@@ -206,6 +206,8 @@ body {
   max-width: 45%;
 }
 
+/* Title, progress and transport are centred as one block in the space below
+   the eyebrow: auto margins top and bottom split the slack evenly. */
 .track {
   margin-top: auto;
   min-width: 0;
@@ -276,6 +278,7 @@ body {
   justify-content: center;
   gap: 8px;
   margin-top: 9px;
+  margin-bottom: auto;
 }
 
 .tbtn {
