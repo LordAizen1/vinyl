@@ -189,9 +189,19 @@ move, with the rejection only visible in the webview console.
   per event. Restored before the window is shown, clamped to a connected monitor.
   Tauri resolves the file to `%APPDATA%\dev.lordaizen.vinyl\config.json`, not the
   `%APPDATA%\vinyl` guessed here originally.
-- System tray icon: show/hide, always-on-top toggle, launch at login, quit.
-  **Still open**, though less urgent than it looks: the right-click menu already
-  carries Quit, so the widget is not unclosable without it.
+- ~~System tray icon: show/hide, always-on-top toggle, launch at login, quit.~~
+  **Done**, bar launch-at-login. The tray shares the widget's own menu rather
+  than defining a second one, so the two cannot drift into offering different
+  things, and it gains a "Show vinyl" tick at the top. Left-click toggles the
+  widget, right-click opens the menu, which is the Windows convention.
+
+  Visibility is deliberately *not* saved to `config.json`: it is a window state,
+  not a preference, and a widget that starts hidden with no taskbar entry would
+  look like a failed launch.
+
+  Launch at login is what remains. It needs a registry `Run` entry or the
+  autostart plugin, and it is the only item here that touches anything outside
+  the app.
 - ~~**Two sizes, chosen from a right-click menu on the widget.**~~ **Built early**,
   and the same menu carries a Light / Dark / Match Windows choice. Full is
   470x275 (deck, screen, progress readout, transport), compact is 280x275 (the

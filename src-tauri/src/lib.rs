@@ -6,6 +6,7 @@ mod smtc;
 mod state;
 mod window;
 
+use std::io::Write;
 use std::sync::Arc;
 
 use std::sync::mpsc::Sender;
@@ -71,11 +72,65 @@ fn show_menu(window: tauri::Window, menu: tauri::State<'_, AppMenu<Wry>>) -> Res
     menu.popup(window).map_err(|error| error.to_string())
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+/// Logs to a file as well as to stdout.
+///
+/// An installed build has no console, so without this every line the app writes
+/// goes nowhere. That is fine right up until it misbehaves on a machine you
+/// cannot attach a terminal to: placing the lyrics bug took two rounds of
+/// reading these very lines.
+///
+/// Truncated each launch rather than rotated. This is one small widget, the
+/// interesting part is always the current run, and an unbounded log growing on
+/// someone else's disk would be its own bug.
+fn start_logging() {
     // Default to info so a dev run says something useful without needing
     // RUST_LOG set. Override with RUST_LOG as usual.
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    let mut builder =
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"));
+
+    let path = std::env::var_os("LOCALAPPDATA")
+        .map(|dir| std::path::PathBuf::from(dir).join("vinyl").join("vinyl.log"));
+
+    if let Some(path) = &path {
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        match std::fs::File::create(path) {
+            Ok(file) => {
+                builder.target(env_logger::Target::Pipe(Box::new(Tee(file))));
+            }
+            // Nowhere to report this but stderr; it must not stop the widget.
+            Err(error) => eprintln!("logging: could not open {} ({error})", path.display()),
+        }
+    }
+
+    builder.init();
+
+    if let Some(path) = &path {
+        log::info!("vinyl {} starting", env!("CARGO_PKG_VERSION"));
+        log::info!("logging to {}", path.display());
+    }
+}
+
+/// Writes to the log file and to stdout at once, so `tauri dev` keeps printing
+/// everything in the terminal while an installed build still gets its file.
+struct Tee(std::fs::File);
+
+impl Write for Tee {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let _ = std::io::stdout().write_all(buf);
+        self.0.write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        let _ = std::io::stdout().flush();
+        self.0.flush()
+    }
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    start_logging();
 
     let shared = state::shared();
     let cache = Arc::new(ArtCache::default());
@@ -142,7 +197,13 @@ pub fn run() {
             }
 
             app.manage(PrefsState(Mutex::new(prefs)));
-            app.manage(menu::build(&handle, prefs)?);
+
+            let menu = menu::build(&handle, prefs)?;
+            // Shares the widget's menu, so the two cannot offer different
+            // things. Built before the window is touched, because it is the
+            // only way back if the widget is ever hidden.
+            menu::build_tray(&handle, menu.menu())?;
+            app.manage(menu);
 
             // Its own thread: a lookup blocks for up to 8s and must never sit
             // in front of the SMTC worker, which owns the session events.
@@ -164,7 +225,10 @@ pub fn run() {
         // Dragging emits a stream of Moved events, so the write is debounced
         // rather than run per pixel: see menu::remember_placement.
         .on_window_event(|window, event| {
-            if matches!(event, tauri::WindowEvent::Moved(_)) {
+            if matches!(
+                event,
+                tauri::WindowEvent::Moved(_) | tauri::WindowEvent::Resized(_)
+            ) {
                 let app = window.app_handle();
                 // Clamp first, then save, so what lands in config.json is the
                 // corrected position rather than the one that went off-screen.

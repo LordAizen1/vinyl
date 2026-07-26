@@ -8,6 +8,7 @@ use std::sync::mpsc::Sender;
 
 use parking_lot::Mutex;
 use tauri::menu::{CheckMenuItem, ContextMenu, Menu, PredefinedMenuItem, Submenu};
+use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, Runtime, Window};
 
 use crate::lyrics::Query;
@@ -36,6 +37,7 @@ const THEME_AUTO: &str = "theme:auto";
 const THEME_LIGHT: &str = "theme:light";
 const THEME_DARK: &str = "theme:dark";
 const LYRICS: &str = "lyrics";
+const VISIBLE: &str = "visible";
 const QUIT: &str = "quit";
 
 /// The menu, plus the check items that have to be re-ticked after a choice.
@@ -44,6 +46,7 @@ pub struct AppMenu<R: Runtime> {
     size_items: [(CheckMenuItem<R>, Size); 2],
     theme_items: [(CheckMenuItem<R>, Theme); 3],
     lyrics_item: CheckMenuItem<R>,
+    visible_item: CheckMenuItem<R>,
 }
 
 /// The live preferences. A `Mutex` rather than a channel: menu clicks are rare
@@ -65,10 +68,15 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) -> tauri::Result<AppM
     let appearance = Submenu::with_items(app, "Appearance", true, &[&auto, &light, &dark])?;
 
     let lyrics = check(LYRICS, "Show lyrics", prefs.lyrics)?;
+    // Ticked because the widget starts visible. The tray is the only way back
+    // once it is not: there is no taskbar entry to click.
+    let visible = check(VISIBLE, "Show vinyl", true)?;
 
     let menu = Menu::with_items(
         app,
         &[
+            &visible,
+            &PredefinedMenuItem::separator(app)?,
             &full,
             &compact,
             &PredefinedMenuItem::separator(app)?,
@@ -88,10 +96,16 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) -> tauri::Result<AppM
             (dark, Theme::Dark),
         ],
         lyrics_item: lyrics,
+        visible_item: visible,
     })
 }
 
 impl<R: Runtime> AppMenu<R> {
+    /// For the tray, which shows the same menu.
+    pub fn menu(&self) -> &Menu<R> {
+        &self.menu
+    }
+
     pub fn popup(&self, window: Window<R>) -> tauri::Result<()> {
         self.menu.popup(window)
     }
@@ -109,6 +123,64 @@ impl<R: Runtime> AppMenu<R> {
         // A plain on/off, so unlike the groups above it needs no exclusivity.
         let _ = self.lyrics_item.set_checked(prefs.lyrics);
     }
+
+    /// Visibility is not a preference, so it is ticked from the window itself
+    /// rather than from `Prefs`.
+    pub fn set_visible(&self, visible: bool) {
+        let _ = self.visible_item.set_checked(visible);
+    }
+}
+
+/// Toggles the widget, keeping the tick in step.
+///
+/// Hiding a window with no taskbar entry and no title bar makes the tray the
+/// only way to get it back, which is most of why the tray exists.
+pub fn set_visible<R: Runtime>(app: &AppHandle<R>, visible: bool) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+
+    let outcome = if visible { window.show() } else { window.hide() };
+    if let Err(error) = outcome {
+        log::warn!("tray: could not toggle the widget ({error})");
+        return;
+    }
+
+    if let Some(menu) = app.try_state::<AppMenu<R>>() {
+        menu.set_visible(visible);
+    }
+}
+
+/// The tray icon, sharing the widget's own menu.
+///
+/// One menu for both, so the two can never drift into offering different
+/// things. Left-clicking the icon toggles the widget, which is what a tray icon
+/// is expected to do and saves opening the menu for the common case.
+pub fn build_tray<R: Runtime>(app: &AppHandle<R>, menu: &Menu<R>) -> tauri::Result<()> {
+    let mut builder = TrayIconBuilder::with_id("vinyl")
+        .tooltip("vinyl")
+        .menu(menu)
+        // Windows convention: left-click is the action, right-click the menu.
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { button, .. } = event {
+                if button == tauri::tray::MouseButton::Left {
+                    let app = tray.app_handle();
+                    let showing = app
+                        .get_webview_window("main")
+                        .and_then(|w| w.is_visible().ok())
+                        .unwrap_or(true);
+                    set_visible(app, !showing);
+                }
+            }
+        });
+
+    if let Some(icon) = app.default_window_icon().cloned() {
+        builder = builder.icon(icon);
+    }
+
+    builder.build(app)?;
+    Ok(())
 }
 
 /// Applies a menu choice: resize if the size changed, persist, re-tick, tell the
@@ -116,6 +188,17 @@ impl<R: Runtime> AppMenu<R> {
 pub fn handle<R: Runtime>(app: &AppHandle<R>, id: &str) {
     // Quit is a predefined item and Tauri handles it itself.
     if id == QUIT {
+        return;
+    }
+
+    // Visibility is a window state, not a saved preference, so it is handled
+    // before the settings are touched at all.
+    if id == VISIBLE {
+        let showing = app
+            .get_webview_window("main")
+            .and_then(|w| w.is_visible().ok())
+            .unwrap_or(true);
+        set_visible(app, !showing);
         return;
     }
 
@@ -201,7 +284,13 @@ pub fn apply_size<R: Runtime>(app: &AppHandle<R>, size: Size) {
     let (width, height) = size.dimensions();
     if let Err(error) = window.set_size(LogicalSize::new(width, height)) {
         log::warn!("menu: could not resize to {size:?} ({error})");
+        return;
     }
+
+    // Growing keeps the top-left corner where it is, so a widget parked against
+    // the right edge pushes its extra width straight off the screen. Pull it
+    // back so the right edge lands on the work area instead.
+    crate::window::clamp_into_work_area(app);
 }
 
 /// Reads the config for this app.

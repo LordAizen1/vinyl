@@ -312,6 +312,28 @@ mod tests {
         assert_eq!(clamp((-999, -999), (460, 273), desk(), 16), (-16, -16));
     }
 
+    /// Compact parked in the bottom-right, then switched to full size. Growing
+    /// keeps the top-left corner fixed, so without a clamp the extra 180px of
+    /// width hangs off the screen.
+    #[test]
+    fn growing_at_the_right_edge_is_pulled_back_on_screen() {
+        let compact = (280, 275);
+        let full = (460, 273);
+        let work = desk();
+
+        // Sitting flush in the bottom-right corner at the compact size.
+        let parked = clamp((9999, 9999), compact, work, 16);
+        assert_eq!(parked, (work.right + 16 - compact.0, work.bottom + 16 - compact.1));
+
+        // Now the same position with the full size. Its right edge would be at
+        // parked.0 + 460, well past the screen.
+        assert!(parked.0 + full.0 > work.right + 16, "the bug needs a bug");
+
+        let fixed = clamp(parked, full, work, 16);
+        assert_eq!(fixed.0, work.right + 16 - full.0);
+        assert!(fixed.0 + full.0 <= work.right + 16);
+    }
+
     #[test]
     fn a_work_area_smaller_than_the_widget_still_lands_somewhere_sane() {
         // Bounds cross over here; the clamp must not panic or fly off.
