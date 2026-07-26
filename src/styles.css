@@ -69,6 +69,7 @@
   --screw-inner-c: rgba(0, 0, 0, 0.18);
   --rest-fill: #cdd0d3;
   --rest-stroke: rgba(0, 0, 0, 0.22);
+  --slot-c: #b6babe;
 
   --screen-hi: #b98e92;
   --screen: #b08386;
@@ -132,6 +133,7 @@
     --screw-inner-c: rgba(0, 0, 0, 0.4);
     --rest-fill: #24262a;
     --rest-stroke: rgba(255, 255, 255, 0.1);
+    --slot-c: #15171a;
 
     --screen-hi: #4d3539;
     --screen: #422e32;
@@ -300,8 +302,25 @@ body {
 .cart { fill: var(--cart-c); }
 .head-collar { fill: var(--collar-c); }
 .rest { fill: var(--rest-fill); stroke: var(--rest-stroke); }
+.slot { fill: var(--slot-c); }
+.slot-rim { stroke: var(--rest-stroke); }
 #grooves circle { stroke: var(--groove); }
 #grooves circle.sep { stroke: var(--groove-sep); }
+
+/* The cue lever rides up when the arm lifts, which is the gesture it performs
+   on a real deck. Hydraulically damped there, so eased here. */
+#cueKnob {
+  transform: translateY(0);
+  transition: transform 340ms cubic-bezier(0.32, 0.72, 0.24, 1);
+}
+
+.widget:not(.playing) #cueKnob {
+  transform: translateY(-36px);
+}
+
+#cue:hover #cueKnob {
+  filter: brightness(1.1);
+}
 
 /* The record settles onto the plate when a session appears. */
 #vinylG {

@@ -177,11 +177,6 @@
 
             <!-- fixed pivot base -->
             <ellipse cx="646" cy="115" rx="37" ry="34" fill="#000" opacity=".22" filter="url(#fB8)" />
-            <g transform="rotate(-64 640 105)">
-              <rect x="664" y="95" width="42" height="20" rx="10" fill="url(#gTube)" />
-              <circle cx="710" cy="105" r="12" fill="url(#gCapIn)" />
-              <circle cx="710" cy="105" r="12" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1" />
-            </g>
             <circle cx="640" cy="105" r="34" fill="url(#gBase)" />
             <path d="M609 96 A 34 34 0 0 1 671 96" fill="none" stroke="rgba(255,255,255,.75)"
                   stroke-width="2.4" stroke-linecap="round" />
@@ -189,8 +184,21 @@
             <circle cx="640" cy="105" r="21" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.1" />
             <circle class="bearing-pin" cx="640" cy="105" r="4.2" />
 
-            <!-- Clicking the record pauses, and the needle lifts. -->
-            <circle id="deckHit" cx="335" cy="345" r="303" fill="transparent" cursor="pointer" />
+            <!-- Cue lever. On a real deck this is the pause: it raises the arm
+                 hydraulically while the platter keeps turning. Deliberately a
+                 lever, not a knob: a second round chrome shape beside the
+                 bearing just reads as a second counterweight. -->
+            <g id="cue" cursor="pointer">
+              <rect class="slot" x="681" y="70" width="26" height="74" rx="13" />
+              <rect class="slot-rim" x="681" y="70" width="26" height="74" rx="13" fill="none" stroke-width="1.4" />
+              <g id="cueKnob">
+                <rect x="674" y="108" width="40" height="26" rx="8" fill="url(#gCw)"
+                      stroke="rgba(0,0,0,.35)" stroke-width="1" />
+                <rect x="674" y="108" width="40" height="9" rx="4.5" fill="rgba(255,255,255,.4)" />
+                <path d="M681 122 H707 M681 128 H707" stroke="rgba(0,0,0,.3)" stroke-width="1.6" />
+              </g>
+              <rect x="668" y="60" width="52" height="96" fill="transparent" />
+            </g>
           </svg>
         </div>
 

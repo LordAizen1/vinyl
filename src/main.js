@@ -312,9 +312,9 @@ function bindTransport() {
   $("btnPrev").addEventListener("click", () => skip("previous"));
   $("btnShuffle").addEventListener("click", toggleShuffle);
   $("btnRepeat").addEventListener("click", cycleRepeat);
-  // Clicking the record pauses, and the needle lifts. The physical ritual and
-  // the command are one action.
-  $("deckHit").addEventListener("click", toggle);
+  // The cue lever, which is what actually raises the arm on a deck. Two ways
+  // to pause, matching real hardware: this and the START/STOP button.
+  $("cue").addEventListener("click", toggle);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -408,7 +408,7 @@ function render() {
   $("btnShuffle").disabled = !hasSession || !snapshot.canShuffle;
   $("btnRepeat").disabled = !hasSession || !snapshot.canRepeat;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
-  $("deckHit").style.cursor =
+  $("cue").style.cursor =
     hasSession && snapshot.canPlayPause ? "pointer" : "default";
 
   $("btnShuffle").setAttribute(
