@@ -211,7 +211,18 @@ panel does.
 display face and a terracotta accent. It is where every generated design lands for
 this brief and it will read as templated. Also avoid drop-shadowed glassmorphism.
 
-Starting tokens (revise with justification, don't drift):
+**Two palettes since Phase 5, following the Windows light/dark setting.** The dark one
+below is still the default and still the reasoning above. A silver, brushed-aluminium
+scheme was added on request for light desktops, where a near-black slab reads as a hole
+rather than as an object. Both live in `src/styles.css` as custom properties, switched
+by a single `prefers-color-scheme` block.
+
+Note the implementation trap: **Chromium does not resolve `var()` inside SVG
+presentation attributes**, so `fill="var(--x)"` fails silently. Every colour in the deck
+SVG is therefore applied by CSS class, not by a fill attribute. Breaking that rule
+breaks theming without any error.
+
+Starting tokens for the dark scheme (revise with justification, don't drift):
 
 ```
 --plinth    #16171A   near-black, slight blue cast, the chassis

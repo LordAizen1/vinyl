@@ -15,44 +15,41 @@ const needleSh = $("needleSh");
 /* ══════════════════════════════════════════════════════════════════════
  * Geometry
  *
- * Platter centre (96,112), record r 72, label r 26, arm pivot (198,42).
- * The arm is drawn pointing straight down, so a rotation of 0 means "along
- * +y". The engagement angle is derived by intersecting the stylus arc with
- * the groove radius, so the stylus genuinely tracks the playhead.
+ * Platter centre (96,112), record r 76, label r 26, arm pivot (198,42).
  * ══════════════════════════════════════════════════════════════════════ */
 const CENTER = { x: 96, y: 112 };
 const PIVOT = { x: 198, y: 42 };
-const RECORD_R = 72;
+const RECORD_R = 76;
 const LABEL_R = 26;
+const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
+
 /**
  * Pivot to stylus, and the bearing of the stylus in the arm's drawn pose.
  *
  * The contact point is the underside of the cartridge at (198, 137.4), not a
- * drawn stylus: seen from directly above, the stylus is hidden beneath the
+ * drawn stylus: seen from directly above the stylus is hidden beneath the
  * cartridge, so nothing is drawn there. The headshell is then rotated 21
- * degrees at the offset angle, which swings that point off the tube's axis to
- * (193.20, 136.51).
+ * degrees at the offset angle, which swings that point to (193.20, 136.51).
  *
  * So the arm is not simply "pointing down": pivot to contact measures 94.63 at
- * 92.91 degrees, not 98 at 90. Both are derived from the drawn geometry,
- * because assuming 90 would leave the cartridge sitting several degrees off
- * the groove it is meant to be tracking.
+ * 92.91 degrees, not 98 at 90. Both are derived from the drawn geometry;
+ * assuming 90 leaves the cartridge several degrees off the groove it is meant
+ * to be tracking.
  */
 const ARM_LEN = 94.63;
-const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
+const DRAWN_ANGLE = 92.91;
 
 const R_LEAD_IN = RECORD_R * 0.92;
-const R_RUN_OUT = LABEL_R + 3;
+/** The arm physically cannot reach closer than PIVOT_DIST - ARM_LEN, 29.08. */
+const R_RUN_OUT = LABEL_R + 5;
 
 const BASE_ANGLE =
   (Math.atan2(CENTER.y - PIVOT.y, CENTER.x - PIVOT.x) * 180) / Math.PI;
-const DRAWN_ANGLE = 92.91;
 
 /**
  * Parked. Zero, not an offset: the arm is drawn pointing straight down from
- * the pivot, and the arm rest sits directly beneath it at (198, 120), so the
- * tube lies across the rest exactly when the rotation is zero. Any offset
- * swings the stylus off the rest and out over bare plinth.
+ * the pivot, and the arm rest sits directly beneath it, so the tube lies
+ * across the rest exactly when the rotation is zero.
  */
 const REST_ROTATION = 0;
 
@@ -149,7 +146,6 @@ function buildGrooves() {
     c.setAttribute("cx", CENTER.x);
     c.setAttribute("cy", CENTER.y);
     c.setAttribute("r", r.toFixed(2));
-    c.setAttribute("stroke", "#8f96a2");
     c.setAttribute("stroke-width", width);
     c.setAttribute("opacity", opacity.toFixed(3));
     grooves.appendChild(c);
@@ -158,8 +154,8 @@ function buildGrooves() {
   for (let r = R_RUN_OUT; r <= R_LEAD_IN; r += 1.05 + rand() * 0.5) {
     ring(r, 0.055 + rand() * 0.05, 0.6);
   }
-  [40.5, 50.5, 59.5].forEach((r) => ring(r, 0.21, 1)); // track gaps
-  ring(R_LEAD_IN + 1.4, 0.17, 1); // lead-in
+  [43, 53, 63].forEach((r) => ring(r, 0.21, 1)); // track separations
+  ring(R_LEAD_IN + 1.5, 0.17, 1); // lead-in
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -215,6 +211,70 @@ function syncLabel() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * Transport
+ *
+ * The click updates the UI immediately and the real SMTC event reconciles it
+ * a moment later. Phase 0 measured Edge taking minutes to volunteer a timeline
+ * update, so waiting for confirmation would make the buttons feel broken.
+ * ══════════════════════════════════════════════════════════════════════ */
+async function send(action) {
+  try {
+    await invoke("transport", { action });
+  } catch (error) {
+    console.error(`transport ${action} failed`, error);
+    render(); // the optimistic guess was wrong; fall back to real state
+  }
+}
+
+function toggle() {
+  if (!snapshot || !snapshot.canPlayPause) return;
+
+  // Optimistic flip. Re-anchor to now so the extrapolation does not jump when
+  // the real update arrives.
+  const position = currentPositionMs();
+  snapshot = {
+    ...snapshot,
+    status: snapshot.status === "playing" ? "paused" : "playing",
+    positionMs: position ?? snapshot.positionMs,
+    updatedAt: Date.now(),
+  };
+  render();
+  send("toggle");
+}
+
+function skip(action) {
+  const allowed = action === "next" ? snapshot?.canNext : snapshot?.canPrevious;
+  if (!allowed) return;
+  send(action);
+}
+
+function toggleShuffle() {
+  if (!snapshot?.canShuffle) return;
+  snapshot = { ...snapshot, shuffle: !snapshot.shuffle };
+  render();
+  send("shuffle");
+}
+
+/** Off, then the whole list, then the single track, then off again. */
+function cycleRepeat() {
+  if (!snapshot?.canRepeat) return;
+  const next = { off: "list", list: "track", track: "off" }[snapshot.repeat];
+  snapshot = { ...snapshot, repeat: next };
+  render();
+  send("repeat");
+}
+
+function bindTransport() {
+  $("btnPlay").addEventListener("click", toggle);
+  $("btnNext").addEventListener("click", () => skip("next"));
+  $("btnPrev").addEventListener("click", () => skip("previous"));
+  $("btnShuffle").addEventListener("click", toggleShuffle);
+  $("btnRepeat").addEventListener("click", cycleRepeat);
+  // The cue lever, which is what actually raises the arm on a deck.
+  $("cue").addEventListener("click", toggle);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * Render
  * ══════════════════════════════════════════════════════════════════════ */
 function formatTime(ms) {
@@ -258,8 +318,8 @@ let lastRotation = null;
 function render() {
   const hasSession = Boolean(snapshot) && snapshot.status !== "noSession";
   const playing = hasSession && snapshot.status === "playing";
-  // A livestream reports no duration. Phase 0 never caught one, so this is
-  // implemented from the spec: park the arm, do not invent a position.
+  // A livestream reports no duration. Park the arm rather than inventing a
+  // position.
   const isLive = hasSession && !snapshot.durationMs;
 
   widget.classList.toggle("loaded", hasSession);
@@ -294,13 +354,26 @@ function render() {
   $("btnPlay").disabled = !hasSession || !snapshot.canPlayPause;
   $("btnNext").disabled = !hasSession || !snapshot.canNext;
   $("btnPrev").disabled = !hasSession || !snapshot.canPrevious;
+  $("btnShuffle").disabled = !hasSession || !snapshot.canShuffle;
+  $("btnRepeat").disabled = !hasSession || !snapshot.canRepeat;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
   $("cue").style.cursor =
     hasSession && snapshot.canPlayPause ? "pointer" : "default";
 
+  $("btnShuffle").setAttribute(
+    "aria-pressed",
+    String(Boolean(hasSession && snapshot.shuffle)),
+  );
+  const repeat = hasSession ? snapshot.repeat : "off";
+  $("btnRepeat").setAttribute("aria-pressed", String(repeat !== "off"));
+  // The little "1" only appears for single-track repeat, which is how every
+  // player distinguishes the two modes.
+  $("btnRepeat").classList.toggle("repeat-one", repeat === "track");
+
   if (!hasSession) {
     $("uiTitle").textContent = "No session";
     $("uiArtist").textContent = "Nothing is playing";
+    $("uiAlbum").textContent = "";
     $("uiSource").textContent = "";
     $("uiElapsed").textContent = "0:00";
     $("uiTotal").textContent = "–:––";
@@ -309,8 +382,10 @@ function render() {
   }
 
   $("uiTitle").textContent = snapshot.title || "Unknown";
-  $("uiArtist").textContent =
-    snapshot.artist || snapshot.album || snapshot.sourceApp || "Unknown artist";
+  $("uiArtist").textContent = snapshot.artist || "Unknown artist";
+  // Only worth showing when it adds something the artist line does not.
+  $("uiAlbum").textContent =
+    snapshot.album && snapshot.album !== snapshot.title ? snapshot.album : "";
   $("uiSource").textContent = snapshot.sourceApp || "";
 
   if (isLive) {
@@ -323,55 +398,6 @@ function render() {
     $("uiTotal").textContent = formatTime(snapshot.durationMs ?? 0);
     $("uiBar").style.width = `${(fraction * 100).toFixed(2)}%`;
   }
-}
-
-/* ══════════════════════════════════════════════════════════════════════
- * Transport
- *
- * The click updates the UI immediately and the real SMTC event reconciles it
- * a moment later. Phase 0 measured Edge taking minutes to volunteer a timeline
- * update, so waiting for confirmation would make the button feel broken.
- * ══════════════════════════════════════════════════════════════════════ */
-async function send(action) {
-  try {
-    await invoke("transport", { action });
-  } catch (error) {
-    console.error(`transport ${action} failed`, error);
-    // The optimistic guess was wrong; fall back to whatever Rust last told us.
-    render();
-  }
-}
-
-function toggle() {
-  if (!snapshot || !snapshot.canPlayPause) return;
-
-  // Optimistic flip. Re-anchor to now so the extrapolation does not jump when
-  // the real update arrives.
-  const position = currentPositionMs();
-  snapshot = {
-    ...snapshot,
-    status: snapshot.status === "playing" ? "paused" : "playing",
-    positionMs: position ?? snapshot.positionMs,
-    updatedAt: Date.now(),
-  };
-  render();
-  send("toggle");
-}
-
-function skip(action) {
-  const allowed = action === "next" ? snapshot?.canNext : snapshot?.canPrevious;
-  if (!allowed) return;
-  send(action);
-}
-
-function bindTransport() {
-  $("btnPlay").addEventListener("click", toggle);
-  $("btnNext").addEventListener("click", () => skip("next"));
-  $("btnPrev").addEventListener("click", () => skip("previous"));
-  // The cue lever, which is what actually raises the arm on a deck. The record
-  // itself used to toggle too, but three ways to pause was one too many and
-  // clicking the platter was the least discoverable of them.
-  $("cue").addEventListener("click", toggle);
 }
 
 function adopt(next) {

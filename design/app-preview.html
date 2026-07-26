@@ -24,8 +24,8 @@
         background: radial-gradient(1100px 640px at 40% 24%, #1d2026 0%, #0a0b0d 70%);
       }
       #shell {
-        width: 420px;
-        height: 220px;
+        width: 470px;
+        height: 300px;
         resize: both;
         overflow: hidden;
       }
@@ -67,6 +67,10 @@
         canPlayPause: true,
         canNext: true,
         canPrevious: true,
+        canShuffle: true,
+        canRepeat: true,
+        shuffle: false,
+        repeat: "off",
       };
 
       const FLAVOURS = {
@@ -97,6 +101,10 @@
           canPlayPause: false,
           canNext: false,
           canPrevious: false,
+          canShuffle: false,
+          canRepeat: false,
+          shuffle: false,
+          repeat: "off",
         },
       };
 

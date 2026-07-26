@@ -28,6 +28,7 @@ env_logger = "0.11"
 windows = { version = "0.62.2", features = [
     "Foundation",
     "Foundation_Collections",
+    "Media",
     "Media_Control",
     "Storage_Streams",
     "Win32_System_WinRT",

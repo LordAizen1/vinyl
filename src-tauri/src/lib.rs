@@ -29,6 +29,8 @@ fn transport(action: &str, sender: tauri::State<'_, Sender<Signal>>) -> Result<(
         "toggle" => Command::Toggle,
         "next" => Command::Next,
         "previous" => Command::Previous,
+        "shuffle" => Command::ToggleShuffle,
+        "repeat" => Command::CycleRepeat,
         other => return Err(format!("unknown transport action: {other}")),
     };
 

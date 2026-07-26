@@ -192,7 +192,14 @@ capabilities in the Tauri v2 capabilities file.
 ## Phase 5 — Controls, and the point where it stops being decoration
 
 Send transport commands back through SMTC: `TryTogglePlayPauseAsync()`,
-`TrySkipNextAsync()`, `TrySkipPreviousAsync()`.
+`TrySkipNextAsync()`, `TrySkipPreviousAsync()`, and, added during the phase,
+`TryChangeShuffleActiveAsync()` and `TryChangeAutoRepeatModeAsync()`.
+
+Correction to an assumption in this plan: SMTC **does** expose shuffle, repeat and seek.
+`TryChangePlaybackPositionAsync()` exists, so a scrubbable progress bar is achievable.
+Seek is still excluded, but as a choice rather than a limitation. Shuffle and repeat
+were added because the reference design called for them and they are genuinely
+supported.
 
 - Read `PlaybackInfo.Controls` and only show a control the session actually supports.
   A disabled skip button on a livestream is a bug.
@@ -267,7 +274,9 @@ buffer handling, silent-packet handling. Only worth it if tier one leaves you wa
 
 - Click-through via cursor polling
 - 45 RPM as anything more than a manual toggle
-- Themes and skins
+- ~~Themes and skins~~ **Partly overturned in Phase 5.** Two palettes now ship, dark and
+  silver, following the Windows light/dark setting. That is the whole of it: no theme
+  picker, no custom accents, no skin format.
 - Lyrics
 - Scrobbling
 - macOS or Linux ports

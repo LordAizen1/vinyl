@@ -1,8 +1,14 @@
 /*
- * The widget, ported from design/turntable.html once Gate 2 passed.
+ * The widget.
  *
- * Fonts are linked here rather than embedded as data URIs; that trick is only
- * needed in the design harness, which has to run over file://.
+ * Two palettes, dark and silver, following the Windows light/dark setting via
+ * prefers-color-scheme. CLAUDE.md originally specified dark only, on the
+ * reasoning that dark equipment sits better on an arbitrary wallpaper; that
+ * still holds on a dark desktop, which is why dark remains the default.
+ *
+ * Every SVG colour is applied by CSS class, never by a fill attribute.
+ * Chromium does not resolve var() inside SVG presentation attributes, so
+ * fill="var(--x)" fails silently. This is what makes theming possible.
  */
 
 @font-face {
@@ -21,11 +27,9 @@
   src: url("assets/fonts/JetBrainsMono-latin.woff2") format("woff2");
 }
 
-/* The third face, added deliberately. Two uses only: the brand plate on the
-   plinth, and the initial on the procedural label. A gothic initial on a
-   record label is a very old convention, so it earns both. Nothing else uses
-   it, and it is never set in all caps: at plinth sizes VINYL in blackletter
-   collapses into an unreadable smear, where Vinyl reads fine. */
+/* Two uses only: the brand plate, and the initial on the procedural label.
+   Never in all caps: at plinth size blackletter capitals collapse into an
+   unreadable smear, where mixed case reads fine. */
 @font-face {
   font-family: "Pirata One";
   font-style: normal;
@@ -34,22 +38,146 @@
   src: url("assets/fonts/PirataOne-latin.woff2") format("woff2");
 }
 
+/* ═══════════════ dark, the default ═══════════════ */
 :root {
-  --plinth: #16171a;
-  --plinth-hi: #1e2024;
-  --plinth-lo: #101115;
-  --vinyl: #0b0b0d;
-  --mat: #121316;
+  --chassis-hi: #24272c;
+  --chassis: #191b1f;
+  --chassis-lo: #0e1013;
+  --chassis-edge: rgba(255, 255, 255, 0.075);
+
+  --well-hi: #131519;
+  --well-lo: #0a0b0d;
+  --well-edge-c: #05060700;
+  --well-rim-c: rgba(255, 255, 255, 0.08);
+
+  --metal-hi: #b4bac2;
+  --metal-mid: #8b9199;
+  --metal-lo: #43474d;
+  --metal-edge-c: #1d1f23;
+
+  --platter-hi: #6c727b;
+  --platter-mid: #4a4e56;
+  --platter-lo: #33363c;
+  --platter-well-c: #0c0d0f;
+  --platter-edge-c: #2b2e33;
+  --strobe-c: #0e1013;
+
+  --mat-c: #121316;
+  --mat-ring-c: rgba(255, 255, 255, 0.03);
+  --spindle-hole-c: #08090a;
+
+  --vinyl-c: #0b0b0d;
+  --groove-c: #8f96a2;
+  --seam-c: #565b64;
+  --sheen-a-c: #d5dfee;
+  --sheen-b-c: #b6c3d8;
+
+  --rest-fill: #17181b;
+  --rest-stroke: rgba(255, 255, 255, 0.1);
+  --slot-c: #0d0f12;
+  --arm-base-fill: #1f2125;
+  --arm-base-stroke: #2c2e33;
+  --bearing-pin-c: #32353a;
+  --shell-fill: #3a3e45;
+  --shell-edge-c: #141517;
+  --shell-top-c: #616770;
+  --cart-fill: #1a1c20;
+  --cart-edge-c: #0b0c0e;
+  --bolt-shadow-c: #08090b;
+  --bolt-slot-c: #24272c;
+
+  --display-bg: #0f1114;
+  --display-bezel: rgba(255, 255, 255, 0.09);
+  --display-inner-shadow: rgba(0, 0, 0, 0.6);
+
+  --text: #e8e9eb;
   --steel: #8a8f98;
+  --faint: #5f646c;
   --lamp: #ffb454;
   --lamp-soft: rgba(255, 180, 84, 0.5);
-  --text: #e8e9eb;
-  --faint: #5f646c;
+  --lamp-off: #34363a;
+
+  --btn-hi: #2d3138;
+  --btn-mid: #22252a;
+  --btn-lo: #191c20;
+  --btn-edge: #0d0f12;
+  --btn-glyph: #0c0e11;
+  --btn-emboss: rgba(255, 255, 255, 0.13);
+  --ghost-glyph: #7d838c;
 
   --radius: 14px;
   --font-label: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   --font-display: "Pirata One", "UnifrakturMaguntia", Georgia, serif;
+}
+
+/* ═══════════════ silver, on a light desktop ═══════════════ */
+@media (prefers-color-scheme: light) {
+  :root {
+    --chassis-hi: #f2f3f4;
+    --chassis: #dfe1e3;
+    --chassis-lo: #c3c7cb;
+    --chassis-edge: rgba(0, 0, 0, 0.14);
+
+    --well-hi: #e8eaec;
+    --well-lo: #cbcfd3;
+    --well-rim-c: rgba(255, 255, 255, 0.85);
+
+    --metal-hi: #ffffff;
+    --metal-mid: #b9bec5;
+    --metal-lo: #74797f;
+    --metal-edge-c: #8a9096;
+
+    --platter-hi: #9ba1a8;
+    --platter-mid: #7d838a;
+    --platter-lo: #5f656c;
+    --platter-well-c: #b2b7bc;
+    --platter-edge-c: #8f959b;
+    --strobe-c: #3a3f45;
+
+    --mat-c: #26282b;
+    --mat-ring-c: rgba(255, 255, 255, 0.05);
+    --spindle-hole-c: #17191b;
+
+    --vinyl-c: #17181a;
+    --groove-c: #b9c0c9;
+    --seam-c: #767c85;
+    --sheen-a-c: #ffffff;
+    --sheen-b-c: #e3e9f2;
+
+    --rest-fill: #aeb3b9;
+    --rest-stroke: rgba(0, 0, 0, 0.22);
+    --slot-c: #a2a7ad;
+    --arm-base-fill: #d2d6da;
+    --arm-base-stroke: #b0b5bb;
+    --bearing-pin-c: #6c7178;
+    --shell-fill: #8d939a;
+    --shell-edge-c: #5c6167;
+    --shell-top-c: #c2c7cd;
+    --cart-fill: #4a4f55;
+    --cart-edge-c: #33373c;
+    --bolt-shadow-c: #a8adb3;
+    --bolt-slot-c: #8b9097;
+
+    --display-bg: #cdd1d5;
+    --display-bezel: rgba(255, 255, 255, 0.9);
+    --display-inner-shadow: rgba(0, 0, 0, 0.28);
+
+    --text: #1c1e21;
+    --steel: #5c6167;
+    --faint: #868c93;
+    --lamp: #e08a1e;
+    --lamp-soft: rgba(224, 138, 30, 0.45);
+    --lamp-off: #b4b9be;
+
+    --btn-hi: #fbfcfc;
+    --btn-mid: #e6e8ea;
+    --btn-lo: #ccd0d4;
+    --btn-edge: #9ba0a6;
+    --btn-glyph: #3a3f45;
+    --btn-emboss: rgba(255, 255, 255, 0.95);
+    --ghost-glyph: #767c83;
+  }
 }
 
 * {
@@ -69,7 +197,7 @@ body {
   color: var(--text);
 }
 
-/* ─────────────────────────── widget ─────────────────────────── */
+/* ─────────────────────────── chassis ─────────────────────────── */
 .vinyl-widget {
   container: vinylw / size;
   position: relative;
@@ -77,16 +205,18 @@ body {
   height: 100%;
   display: flex;
   align-items: stretch;
+  gap: 4px;
+  padding: 10px;
   border-radius: var(--radius);
   background: linear-gradient(
-    178deg,
-    var(--plinth-hi) 0%,
-    var(--plinth) 46%,
-    var(--plinth-lo) 100%
+    166deg,
+    var(--chassis-hi) 0%,
+    var(--chassis) 46%,
+    var(--chassis-lo) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--chassis-edge);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 22px 44px -20px rgba(0, 0, 0, 0.7),
     0 5px 14px rgba(0, 0, 0, 0.38);
   overflow: hidden;
@@ -103,7 +233,7 @@ body {
   pointer-events: none;
   border-radius: inherit;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.02 1.4' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.55'/></svg>");
-  opacity: 0.05;
+  opacity: 0.06;
   mix-blend-mode: overlay;
 }
 
@@ -111,8 +241,7 @@ body {
 .deck {
   flex: none;
   height: 100%;
-  aspect-ratio: 232/220;
-  max-width: 56%;
+  aspect-ratio: 1;
   position: relative;
 }
 
@@ -121,6 +250,43 @@ body {
   height: 100%;
   display: block;
 }
+
+/* ── SVG palette. Classes, not fill attributes: see the note at the top. ── */
+.s-platter-hi { stop-color: var(--platter-hi); }
+.s-platter-mid { stop-color: var(--platter-mid); }
+.s-platter-lo { stop-color: var(--platter-lo); }
+.s-metal-hi { stop-color: var(--metal-hi); }
+.s-metal-mid { stop-color: var(--metal-mid); }
+.s-metal-lo { stop-color: var(--metal-lo); }
+.s-well-hi { stop-color: var(--well-hi); }
+.s-well-lo { stop-color: var(--well-lo); }
+
+.well-edge { fill: rgba(0, 0, 0, 0.35); }
+.well-rim { stroke: var(--well-rim-c); }
+.bolt-shadow { fill: var(--bolt-shadow-c); }
+.bolt-face { stroke: var(--well-rim-c); }
+.bolt-slot { stroke: var(--bolt-slot-c); }
+.platter-well { fill: var(--platter-well-c); }
+.platter-face { stroke: var(--platter-edge-c); }
+.strobe { stroke: var(--strobe-c); }
+.mat { fill: var(--mat-c); }
+.mat-ring { stroke: var(--mat-ring-c); }
+.spindle-hole { fill: var(--spindle-hole-c); }
+.vinyl { fill: var(--vinyl-c); }
+.seam { stroke: var(--seam-c); }
+.sheen-a { fill: var(--sheen-a-c); }
+.sheen-b { fill: var(--sheen-b-c); }
+.rest { fill: var(--rest-fill); stroke: var(--rest-stroke); }
+.slot { fill: var(--slot-c); }
+.arm-base { fill: var(--arm-base-fill); stroke: var(--arm-base-stroke); }
+.metal-edge { stroke: var(--metal-edge-c); }
+.bearing-pin { fill: var(--bearing-pin-c); }
+.shell { fill: var(--shell-fill); stroke: var(--shell-edge-c); }
+.shell-top { fill: var(--shell-top-c); }
+.cart { fill: var(--cart-fill); stroke: var(--cart-edge-c); }
+.metal-mid-fill { fill: var(--metal-mid); }
+.metal-hi-fill { fill: var(--metal-hi); }
+#grooves circle { stroke: var(--groove-c); }
 
 /* The record settles onto the platter when a session appears, and lifts off
    when everything stops. */
@@ -148,12 +314,10 @@ body {
   will-change: transform;
 }
 
-/* Fades the label rather than flashing empty on a track change. */
 #labelG {
   transition: opacity 0.22s ease;
 }
 
-/* The arm sweeps on a transition. Real state moves it about twice a second. */
 #armG {
   transition: transform 420ms cubic-bezier(0.34, 1.36, 0.64, 1);
 }
@@ -162,13 +326,28 @@ body {
   transition: opacity 240ms ease-out;
 }
 
+/* The cue lever rides up when the arm lifts, hydraulically damped on a real
+   deck and so eased here. */
+#cueKnob {
+  transform: translateY(0);
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0.24, 1);
+}
+
+.vinyl-widget:not(.playing) #cueKnob {
+  transform: translateY(-14px);
+}
+
+#cue:hover #cueKnob {
+  filter: brightness(1.18);
+}
+
 /* ─────────────────────────── panel ─────────────────────────── */
 .panel {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 12px 16px 13px 6px;
+  padding: 4px 6px 4px 8px;
 }
 
 .flex {
@@ -178,23 +357,24 @@ body {
 .eyebrow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 16px;
+  gap: 7px;
+  min-height: 15px;
 }
 
 .lamp {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #34363a;
+  background: var(--lamp-off);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.7);
   transition:
     background 0.35s,
     box-shadow 0.35s;
+  flex: none;
 }
 
 .vinyl-widget.loaded .lamp {
-  background: rgba(255, 180, 84, 0.38);
+  background: var(--lamp-soft);
 }
 
 .vinyl-widget.playing .lamp {
@@ -202,42 +382,58 @@ body {
   box-shadow: 0 0 7px 1.5px var(--lamp-soft);
 }
 
-/* Brand plate. Mixed case, not caps: rendered at plinth size, blackletter
-   capitals run together into an unreadable smear, while the ascenders and
-   x-height of mixed case keep the word legible. Tracking stays near zero,
-   since blackletter is designed to sit tight. */
 .brand {
   font-family: var(--font-display);
   font-size: 15px;
-  font-weight: 400;
   letter-spacing: 0.02em;
-  color: #8b9098;
   line-height: 1;
+  color: var(--steel);
   transform: translateY(0.5px);
 }
 
-.speed {
+.source {
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 8px;
   color: var(--faint);
-  letter-spacing: 0.04em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 45%;
 }
 
-/* Title, progress and transport are centred as one block in the space below
-   the eyebrow: auto margins top and bottom split the slack evenly. */
-.track {
-  margin-top: auto;
-  min-width: 0;
+/* ── the display: a bezelled inset, not text on the faceplate ── */
+.display {
+  margin-top: 7px;
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.35) 0%,
+    var(--display-bezel) 100%
+  );
+}
+
+.display-inner {
+  height: 100%;
+  border-radius: 7px;
+  padding: 9px 11px;
+  background: var(--display-bg);
+  box-shadow:
+    inset 0 2px 5px var(--display-inner-shadow),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
 }
 
 .title {
   font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text);
   overflow: hidden;
@@ -246,7 +442,6 @@ body {
 }
 
 .artist {
-  margin-top: 3px;
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -257,15 +452,30 @@ body {
   white-space: nowrap;
 }
 
-/* A readout, not a control: Phase 5 has no seek. */
+.album {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album:empty {
+  display: none;
+}
+
+/* A readout, not a control: PLAN.md excludes seek. */
 .progress {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .bar {
   height: 3px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.11);
+  background: rgba(128, 128, 128, 0.28);
   overflow: hidden;
 }
 
@@ -280,29 +490,27 @@ body {
 .times {
   display: flex;
   justify-content: space-between;
-  margin-top: 4px;
+  margin-top: 3px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
 }
 
-/* A livestream has no duration, so there is no progress to show. */
 .vinyl-widget.live .bar {
   opacity: 0.25;
 }
 
 /* ─────────────────────────── transport ───────────────────────────
-   Each control takes the form of the real thing it corresponds to. Glyphs
-   are engraved rather than printed: dark fill with a one-pixel lit lower
+   Each control takes the form of the real thing it corresponds to. Glyphs on
+   the pressed buttons are engraved: dark fill with a one-pixel lit lower
    edge, which is how a legend cut into a metal faceplate catches light. */
 .controls {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 11px;
-  margin-bottom: auto;
+  gap: 7px;
+  margin-top: 8px;
 }
 
 button {
@@ -313,66 +521,99 @@ button {
   font: inherit;
 }
 
+/* Shuffle and repeat: flush legends on the faceplate rather than raised
+   buttons, so the transport row reads as one primary and two secondaries. */
+.ghost {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--ghost-glyph);
+  transition:
+    color 0.15s,
+    background 0.15s,
+    opacity 0.2s;
+}
+
+.ghost:hover:not(:disabled) {
+  background: rgba(128, 128, 128, 0.16);
+  color: var(--text);
+}
+
+.ghost[aria-pressed="true"] {
+  color: var(--lamp);
+}
+
+.badge {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  line-height: 1;
+  color: var(--lamp);
+  display: none;
+}
+
+.ghost.repeat-one .badge {
+  display: block;
+}
+
 /* Skip: the form of the 33/45 speed selector, the small squarish button that
    really does exist on the plinth. Turntables have no skip control at all, so
    this borrows a real shape rather than inventing one. */
 .selector {
-  width: 30px;
-  height: 21px;
+  width: 28px;
+  height: 20px;
   border-radius: 3px;
   display: grid;
   place-items: center;
-  color: #0c0e11;
-  background: linear-gradient(180deg, #2d3138 0%, #22252a 52%, #191c20 100%);
-  border: 1px solid #0d0f12;
+  color: var(--btn-glyph);
+  background: linear-gradient(180deg, var(--btn-hi) 0%, var(--btn-mid) 52%, var(--btn-lo) 100%);
+  border: 1px solid var(--btn-edge);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 var(--btn-emboss),
+    0 1px 2px rgba(0, 0, 0, 0.4);
   transition:
     box-shadow 0.12s,
     transform 0.08s,
-    opacity 0.2s,
-    color 0.2s;
+    opacity 0.2s;
 }
 
 .selector svg {
   /* the lit lower edge that makes a glyph read as cut in, not drawn on */
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.13));
-}
-
-.selector:hover:not(:disabled) {
-  color: #05070a;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 1px 2px rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(0 1px 0 var(--btn-emboss));
 }
 
 .selector:active:not(:disabled) {
   transform: translateY(1px);
-  background: linear-gradient(180deg, #1c1f23 0%, #23262b 100%);
-  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
 }
 
 /* Play/pause: the round START/STOP button, machined, with concentric turning
    marks and a real pressed state that sinks into the plinth. */
 .startstop {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 1px solid #0b0d10;
+  border: 1px solid var(--btn-edge);
   background:
     repeating-radial-gradient(
       circle at 50% 50%,
-      rgba(255, 255, 255, 0.028) 0 1px,
-      rgba(0, 0, 0, 0.028) 1px 2px
+      rgba(255, 255, 255, 0.03) 0 1px,
+      rgba(0, 0, 0, 0.03) 1px 2px
     ),
-    radial-gradient(circle at 36% 28%, #565b64 0%, #383c43 46%, #23262b 100%);
+    radial-gradient(circle at 36% 28%, var(--metal-mid) 0%, var(--btn-mid) 55%, var(--btn-lo) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -2px 5px rgba(0, 0, 0, 0.45),
-    0 2px 5px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 var(--btn-emboss),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.35),
+    0 2px 5px rgba(0, 0, 0, 0.4);
   transition:
     box-shadow 0.12s,
     transform 0.08s,
@@ -380,43 +621,42 @@ button {
 }
 
 .startstop-face {
-  width: 27px;
-  height: 27px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #0b0d10;
-  background: linear-gradient(180deg, #3c4149 0%, #2a2d33 100%);
+  color: var(--btn-glyph);
+  background: linear-gradient(180deg, var(--btn-hi) 0%, var(--btn-mid) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 var(--btn-emboss),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .startstop-face svg {
   grid-area: 1/1;
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.14));
+  filter: drop-shadow(0 1px 0 var(--btn-emboss));
 }
 
 .startstop:hover:not(:disabled) {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -2px 5px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 var(--btn-emboss),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.35),
     0 0 0 1px var(--lamp-soft),
-    0 2px 5px rgba(0, 0, 0, 0.5);
+    0 2px 5px rgba(0, 0, 0, 0.4);
 }
 
 .startstop:active:not(:disabled) {
   transform: translateY(1px);
-  box-shadow:
-    inset 0 2px 5px rgba(0, 0, 0, 0.6),
-    0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 /* Unsupported by the source: dimmed and inert rather than hidden, so the
    layout does not jump between a track and a livestream. */
+.ghost:disabled,
 .selector:disabled,
 .startstop:disabled {
-  opacity: 0.28;
+  opacity: 0.25;
   cursor: default;
 }
 
@@ -444,21 +684,6 @@ button {
   transform: scale(1);
 }
 
-/* The cue lever rides up when the arm lifts, which is the gesture it performs
-   on a real deck. Hydraulically damped there, so eased here. */
-#cueKnob {
-  transform: translateY(0);
-  transition: transform 320ms cubic-bezier(0.32, 0.72, 0.24, 1);
-}
-
-.vinyl-widget:not(.playing) #cueKnob {
-  transform: translateY(-14px);
-}
-
-#cue:hover #cueKnob {
-  filter: brightness(1.18);
-}
-
 :where(button):focus-visible,
 #cue:focus-visible {
   outline: 2px solid var(--lamp);
@@ -466,55 +691,46 @@ button {
 }
 
 /* ─────────────────────────── responsive ─────────────────────────── */
-@container vinylw (max-width: 378px) {
+@container vinylw (max-width: 420px) {
   .brand {
     display: none;
   }
-  .panel {
-    padding-right: 14px;
+  .title {
+    font-size: 13.5px;
   }
 }
 
-@container vinylw (max-width: 352px) {
-  .speed {
+@container vinylw (max-width: 380px) {
+  .source {
     display: none;
   }
-  .deck {
-    max-width: 52%;
-  }
-  .title {
-    font-size: 13.5px;
+  .album {
+    display: none;
   }
 }
 
-@container vinylw (max-height: 198px) {
-  .panel {
-    padding-top: 9px;
-    padding-bottom: 10px;
+@container vinylw (max-height: 270px) {
+  .display-inner {
+    padding: 7px 10px;
   }
   .title {
     font-size: 13.5px;
   }
-  .artist {
-    margin-top: 2px;
-  }
-  .progress {
-    margin-top: 7px;
-  }
   .controls {
-    margin-top: 7px;
-  }
-  .selector {
-    width: 27px;
-    height: 19px;
+    margin-top: 6px;
+    gap: 6px;
   }
   .startstop {
-    width: 35px;
-    height: 35px;
+    width: 34px;
+    height: 34px;
   }
   .startstop-face {
-    width: 24px;
-    height: 24px;
+    width: 23px;
+    height: 23px;
+  }
+  .selector {
+    width: 25px;
+    height: 18px;
   }
 }
 
@@ -524,7 +740,8 @@ button {
   #armG,
   #needleSh,
   #vinylG,
-  #labelG {
+  #labelG,
+  #cueKnob {
     transition: none;
   }
 }

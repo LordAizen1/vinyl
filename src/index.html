@@ -9,24 +9,26 @@
   </head>
 
   <body>
+    <!--
+      Every colour in this SVG comes from a CSS class, never a fill attribute.
+      Chromium does not resolve var() inside SVG presentation attributes, so
+      fill="var(--x)" fails silently; styling by class is what makes the two
+      palettes possible at all.
+    -->
     <div class="vinyl-widget" id="widget" role="group" aria-label="Now playing">
-      <!-- ─── deck ─── -->
+      <!-- ─── deck: the platter in a machined recess ─── -->
       <div class="deck">
         <svg
-          viewBox="0 0 232 220"
+          viewBox="0 0 232 232"
           preserveAspectRatio="xMidYMid meet"
           aria-hidden="true"
         >
           <defs>
             <radialGradient id="gPlatter" cx="42%" cy="34%" r="68%">
-              <stop offset="0" stop-color="#6c727b" />
-              <stop offset="0.5" stop-color="#4a4e56" />
-              <stop offset="1" stop-color="#33363c" />
+              <stop offset="0" class="s-platter-hi" />
+              <stop offset="0.5" class="s-platter-mid" />
+              <stop offset="1" class="s-platter-lo" />
             </radialGradient>
-            <!-- userSpaceOnUse, not the default objectBoundingBox: the tube is
-                 a vertical <line>, whose bounding box is zero pixels wide, so
-                 a bounding-box gradient collapses and the tube renders flat
-                 black. These coordinates span the tube's actual 4.2px width. -->
             <linearGradient
               id="gTube"
               gradientUnits="userSpaceOnUse"
@@ -35,20 +37,28 @@
               x2="200.75"
               y2="0"
             >
-              <stop offset="0" stop-color="#4e535b" />
-              <stop offset="0.3" stop-color="#b4bac2" />
-              <stop offset="0.55" stop-color="#8b9199" />
-              <stop offset="1" stop-color="#43474d" />
+              <stop offset="0" class="s-metal-lo" />
+              <stop offset="0.3" class="s-metal-hi" />
+              <stop offset="0.55" class="s-metal-mid" />
+              <stop offset="1" class="s-metal-lo" />
             </linearGradient>
             <radialGradient id="gCap" cx="36%" cy="30%" r="78%">
-              <stop offset="0" stop-color="#b3b8bf" />
-              <stop offset="0.55" stop-color="#787d84" />
-              <stop offset="1" stop-color="#484b51" />
+              <stop offset="0" class="s-metal-hi" />
+              <stop offset="0.55" class="s-metal-mid" />
+              <stop offset="1" class="s-metal-lo" />
             </radialGradient>
             <radialGradient id="gCw" cx="38%" cy="30%" r="80%">
-              <stop offset="0" stop-color="#878c93" />
-              <stop offset="0.6" stop-color="#565a61" />
-              <stop offset="1" stop-color="#35383d" />
+              <stop offset="0" class="s-metal-hi" />
+              <stop offset="0.6" class="s-metal-mid" />
+              <stop offset="1" class="s-metal-lo" />
+            </radialGradient>
+            <linearGradient id="gWell" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0" class="s-well-hi" />
+              <stop offset="1" class="s-well-lo" />
+            </linearGradient>
+            <radialGradient id="gBolt" cx="35%" cy="30%" r="75%">
+              <stop offset="0" class="s-metal-hi" />
+              <stop offset="1" class="s-metal-lo" />
             </radialGradient>
             <radialGradient id="gLabShade" cx="42%" cy="34%" r="72%">
               <stop offset="0" stop-color="rgba(255,255,255,.10)" />
@@ -65,46 +75,59 @@
               <feGaussianBlur stdDeviation="1.4" />
             </filter>
             <mask id="mV">
-              <rect x="0" y="0" width="232" height="220" fill="#000" />
-              <circle cx="96" cy="112" r="72" fill="#fff" />
+              <rect x="0" y="0" width="232" height="232" fill="#000" />
+              <circle cx="96" cy="112" r="76" fill="#fff" />
             </mask>
             <clipPath id="cLab">
               <circle cx="96" cy="112" r="26" />
             </clipPath>
           </defs>
 
-          <!-- platter well + platter -->
-          <circle cx="96" cy="117" r="86" fill="#000" opacity=".5" filter="url(#fB5)" />
-          <circle cx="96" cy="112" r="88" fill="#0c0d0f" />
-          <circle cx="96" cy="112" r="88" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1" />
-          <circle cx="96" cy="112" r="84" fill="url(#gPlatter)" stroke="#2b2e33" stroke-width="1" />
+          <!-- Recessed well. The reference design's strongest idea: the platter
+               sits in a machined pocket rather than on a flat face. -->
+          <rect class="well-edge" x="6" y="12" width="220" height="208" rx="12" />
+          <rect class="well-face" x="8" y="14" width="216" height="204" rx="10.5" fill="url(#gWell)" />
+          <rect class="well-rim" x="8" y="14" width="216" height="204" rx="10.5" fill="none" stroke-width="1" />
+
+          <!-- bolt heads at the corners of the pocket -->
+          <circle class="bolt-shadow" cx="22" cy="30" r="6.4" />
+          <circle class="bolt-face" cx="22" cy="29.4" r="5.6" fill="url(#gBolt)" stroke-width=".7" />
+          <path class="bolt-slot" d="M18.6 29.4 H25.4" stroke-width="1.1" />
+          <circle class="bolt-shadow" cx="22" cy="202" r="6.4" />
+          <circle class="bolt-face" cx="22" cy="201.4" r="5.6" fill="url(#gBolt)" stroke-width=".7" />
+          <path class="bolt-slot" d="M18.6 201.4 H25.4" stroke-width="1.1" />
+
+          <!-- platter -->
+          <circle cx="96" cy="117" r="90" fill="#000" opacity=".45" filter="url(#fB5)" />
+          <circle class="platter-well" cx="96" cy="112" r="92" />
+          <circle class="platter-face" cx="96" cy="112" r="88" fill="url(#gPlatter)" stroke-width="1" />
           <!-- strobe dots: concentric grooves are rotationally symmetric, so
                this is what actually reads as rotation -->
-          <circle cx="96" cy="112" r="80" fill="none" stroke="#0e1013" opacity=".85"
-                  stroke-width="2" stroke-dasharray="1.1 3.6" />
-          <circle cx="96" cy="112" r="76" fill="var(--mat)" />
-          <g fill="none" stroke="rgba(255,255,255,.03)" stroke-width=".7">
-            <circle cx="96" cy="112" r="32" />
-            <circle cx="96" cy="112" r="46" />
-            <circle cx="96" cy="112" r="60" />
-            <circle cx="96" cy="112" r="70" />
+          <circle class="strobe" cx="96" cy="112" r="84" fill="none" opacity=".85"
+                  stroke-width="2" stroke-dasharray="1.15 3.8" />
+          <circle class="mat" cx="96" cy="112" r="80" />
+          <g class="mat-ring" fill="none" stroke-width=".7">
+            <circle cx="96" cy="112" r="34" />
+            <circle cx="96" cy="112" r="49" />
+            <circle cx="96" cy="112" r="63" />
+            <circle cx="96" cy="112" r="74" />
           </g>
-          <circle cx="96" cy="112" r="3.2" fill="#08090a" />
+          <circle class="spindle-hole" cx="96" cy="112" r="3.2" />
 
           <!-- ─── the record ─── -->
           <g id="vinylG">
             <g id="spinG">
-              <circle cx="96" cy="112" r="72" fill="var(--vinyl)" />
-              <circle cx="96" cy="112" r="72" fill="none" stroke="#000" stroke-width="1" />
+              <circle class="vinyl" cx="96" cy="112" r="76" />
+              <circle cx="96" cy="112" r="76" fill="none" stroke="#000" stroke-width="1" />
               <g id="grooves" fill="none"></g>
-              <path d="M 96 40.4 L 96 45.4" stroke="#565b64" stroke-width=".8" opacity=".8" />
+              <path class="seam" d="M 96 36.4 L 96 41.4" stroke-width=".8" opacity=".8" />
               <g id="labelG"></g>
             </g>
             <!-- Fixed-light sheen: the grooves turn beneath it, which is what
                  real vinyl does. Outside #spinG on purpose. -->
             <g mask="url(#mV)" pointer-events="none">
-              <path d="M96 112 L14 4 L138 -18 Z" fill="#d5dfee" opacity=".13" filter="url(#fB7)" />
-              <path d="M96 112 L186 218 L96 236 Z" fill="#b6c3d8" opacity=".075" filter="url(#fB7)" />
+              <path class="sheen-a" d="M96 112 L10 0 L140 -22 Z" opacity=".13" filter="url(#fB7)" />
+              <path class="sheen-b" d="M96 112 L190 224 L96 244 Z" opacity=".075" filter="url(#fB7)" />
             </g>
             <circle cx="96" cy="112" r="2.2" fill="url(#gCap)" stroke="rgba(0,0,0,.6)" stroke-width=".4" />
           </g>
@@ -112,84 +135,62 @@
           <!-- ─── tonearm ─── -->
           <g id="armRest">
             <ellipse cx="198" cy="122.5" rx="6.5" ry="2" fill="#000" opacity=".4" filter="url(#fB2)" />
-            <rect x="193.2" y="117.4" width="9.6" height="5.2" rx="2.4"
-                  fill="#17181b" stroke="rgba(255,255,255,.10)" stroke-width=".6" />
+            <rect class="rest" x="193.2" y="117.4" width="9.6" height="5.2" rx="2.4" stroke-width=".6" />
           </g>
 
           <!-- Cue lever. On a real deck this is the pause: it raises the arm
-               hydraulically while the platter keeps turning. Down means the
-               stylus is in the groove. Sits beside the arm rest, where a
-               Technics puts it. Clicking it toggles playback. -->
+               hydraulically while the platter keeps turning. -->
           <g id="cue" cursor="pointer">
-            <!-- machined slot -->
-            <rect x="212.5" y="96" width="10" height="27" rx="5" fill="#0d0f12" />
-            <rect x="212.5" y="96" width="10" height="27" rx="5" fill="none"
-                  stroke="rgba(255,255,255,.08)" stroke-width=".7" />
+            <rect class="slot" x="212.5" y="96" width="10" height="27" rx="5" />
+            <rect class="well-rim" x="212.5" y="96" width="10" height="27" rx="5" fill="none" stroke-width=".7" />
             <g id="cueKnob">
-              <rect x="208.4" y="110.5" width="18.2" height="9.6" rx="3" fill="url(#gCw)"
-                    stroke="#191b1f" stroke-width=".8" />
-              <rect x="208.4" y="110.5" width="18.2" height="3.2" rx="1.6"
-                    fill="rgba(255,255,255,.16)" />
-              <path d="M210.8 115.4 H224.2 M210.8 117.4 H224.2"
-                    stroke="rgba(0,0,0,.34)" stroke-width=".6" />
+              <rect class="metal-edge" x="208.4" y="110.5" width="18.2" height="9.6" rx="3"
+                    fill="url(#gCw)" stroke-width=".8" />
+              <rect x="208.4" y="110.5" width="18.2" height="3.2" rx="1.6" fill="rgba(255,255,255,.16)" />
+              <path d="M210.8 115.4 H224.2 M210.8 117.4 H224.2" stroke="rgba(0,0,0,.34)" stroke-width=".6" />
             </g>
-            <!-- generous hit area; the lever itself is small -->
             <rect x="203" y="92" width="28" height="36" fill="transparent" />
           </g>
+
           <g id="armBase">
-            <circle cx="198" cy="42" r="13.5" fill="#1f2125" stroke="#2c2e33" stroke-width="1" />
+            <circle class="arm-base" cx="198" cy="42" r="13.5" stroke-width="1" />
           </g>
+
           <g id="armG" transform="rotate(0 198 42)">
             <!-- Counterweight shaft, drawn first so the capsule and the bearing
-                 overlap its ends. Butted against them it read as a flat plate
-                 wedged between two parts; tucked under, it reads as one shaft
-                 passing through. Uses the tube gradient so it is the same
-                 metal as the arm. -->
+                 overlap its ends and it reads as one shaft passing through. -->
             <line x1="198" y1="26" x2="198" y2="43" stroke="rgba(0,0,0,.45)" stroke-width="4.8" />
             <line x1="198" y1="26" x2="198" y2="43" stroke="url(#gTube)" stroke-width="3.2" />
 
-            <!-- counterweight: a machined capsule, which is what a real arm
-                 carries and what the reference shows, not a knurled sphere.
-                 Its shading comes from the radial gradient; an extra highlight
-                 rect on top just created a visible seam across the body. -->
-            <rect x="192.4" y="14.5" width="11.2" height="17" rx="5.6" fill="url(#gCw)"
-                  stroke="#1d1f23" stroke-width=".8" />
+            <rect class="metal-edge" x="192.4" y="14.5" width="11.2" height="17" rx="5.6"
+                  fill="url(#gCw)" stroke-width=".8" />
             <path d="M193.8 21.5 H202.2 M193.6 24 H202.4 M193.8 26.5 H202.2"
                   stroke="rgba(0,0,0,.26)" stroke-width=".55" />
 
-            <circle cx="198" cy="42" r="6" fill="url(#gCap)" stroke="#212327" stroke-width=".8" />
-            <circle cx="198" cy="42" r="1" fill="#32353a" />
+            <circle class="metal-edge" cx="198" cy="42" r="6" fill="url(#gCap)" stroke-width=".8" />
+            <circle class="bearing-pin" cx="198" cy="42" r="1" />
 
-            <!-- Tube, 5.5 wide. A real tonearm is about 3.5% of the record
-                 diameter and the reference illustration exaggerates to roughly
-                 5.5%; this sits between the two. -->
             <line x1="198" y1="47" x2="198" y2="124" stroke="rgba(0,0,0,.4)" stroke-width="7.2" stroke-linecap="round" />
             <line x1="198" y1="47" x2="198" y2="124" stroke="url(#gTube)" stroke-width="5.5" stroke-linecap="round" />
             <line x1="196.5" y1="49" x2="196.5" y2="122" stroke="rgba(255,255,255,.55)" stroke-width=".8"
                   stroke-linecap="round" opacity=".5" />
 
-            <!-- Headshell, kicked out at the offset angle. A pivoted arm angles
-                 the cartridge toward the spindle so the stylus sits nearer to
-                 tangent in the groove, and it is the detail that most makes
-                 this read as a tonearm rather than a stick. The 21 degrees is
-                 accounted for in main.js, which corrects ARM_LEN and the drawn
-                 bearing so the stylus still tracks the right groove radius. -->
+            <!-- Headshell at the offset angle. main.js corrects ARM_LEN and the
+                 drawn bearing for this rotation so the cartridge still tracks
+                 the right groove radius. -->
             <g transform="rotate(21 198 124)">
-              <path d="M193.8 123 h8.4 l1 12.6 a3.4 3.4 0 0 1 -3.4 3.7 h-3.6 a3.4 3.4 0 0 1 -3.4 -3.7 Z"
-                    fill="#3a3e45" stroke="#141517" stroke-width=".8" />
-              <path d="M193.8 123 h8.4 l.2 2.8 h-8.8 Z" fill="#616770" />
-              <!-- Cartridge, a separate darker body beneath the headshell.
-                   The stylus itself is deliberately not drawn: it points down
-                   into the record, so from directly above it sits underneath
+              <path class="shell" d="M193.8 123 h8.4 l1 12.6 a3.4 3.4 0 0 1 -3.4 3.7 h-3.6 a3.4 3.4 0 0 1 -3.4 -3.7 Z"
+                    stroke-width=".8" />
+              <path class="shell-top" d="M193.8 123 h8.4 l.2 2.8 h-8.8 Z" />
+              <!-- Cartridge. The stylus is deliberately not drawn: it points
+                   down into the record, so from directly above it sits beneath
                    the cartridge and nothing of it would be visible. -->
-              <rect x="195.3" y="130.6" width="5.4" height="6.8" rx="1.1" fill="#1a1c20" stroke="#0b0c0e" stroke-width=".5" />
-              <rect x="196" y="131.5" width="4" height="1.3" rx=".65" fill="#6d737b" opacity=".7" />
-              <!-- finger lift, on the headshell's flank -->
-              <path d="M202 127 h5.4 a1.5 1.5 0 0 1 0 3 h-5.4 z" fill="#8f959e" />
-              <path d="M202 127 h5.4 a1.5 1.5 0 0 1 .6 .5 h-6 z" fill="#b6bcc4" opacity=".8" />
-              <!-- Contact shadow, cast on the record just beyond the cartridge.
-                   This is the only thing that shows the stylus is down, and it
-                   is how a top-down view expresses height at all. -->
+              <rect class="cart" x="195.3" y="130.6" width="5.4" height="6.8" rx="1.1" stroke-width=".5" />
+              <rect class="metal-mid-fill" x="196" y="131.5" width="4" height="1.3" rx=".65" opacity=".7" />
+              <path class="metal-mid-fill" d="M202 127 h5.4 a1.5 1.5 0 0 1 0 3 h-5.4 z" />
+              <path class="metal-hi-fill" d="M202 127 h5.4 a1.5 1.5 0 0 1 .6 .5 h-6 z" opacity=".8" />
+              <!-- The only thing showing the stylus is down, and the only way a
+                   top-down view expresses height at all. -->
               <ellipse id="needleSh" cx="197.9" cy="138.8" rx="3" ry=".9" fill="#000" opacity="0" filter="url(#fB2)" />
             </g>
           </g>
@@ -198,20 +199,20 @@
 
       <!-- ─── panel ─── -->
       <div class="panel">
-        <!-- Lamp, then the brand plate, then the actual source. A real deck
-             carries the maker's name on the plinth in this position; PHONO,
-             which used to sit here, is an amplifier input label and belongs
-             on the thing you plug a turntable into, not on the turntable. -->
         <div class="eyebrow">
           <span class="lamp" id="uiLamp" aria-hidden="true"></span>
           <span class="brand">Vinyl</span>
           <span class="flex"></span>
-          <span class="speed" id="uiSource"></span>
+          <span class="source" id="uiSource"></span>
         </div>
 
-        <div class="track" aria-live="polite">
-          <div class="title" id="uiTitle">No session</div>
-          <div class="artist" id="uiArtist">Nothing is playing</div>
+        <!-- The display: a bezelled inset panel, not text on the faceplate. -->
+        <div class="display">
+          <div class="display-inner">
+            <div class="title" id="uiTitle">No session</div>
+            <div class="artist" id="uiArtist">Nothing is playing</div>
+            <div class="album" id="uiAlbum"></div>
+          </div>
         </div>
 
         <div class="progress">
@@ -221,15 +222,17 @@
           </div>
         </div>
 
-        <!-- Controls take the form of the real thing they correspond to.
-             Play/pause is the round START/STOP button a Technics puts at the
-             front left. Skip has no analogue on any turntable, so it borrows
-             the form of the 33/45 speed selector, which does exist, rather
-             than inventing hardware that never existed.
-
-             Only ever shows what PlaybackInfo.Controls says the source
-             supports: a dead skip button on a livestream is a bug. -->
+        <!-- Every control here is real. Each is disabled unless the source
+             reports it supported, so nothing offers what it cannot do. -->
         <div class="controls">
+          <button id="btnShuffle" class="ghost" type="button" aria-label="Shuffle" aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M16 3h5v5" /><path d="M4 20 21 3" /><path d="M21 16v5h-5" />
+              <path d="m15 15 6 6" /><path d="M4 4l5 5" />
+            </svg>
+          </button>
+
           <button id="btnPrev" class="selector" type="button" aria-label="Previous track">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
               <path d="M6.2 5.2h2.3v13.6H6.2zM18.9 6.1v11.8c0 .95-1.05 1.52-1.85.98l-8.6-5.9a1.18 1.18 0 0 1 0-1.96l8.6-5.9c.8-.54 1.85.03 1.85.98z" />
@@ -240,8 +243,7 @@
             <span class="startstop-face">
               <svg id="icPlay" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
                 <!-- The glyph's own bounding box is centred at x 14.81 against
-                     a viewBox centre of 12, which is why it read as shifted
-                     right. Measured and corrected rather than eyeballed. -->
+                     a viewBox centre of 12, so it needs shifting to sit true. -->
                 <path
                   transform="translate(-2.81 0)"
                   d="M8.6 5.5v13c0 .96 1.06 1.54 1.86 1.02l10-6.5c.74-.48.74-1.56 0-2.04l-10-6.5C9.66 3.96 8.6 4.54 8.6 5.5z"
@@ -257,6 +259,15 @@
             <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
               <path d="M15.5 5.2h2.3v13.6h-2.3zM5.1 6.1v11.8c0 .95 1.05 1.52 1.85.98l8.6-5.9c.78-.53.78-1.43 0-1.96l-8.6-5.9C6.15 4.58 5.1 5.15 5.1 6.1z" />
             </svg>
+          </button>
+
+          <button id="btnRepeat" class="ghost" type="button" aria-label="Repeat" aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+              <path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" />
+            </svg>
+            <span class="badge" id="uiRepeatOne" aria-hidden="true">1</span>
           </button>
         </div>
       </div>

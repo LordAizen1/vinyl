@@ -17,6 +17,17 @@ pub enum Status {
     NoSession,
 }
 
+/// Mirrors `MediaPlaybackAutoRepeatMode`. Sources that do not support repeat
+/// simply report `Off`, which is also what we fall back to when the value is
+/// absent, since SMTC returns these as nullable references.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum RepeatMode {
+    Off,
+    Track,
+    List,
+}
+
 /// A snapshot of what is playing anywhere on the system.
 ///
 /// `position_ms` is deliberately **not** live. It is the position as of
@@ -47,6 +58,11 @@ pub struct PlaybackState {
     pub can_play_pause: bool,
     pub can_next: bool,
     pub can_previous: bool,
+    pub can_shuffle: bool,
+    pub can_repeat: bool,
+
+    pub shuffle: bool,
+    pub repeat: RepeatMode,
 }
 
 impl PlaybackState {
@@ -66,6 +82,10 @@ impl PlaybackState {
             can_play_pause: false,
             can_next: false,
             can_previous: false,
+            can_shuffle: false,
+            can_repeat: false,
+            shuffle: false,
+            repeat: RepeatMode::Off,
         }
     }
 
@@ -86,6 +106,10 @@ impl PlaybackState {
             || self.can_play_pause != other.can_play_pause
             || self.can_next != other.can_next
             || self.can_previous != other.can_previous
+            || self.can_shuffle != other.can_shuffle
+            || self.can_repeat != other.can_repeat
+            || self.shuffle != other.shuffle
+            || self.repeat != other.repeat
     }
 }
 

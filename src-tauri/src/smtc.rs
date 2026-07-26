@@ -28,11 +28,12 @@ use windows::Media::Control::{
     GlobalSystemMediaTransportControlsSessionMediaProperties as MediaProperties,
     GlobalSystemMediaTransportControlsSessionPlaybackStatus as SmtcStatus,
 };
+use windows::Media::MediaPlaybackAutoRepeatMode as SmtcRepeat;
 use windows::Storage::Streams::DataReader;
 use windows::Win32::System::WinRT::{RoInitialize, RO_INIT_MULTITHREADED};
 
 use crate::art::ArtCache;
-use crate::state::{PlaybackState, SharedState, Status};
+use crate::state::{PlaybackState, RepeatMode, SharedState, Status};
 
 /// Safety net only. Events drive the updates; this bounds how long a missed
 /// event can leave the UI stale. Reading metadata is cheap because Phase 1 does
@@ -52,6 +53,11 @@ pub enum Command {
     Toggle,
     Next,
     Previous,
+    /// Flip shuffle. The worker reads the session's current value rather than
+    /// trusting one sent from the UI, which may be a frame out of date.
+    ToggleShuffle,
+    /// Advance repeat: off, then whole list, then single track, then off.
+    CycleRepeat,
 }
 
 /// Why the worker woke up.
@@ -158,6 +164,12 @@ fn execute(session: &GlobalSystemMediaTransportControlsSession, command: Command
         Command::Toggle => session.TryTogglePlayPauseAsync().and_then(block_on),
         Command::Next => session.TrySkipNextAsync().and_then(block_on),
         Command::Previous => session.TrySkipPreviousAsync().and_then(block_on),
+        Command::ToggleShuffle => session
+            .TryChangeShuffleActiveAsync(!read_shuffle(session))
+            .and_then(block_on),
+        Command::CycleRepeat => session
+            .TryChangeAutoRepeatModeAsync(next_repeat(read_repeat(session)))
+            .and_then(block_on),
     };
 
     match outcome {
@@ -246,6 +258,36 @@ fn read(
     *selected = Some(session.clone());
 
     describe(&session, anchors, artwork, art)
+}
+
+/// Reads shuffle from a session.
+///
+/// SMTC returns these as nullable references, and plenty of sources simply do
+/// not set them, so absent means off rather than being an error.
+fn read_shuffle(session: &GlobalSystemMediaTransportControlsSession) -> bool {
+    session
+        .GetPlaybackInfo()
+        .and_then(|info| info.IsShuffleActive())
+        .and_then(|value| value.Value())
+        .unwrap_or(false)
+}
+
+fn read_repeat(session: &GlobalSystemMediaTransportControlsSession) -> SmtcRepeat {
+    session
+        .GetPlaybackInfo()
+        .and_then(|info| info.AutoRepeatMode())
+        .and_then(|value| value.Value())
+        .unwrap_or(SmtcRepeat::None)
+}
+
+/// Off, then the whole list, then the single track, then off again. Matches
+/// the order every media player uses, so the button behaves as expected.
+fn next_repeat(current: SmtcRepeat) -> SmtcRepeat {
+    match current {
+        SmtcRepeat::None => SmtcRepeat::List,
+        SmtcRepeat::List => SmtcRepeat::Track,
+        _ => SmtcRepeat::None,
+    }
 }
 
 /// Ranks a session for selection. Higher wins; zero is never selected.
@@ -338,6 +380,20 @@ fn describe(
         .as_ref()
         .and_then(|c| c.IsPreviousEnabled().ok())
         .unwrap_or(false);
+    let can_shuffle = controls
+        .as_ref()
+        .and_then(|c| c.IsShuffleEnabled().ok())
+        .unwrap_or(false);
+    let can_repeat = controls
+        .as_ref()
+        .and_then(|c| c.IsRepeatEnabled().ok())
+        .unwrap_or(false);
+
+    let repeat = match read_repeat(session) {
+        SmtcRepeat::Track => RepeatMode::Track,
+        SmtcRepeat::List => RepeatMode::List,
+        _ => RepeatMode::Off,
+    };
 
     Ok(PlaybackState {
         title,
@@ -353,6 +409,10 @@ fn describe(
         can_play_pause,
         can_next,
         can_previous,
+        can_shuffle,
+        can_repeat,
+        shuffle: read_shuffle(session),
+        repeat,
     })
 }
 
