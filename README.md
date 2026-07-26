@@ -2,7 +2,7 @@
 
 A little turntable that sits on your desktop and plays along with whatever you're listening to.
 
-Put something on — Spotify, Apple Music, a YouTube tab, honestly anything — and the record starts spinning. The tonearm drifts inwards as the song goes on, the way a real one does. The album art becomes the label in the middle. If the song has lyrics, they scroll past on the little screen.
+Put something on (Spotify, Apple Music, a YouTube tab, honestly anything) and the record starts spinning. The tonearm drifts inwards as the song goes on, the way a real one does. The album art becomes the label in the middle. If the song has lyrics, they scroll past on the little screen.
 
 That's the whole thing, really.
 
@@ -39,7 +39,7 @@ In the menu you'll find:
 
 ## The lyrics thing
 
-Windows tells the app what's playing, but it has no idea about lyrics, nobody does. So when a song starts, it asks [LRCLIB](https://lrclib.net) — a free, community-run lyrics database — whether it knows that one.
+Windows tells the app what's playing, but it has no idea about lyrics, nobody does. So when a song starts, it asks [LRCLIB](https://lrclib.net), a free community-run lyrics database, whether it knows that one.
 
 Which means: **the song title and artist get sent to lrclib.net.** Nothing else leaves your machine, and if you untick **Show lyrics** the app makes no internet requests at all, ever.
 
@@ -70,7 +70,7 @@ It runs the real interface against fake data. Add `?state=none`, `?size=compact`
 
 There's a log at `%LOCALAPPDATA%\vinyl\vinyl.log`, wiped fresh each time it starts. It usually says something useful. Feel free to open an issue and paste it in.
 
-Your settings live in `%APPDATA%\dev.lordaizen.vinyl\config.json` — window position, size, theme, whether lyrics are on. Delete it and everything goes back to defaults.
+Your settings live in `%APPDATA%\dev.lordaizen.vinyl\config.json`: window position, size, theme, whether lyrics are on. Delete it and everything goes back to defaults.
 
 ## Bits and pieces
 
