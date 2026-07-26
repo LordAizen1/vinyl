@@ -169,9 +169,7 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, id: &str) {
         }
     }
 
-    if let Ok(dir) = app.path().app_config_dir() {
-        prefs.save(&dir.join(CONFIG_FILE));
-    }
+    persist(app, prefs);
 
     if let Some(menu) = app.try_state::<AppMenu<R>>() {
         menu.retick(prefs);
@@ -179,6 +177,15 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, id: &str) {
 
     if let Err(error) = app.emit(CHANGED_EVENT, prefs) {
         log::warn!("menu: could not tell the frontend ({error})");
+    }
+}
+
+/// Writes the settings out. Shared with the window-position saver, which has to
+/// write the same file from its own thread.
+pub fn persist<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) {
+    match app.path().app_config_dir() {
+        Ok(dir) => prefs.save(&dir.join(CONFIG_FILE)),
+        Err(error) => log::warn!("prefs: no config directory ({error}), not saving"),
     }
 }
 

@@ -95,6 +95,17 @@
   --big-hi: #f7f8f9;
   --big-lo: #dfe1e3;
 
+  /* The gap between the chassis edge and the deck, and between the deck and the
+     right column. Fixed pixels, deliberately, while everything inside the deck
+     stays in cqw.
+
+     cqw is a share of width, so an identical cqw figure is more pixels in the
+     wider window: the two sizes ended up on 27px and 15px margins and read as
+     two different designs. The window is `resizable: false` with two fixed
+     presets, so there is nothing for this to scale against anyway, and pixels
+     make the two match by construction rather than by tuning. */
+  --deck-gap: 16px;
+
   --font-label: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   --font-display: "Pirata One", "UnifrakturMaguntia", Georgia, serif;
@@ -177,12 +188,29 @@ body {
   background: transparent;
 }
 
+/* Transparent room for the chassis to cast its shadow into.
+ *
+ * The window is square and the chassis is rounded, so the shadow spills into
+ * the corner triangles. Filling the window edge-to-edge meant that spill was
+ * clipped by the window bounds, and against the desktop the clip read as four
+ * sharp corners hanging off the rounded ones. The shadow now fades to nothing
+ * before it reaches the edge.
+ *
+ * Fixed pixels, not cqw: it has to cover the shadow's blur, which is the same
+ * at both window sizes. Both presets in prefs.rs include it. */
 body {
+  padding: 16px;
   font-family: var(--font-label);
   color: var(--ink);
 }
 
-/* ─────────────────────────── chassis ─────────────────────────── */
+/* ─────────────────────────── chassis ───────────────────────────
+ *
+ * The whole chassis is the drag handle: with `decorations: false` there is no
+ * title bar to grab and no taskbar entry to recover from, so this needs to be a
+ * large, obvious target rather than a strip to hunt for. The dragging itself is
+ * in main.js, because `-webkit-app-region` is an Electron feature that WebView2
+ * does not implement. */
 .widget {
   container-type: inline-size;
   width: 100%;
@@ -190,9 +218,11 @@ body {
   padding: 0.62cqw;
   border-radius: 4.15cqw;
   background: linear-gradient(180deg, var(--steel-hi) 0%, var(--steel) 30%, var(--steel-lo) 100%);
+  /* Sized to fade out inside the 16px gutter above. Offset plus blur must stay
+     under it, or the clipped edge comes back. */
   box-shadow:
-    0 1.7cqw 3.6cqw rgba(18, 20, 23, 0.34),
-    0 0.4cqw 1cqw rgba(18, 20, 23, 0.22);
+    0 4px 11px rgba(18, 20, 23, 0.38),
+    0 1px 3px rgba(18, 20, 23, 0.26);
   user-select: none;
   -webkit-font-smoothing: antialiased;
 }
@@ -248,14 +278,18 @@ body {
 /* ─────────────────────────── the plate ─────────────────────────── */
 /* Centred rather than pinned to a fixed top: the plate's height is in cqw and
    so does not track the chassis's height, which left the bottom margin wider
-   than the top at every aspect but one. */
+   than the top at every aspect but one.
+
+   The margin is --deck-gap, shared with compact and with the right column, so
+   the three cannot drift apart. See the token for why it is in pixels. */
 .plate {
   position: absolute;
-  left: 6.2cqw;
+  left: var(--deck-gap);
   top: 50%;
   transform: translateY(-50%);
-  width: 46.5cqw;
-  height: 45.6cqw;
+  width: 49.2cqw;
+  /* Width over the deck's 715x700 viewBox ratio, so it never letterboxes. */
+  height: 48.17cqw;
   border-radius: 2.6cqw;
   background: linear-gradient(180deg, var(--plate-hi) 0%, var(--plate-lo) 100%);
   /* Themed, not fixed. A dark cast shadow reads on the silver chassis but
@@ -367,11 +401,12 @@ body {
    same way .plate is, and must keep the same height as it. */
 .side {
   position: absolute;
-  left: 56.3cqw;
-  right: 7.2cqw;
+  /* Straight after the deck, one gap along. */
+  left: calc(var(--deck-gap) * 2 + 49.2cqw);
+  right: var(--deck-gap);
   top: 50%;
   transform: translateY(-50%);
-  height: 45.6cqw;
+  height: 48.46cqw;
   display: flex;
   flex-direction: column;
 }
@@ -704,6 +739,13 @@ button {
   outline-offset: 0.3cqw;
 }
 
+/* The chassis is a drag handle, so the controls need to say they are not: see
+   the mousedown handler in main.js, which tests for this cursor. */
+button:not(:disabled),
+.widget.compact #deckHit:not(:disabled) {
+  cursor: pointer;
+}
+
 /* ─────────────────────────── compact ───────────────────────────
  *
  * The deck on its own: no screen, no readout, no transport. A display, not a
@@ -725,7 +767,7 @@ button {
 }
 
 .widget.compact .plate {
-  inset: 6.2cqw;
+  inset: var(--deck-gap);
   width: auto;
   height: auto;
   /* The inset already centres it; leaving the full size's translate on would

@@ -7,6 +7,7 @@ import {
 
 const { invoke, convertFileSrc } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
+const { getCurrentWindow } = window.__TAURI__.window;
 
 const $ = (id) => document.getElementById(id);
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
@@ -699,6 +700,23 @@ SYSTEM_DARK.addEventListener("change", () => {
 addEventListener("contextmenu", (event) => {
   event.preventDefault();
   invoke("show_menu").catch((error) => console.error("show_menu failed", error));
+});
+
+/* The whole chassis drags the window.
+ *
+ * Done here rather than with `-webkit-app-region: drag`, which is an Electron
+ * feature WebView2 does not implement, and rather than Tauri's
+ * `data-tauri-drag-region` attribute, which only matches the element directly
+ * under the cursor and would need marking up on every layer of the deck.
+ *
+ * Left button only, and never on a control: startDragging takes over the press,
+ * so a button would never see its click. */
+const appWindow = getCurrentWindow();
+
+addEventListener("mousedown", (event) => {
+  if (event.button !== 0) return;
+  if (event.target.closest("button, #deckHit")) return;
+  appWindow.startDragging().catch((error) => console.error("drag failed", error));
 });
 
 function adopt(next) {

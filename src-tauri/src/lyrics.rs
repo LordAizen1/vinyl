@@ -336,7 +336,7 @@ pub fn spawn(app: AppHandle, current: SharedLyrics) -> Sender<Option<Query>> {
     let (tx, rx) = mpsc::channel::<Option<Query>>();
 
     thread::spawn(move || {
-        log::info!("lyrics: worker started");
+        log::debug!("lyrics: worker started");
         // A panic here would kill only this thread. Sends would keep succeeding
         // into a channel nobody reads, and lyrics would simply never appear with
         // nothing in the log to say why. Say so instead.
@@ -364,7 +364,7 @@ pub fn spawn(app: AppHandle, current: SharedLyrics) -> Sender<Option<Query>> {
                 if key == showing {
                     continue;
                 }
-                log::info!("lyrics: looking up {key:?}");
+                log::debug!("lyrics: looking up {key:?}");
 
                 if let Some((_, hit)) = cache.iter().find(|(cached, _)| *cached == key) {
                     showing = key;
@@ -405,7 +405,7 @@ pub fn spawn(app: AppHandle, current: SharedLyrics) -> Sender<Option<Query>> {
         }));
 
         match outcome {
-            Ok(()) => log::info!("lyrics: worker stopped, the channel closed"),
+            Ok(()) => log::debug!("lyrics: worker stopped, the channel closed"),
             Err(_) => log::error!(
                 "lyrics: worker PANICKED and has stopped; no lyrics will appear \
                  until restart"
@@ -417,7 +417,7 @@ pub fn spawn(app: AppHandle, current: SharedLyrics) -> Sender<Option<Query>> {
 }
 
 fn emit(app: &AppHandle, current: &SharedLyrics, lyrics: Lyrics) {
-    log::info!(
+    log::debug!(
         "lyrics: emitting trackKey={:?} with {} lines",
         lyrics.track_key,
         lyrics.lines.len()

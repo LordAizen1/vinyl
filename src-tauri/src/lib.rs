@@ -4,6 +4,7 @@ mod menu;
 mod prefs;
 mod smtc;
 mod state;
+mod window;
 
 use std::sync::Arc;
 
@@ -98,7 +99,7 @@ pub fn run() {
                     .unwrap_or_default();
             };
 
-            log::info!(
+            log::debug!(
                 "art: request for {id:?} -> {}",
                 if cache.get(&id).is_some() {
                     "hit"
@@ -149,11 +150,32 @@ pub fn run() {
             app.manage(current_lyrics.clone());
             app.manage(lyrics::spawn(handle.clone(), current_lyrics));
 
+            // Before anything is shown, so it does not appear centred and then
+            // jump to where it was left.
+            window::restore(&handle, prefs.placement, prefs.size.dimensions());
+            window::keep_on_desktop(handle.clone());
+            app.manage(window::spawn_saver(handle.clone()));
+
             let sender = smtc::spawn(handle, worker_state, worker_cache);
             app.manage(sender);
             Ok(())
         })
         .on_menu_event(|app, event| menu::handle(app, event.id().as_ref()))
+        // Dragging emits a stream of Moved events, so the write is debounced
+        // rather than run per pixel: see menu::remember_placement.
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Moved(_)) {
+                let app = window.app_handle();
+                // Clamp first, then save, so what lands in config.json is the
+                // corrected position rather than the one that went off-screen.
+                // The clamp re-enters this handler with its own Moved event;
+                // the second pass is already in bounds and does nothing.
+                window::clamp_into_work_area(app);
+                if let Some(saver) = app.try_state::<window::Saver>() {
+                    let _ = saver.0.send(());
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             get_state, transport, get_prefs, get_lyrics, show_menu
         ])

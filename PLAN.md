@@ -166,17 +166,32 @@ Requirements:
 
 ## Phase 4 — Make it an actual widget
 
-Tauri window config: `transparent: true`, `decorations: false`, `alwaysOnTop: true`,
-`skipTaskbar: true`, `resizable: false`, `shadow: false`. Grant the matching
-capabilities in the Tauri v2 capabilities file.
+~~Tauri window config~~ **Done**: `transparent`, `decorations: false`,
+`alwaysOnTop`, `skipTaskbar`, `resizable: false`, `shadow: false`.
 
-- Drag to move via a designated drag region on the plinth.
-- Persist window position to the `config.json` the menu already writes, debounced.
-  Restore on launch, clamped to a currently-connected monitor so it can't restore
-  off-screen. Tauri resolves the file to
-  `%APPDATA%\dev.lordaizen.vinyl\config.json`, not the `%APPDATA%\vinyl` guessed
-  here originally.
+One capability *was* needed, contrary to a first guess that `core:default`
+covered it: `core:window:allow-start-dragging`. `core:window:default` grants 28
+permissions and every one of them is a read — `allow-is-*`, `allow-get-*`,
+`allow-scale-factor`. Anything that moves or changes a window has to be named
+explicitly. Without it `startDragging` is denied and the widget simply will not
+move, with the rejection only visible in the webview console.
+
+- ~~Drag to move via a designated drag region on the plinth.~~ **Done**, and the
+  whole chassis is the handle rather than a strip: with no title bar and no
+  taskbar entry, a small target would be a trap. Implemented as a `mousedown`
+  handler calling `startDragging`, not `-webkit-app-region` (an Electron feature
+  WebView2 does not implement) and not `data-tauri-drag-region` (which matches
+  only the element directly under the cursor, so every layer of the deck would
+  need marking up). Controls are excluded: `startDragging` takes the press, so a
+  button would otherwise never see its click.
+- ~~Persist window position~~ **Done**, into the same `config.json`, debounced
+  700ms because a drag emits a `Moved` event per pixel. One saver thread, not one
+  per event. Restored before the window is shown, clamped to a connected monitor.
+  Tauri resolves the file to `%APPDATA%\dev.lordaizen.vinyl\config.json`, not the
+  `%APPDATA%\vinyl` guessed here originally.
 - System tray icon: show/hide, always-on-top toggle, launch at login, quit.
+  **Still open**, though less urgent than it looks: the right-click menu already
+  carries Quit, so the widget is not unclosable without it.
 - ~~**Two sizes, chosen from a right-click menu on the widget.**~~ **Built early**,
   and the same menu carries a Light / Dark / Match Windows choice. Full is
   470x275 (deck, screen, progress readout, transport), compact is 280x275 (the
@@ -185,15 +200,29 @@ capabilities in the Tauri v2 capabilities file.
   preset's height is free — see the notes on `Size::dimensions`. **This phase now
   only has to add window position to the existing `config.json`, not build the
   store.**
-- **Hide when a fullscreen app is foreground.** Compare the `GetForegroundWindow()`
-  rect against its monitor rect from `MonitorFromWindow` + `GetMonitorInfoW`. Poll at
-  1 Hz — cheap and adequate. Without this, the widget draws over games.
+- ~~**Hide when a fullscreen app is foreground.**~~ **Obsolete, and removed.**
+  It was built and worked, then the widget was pinned to the desktop layer
+  instead of floating always-on-top, and a bottom-most window is covered by a
+  fullscreen app for free. Keeping a second mechanism that hides the widget
+  would only have given it a way to disappear wrongly.
+- **On the desktop, under every ordinary window.** `alwaysOnTop` off, and
+  `SetWindowPos(HWND_BOTTOM, …)` re-asserted at 1 Hz. Re-asserted rather than set
+  once, because Windows raises a window when it is clicked and there is no event
+  for "someone put something above me". The push back down is invisible: if
+  nothing was covering the widget when you clicked it, it looks identical at the
+  bottom of the stack.
+- **Clamped to the monitor's work area** on every move and on restore, so it
+  cannot be dragged off-screen or under the taskbar. `rcWork`, not `rcMonitor` —
+  the difference between them *is* the taskbar. The 16px shadow gutter is allowed
+  to overhang, since those pixels draw nothing and without that the widget could
+  never sit flush in a corner.
 - Click-through stays **off** per `CLAUDE.md` constraint 2.
 
 ### Acceptance criteria
 - Sits over the desktop with no chrome, no square background, no taskbar entry.
 - Survives a restart in the same position. Survives unplugging a second monitor.
-- Disappears in a fullscreen game and returns on alt-tab.
+- Sits behind ordinary windows and reappears when the desktop does.
+- Cannot be dragged off-screen or under the taskbar, on any monitor.
 - Multi-monitor and 150% display scaling both behave.
 - Switching to compact and back leaves the window where it was, and the choice
   survives a restart.

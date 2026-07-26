@@ -12,10 +12,16 @@
       {
         "label": "main",
         "title": "vinyl",
-        "width": 470,
-        "height": 275,
+        "width": 460,
+        "height": 273,
         "minWidth": 260,
-        "minHeight": 240
+        "minHeight": 240,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": true,
+        "shadow": false,
+        "resizable": false
       }
     ],
     "security": {
