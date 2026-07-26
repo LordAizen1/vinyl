@@ -1,0 +1,59 @@
+/*
+ * Phase 1 only. Deliberately plain: this window is a data readout, not the
+ * product. The visual work happens in Phase 2, standalone, in a browser.
+ */
+
+:root {
+  --plinth: #16171a;
+  --steel: #8a8f98;
+  --lamp: #ffb454;
+
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  color: #e8e9eb;
+  background-color: var(--plinth);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 1.5rem;
+}
+
+.note {
+  margin: 0 0 1.25rem;
+  color: var(--steel);
+  font-size: 0.85rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+  align-items: baseline;
+}
+
+dt {
+  color: var(--steel);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+#status {
+  color: var(--lamp);
+}
+
+.mono {
+  font-family: ui-monospace, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
