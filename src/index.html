@@ -132,34 +132,46 @@
             <g clip-path="url(#cRec)">
               <path
                 id="armSh"
-                d="M670 105 C 780 89, 890 97, 988 107"
-                transform="translate(7 12) rotate(90 640 105)"
+                d="M672 105 H860 C925 105, 960 112, 990 128"
+                transform="translate(7 12) rotate(80.2 640 105)"
                 fill="none"
                 stroke="#000"
-                stroke-width="13"
+                stroke-width="14"
                 stroke-linecap="round"
                 opacity=".3"
                 filter="url(#fB8)"
               />
             </g>
 
-            <g id="armG" transform="rotate(90 640 105)">
+            <g id="armG" transform="rotate(80.2 640 105)">
               <circle cx="582" cy="105" r="13.5" fill="url(#gCw)" />
               <circle cx="582" cy="105" r="13.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1" />
               <rect x="588" y="97.5" width="28" height="15" rx="7.5" fill="url(#gTube)" />
-              <path d="M670 105 C 780 89, 890 97, 988 107" fill="none"
+
+              <!-- Straight tube, then the bend. A J-arm: the tube runs true out
+                   of the bearing and only turns near the headshell. -->
+              <path d="M672 105 H860 C925 105, 960 112, 990 128" fill="none"
                     stroke="url(#gTube)" stroke-width="12" stroke-linecap="round" />
-              <path d="M672 101.8 C 780 86, 888 94, 985 103.6" fill="none"
+              <path d="M674 101.4 H858 C922 101.4, 956 108.6, 985 124.4" fill="none"
                     stroke="rgba(255,255,255,.6)" stroke-width="2.6" stroke-linecap="round" opacity=".8" />
-              <!-- headshell and cartridge at the arm tip. The stylus itself is
-                   not drawn: it points down into the record, so from directly
-                   above it sits beneath the cartridge. -->
-              <g transform="translate(1032 105) rotate(118)">
-                <rect x="-47" y="-8" width="47" height="16" rx="4.5" fill="url(#gHead)"
-                      stroke="#0c0d0f" stroke-width=".8" />
-                <rect class="head-collar" x="-52" y="-3.4" width="9" height="6.8" rx="3" />
-                <rect class="cart" x="-30" y="7" width="19" height="8" rx="2" />
-                <rect x="-45" y="-6.6" width="42" height="2.6" rx="1.3" fill="rgba(255,255,255,.35)" />
+
+              <!-- Headshell, set at the offset angle where the bend ends. The
+                   stylus itself is not drawn: it points down into the record,
+                   so from directly above it sits beneath the cartridge. The
+                   contact point it implies is what main.js measures ARM_LEN
+                   and DRAWN_ANGLE from. -->
+              <g transform="translate(990 128) rotate(30)">
+                <!-- collar over the tube joint -->
+                <rect class="head-collar" x="-9" y="-6.5" width="18" height="13" rx="6.5" />
+                <!-- body -->
+                <rect x="2" y="-9.5" width="46" height="19" rx="5" fill="url(#gHead)"
+                      stroke="#0c0d0f" stroke-width=".9" />
+                <rect x="6" y="-7.4" width="38" height="3.2" rx="1.6" fill="rgba(255,255,255,.38)" />
+                <!-- finger lift on the nose -->
+                <path d="M48 -9.5 l10 5 -10 5 z" fill="url(#gHead)" stroke="#0c0d0f" stroke-width=".8" />
+                <!-- cartridge, slung under the front of the headshell -->
+                <rect class="cart" x="26" y="9" width="21" height="11" rx="2.5" />
+                <rect x="29" y="11" width="15" height="2.4" rx="1.2" fill="rgba(255,255,255,.22)" />
               </g>
             </g>
 

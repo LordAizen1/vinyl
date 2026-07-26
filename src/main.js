@@ -21,8 +21,23 @@ const labelG = $("labelG");
  * ══════════════════════════════════════════════════════════════════════ */
 const CENTER = { x: 335, y: 345 };
 const PIVOT = { x: 640, y: 105 };
-const ARM_LEN = 392;
 const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
+
+/**
+ * Pivot to contact, and the bearing of the contact in the arm's drawn pose.
+ *
+ * The tube runs straight to (860,105), bends to (990,128), and the headshell
+ * is set there at a 30 degree offset. The contact point is the underside of
+ * the cartridge, local (36,19) inside that rotated group, which lands at
+ * (1011.7, 162.5) absolute.
+ *
+ * So the arm is not "pointing along +x": pivot to contact measures 376.1 at
+ * 8.79 degrees. Both are derived from the drawn geometry, because assuming
+ * zero would leave the cartridge several degrees off the groove it is meant
+ * to be tracking.
+ */
+const ARM_LEN = 376.1;
+const DRAWN_ANGLE = 8.79;
 
 const R_LEAD_IN = 294;
 const R_RUN_OUT = 128;
@@ -35,7 +50,7 @@ function armRotationFor(radius) {
     (ARM_LEN * ARM_LEN + PIVOT_DIST * PIVOT_DIST - radius * radius) /
     (2 * ARM_LEN * PIVOT_DIST);
   const theta = (Math.acos(Math.min(1, Math.max(-1, cos))) * 180) / Math.PI;
-  return BASE_ANGLE - theta;
+  return BASE_ANGLE - theta - DRAWN_ANGLE;
 }
 
 /**
