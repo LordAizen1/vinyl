@@ -254,7 +254,28 @@ never refetch per frame; this finding sets the actual stakes. Concretely:
 - The idle CPU budget in `CLAUDE.md` constraint 4 is under 1%. A per-second megabyte
   read and decode would not fit inside it.
 
-### Possible stale thumbnail in Edge, unconfirmed
+### Confirmed in Phase 3: artwork lags metadata by one track
+
+The suspicion below turned out to be real, and it is not specific to Edge.
+Reproduced by playing the next video: the record showed the *previous* track's
+cover for the rest of the track.
+
+Sources publish the new title before they publish the new artwork. So a
+thumbnail read triggered by "the title changed" reliably returns the image that
+is still attached to the session, which is the old one. Every later
+`MediaPropertiesChanged` was then ignored, because the gate was on the title
+having changed and it had not changed again.
+
+**Fix, in `ArtTracker`:** when a fresh read returns bytes byte-identical to the
+previous track's art, treat the result as provisional and look again, up to four
+attempts at 280 ms. Attempts are capped rather than looped until the bytes
+differ, because two tracks from the same album legitimately share a cover.
+
+The widget keeps showing the old cover for that fraction of a second rather than
+blanking to the procedural label and then flashing back, which would be a more
+visible wrong than a brief lag.
+
+### The original suspicion, recorded before it was confirmed
 
 The Edge session reported a thumbnail of exactly `15545` bytes for a JJ Lin music video
 and then, after the session metadata swapped to an unrelated film page titled

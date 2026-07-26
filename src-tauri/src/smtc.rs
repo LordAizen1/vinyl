@@ -39,6 +39,10 @@ use crate::state::{PlaybackState, SharedState, Status};
 /// not touch thumbnails, which are the expensive part (measured at 1 MB).
 const WATCHDOG: Duration = Duration::from_secs(5);
 
+/// How long to wait between attempts while the artwork still looks stale.
+/// Only ever used for the first second or so after a track change.
+const SETTLE_POLL: Duration = Duration::from_millis(280);
+
 /// Unix epoch expressed in the 100 ns ticks since 1601 that WinRT `DateTime` uses.
 const UNIX_EPOCH_IN_1601_TICKS: i64 = 116_444_736_000_000_000;
 
@@ -86,8 +90,15 @@ fn run(app: &AppHandle, state: &SharedState, art: &ArtCache) -> Result<()> {
             Err(error) => log::warn!("SMTC read failed: {error:#}"),
         }
 
-        // Wait for an event, or fall through on the watchdog.
-        let _ = rx.recv_timeout(WATCHDOG);
+        // Wait for an event, or fall through on the watchdog. While the
+        // artwork is still settling after a track change, look again sooner:
+        // sources publish the new title before the new image.
+        let wait = if artwork.is_settling() {
+            SETTLE_POLL
+        } else {
+            WATCHDOG
+        };
+        let _ = rx.recv_timeout(wait);
         // Coalesce a burst: sources fire several change events per track change.
         while rx.try_recv().is_ok() {}
     }
@@ -159,7 +170,9 @@ fn read(
 
     let Some((_, _, session)) = best else {
         anchors.clear();
-        *artwork = ArtTracker::default();
+        // Settled, not pending: with no session there is nothing to look for,
+        // and leaving it unsettled would spin the worker at SETTLE_POLL.
+        *artwork = ArtTracker::idle();
         return Ok(PlaybackState::no_session());
     };
 
@@ -219,12 +232,24 @@ fn describe(
     // is gated on the track identity changing rather than run on every wake.
     // Phase 0 measured one at 1,022,489 bytes; doing this per tick would not
     // fit the idle CPU budget in CLAUDE.md constraint 4.
+    // Reading the thumbnail is the expensive part of this module, so it never
+    // runs on a plain tick. It runs on a track change, and then again only
+    // while the result still looks like the previous track's art.
     let art_key = format!("{source_app}|{identity}");
     if artwork.identity != art_key {
-        log::info!("art: track changed to {art_key:?}, reading thumbnail");
-        artwork.identity = art_key;
-        artwork.art_id = read_thumbnail(&media).map(|bytes| art.insert(bytes));
-        log::info!("art: art_id is now {:?}", artwork.art_id);
+        log::info!("art: track changed to {art_key:?}");
+        artwork.begin_track(art_key);
+    }
+
+    if artwork.is_settling() {
+        artwork.attempts += 1;
+        if let Some(bytes) = read_thumbnail(&media) {
+            let id = art.insert(bytes);
+            if artwork.art_id.as_ref() != Some(&id) {
+                log::info!("art: art_id is now {id} (attempt {})", artwork.attempts);
+            }
+            artwork.art_id = Some(id);
+        }
     }
 
     Ok(PlaybackState {
@@ -245,12 +270,51 @@ fn describe(
 // Artwork
 // ---------------------------------------------------------------------------
 
-/// Remembers which track's art we already hold, so the thumbnail is read once
-/// per track rather than once per event.
+/// How many times to re-read a thumbnail before accepting what we have.
+///
+/// Sources publish the new title before the new artwork, so the read triggered
+/// by a track change frequently returns the *previous* track's image. Each
+/// attempt can cost a megabyte, so this is deliberately small and only runs
+/// while the art still looks stale.
+const MAX_ART_ATTEMPTS: u8 = 4;
+
+/// Remembers which track's art we hold, so the thumbnail is read once per
+/// track rather than once per event, and so a stale read can be corrected.
 #[derive(Default)]
 struct ArtTracker {
     identity: String,
     art_id: Option<String>,
+    /// What the previous track's art hashed to. If a fresh read returns this,
+    /// the source has not caught up yet and we should look again.
+    previous_art_id: Option<String>,
+    attempts: u8,
+}
+
+impl ArtTracker {
+    /// Whether the art we hold is still suspect.
+    ///
+    /// True when we have nothing, or when what we have is byte-identical to
+    /// the previous track's art. The latter is occasionally legitimate, two
+    /// tracks off one album, which is why attempts are capped rather than
+    /// looped until they differ.
+    fn is_settling(&self) -> bool {
+        self.attempts < MAX_ART_ATTEMPTS
+            && (self.art_id.is_none() || self.art_id == self.previous_art_id)
+    }
+
+    fn begin_track(&mut self, identity: String) {
+        self.previous_art_id = self.art_id.take();
+        self.identity = identity;
+        self.attempts = 0;
+    }
+
+    /// A tracker with nothing to look for, so the worker goes back to sleep.
+    fn idle() -> Self {
+        Self {
+            attempts: MAX_ART_ATTEMPTS,
+            ..Self::default()
+        }
+    }
 }
 
 /// Pulls the thumbnail bytes out of a session.
@@ -656,5 +720,57 @@ mod tests {
     #[test]
     fn a_missing_anchor_falls_back_to_now() {
         assert!(anchor_unix_ms(0) > 0);
+    }
+
+    /// The reported bug: a track change where the source hands back the
+    /// previous track's artwork must not be accepted as final.
+    #[test]
+    fn stale_art_keeps_looking() {
+        let mut art = ArtTracker::default();
+        art.begin_track("first".to_owned());
+        art.attempts = 1;
+        art.art_id = Some("aaa".to_owned());
+        assert!(!art.is_settling(), "fresh art on a new track is settled");
+
+        art.begin_track("second".to_owned());
+        art.attempts = 1;
+        // The source has not caught up: same bytes as the previous track.
+        art.art_id = Some("aaa".to_owned());
+        assert!(
+            art.is_settling(),
+            "art identical to the last track is suspect"
+        );
+
+        // The real image finally arrives.
+        art.attempts = 2;
+        art.art_id = Some("bbb".to_owned());
+        assert!(!art.is_settling());
+    }
+
+    #[test]
+    fn art_attempts_are_capped() {
+        let mut art = ArtTracker::default();
+        art.begin_track("only".to_owned());
+        art.attempts = MAX_ART_ATTEMPTS;
+        assert!(
+            !art.is_settling(),
+            "must stop re-reading; each attempt can cost a megabyte"
+        );
+    }
+
+    #[test]
+    fn a_session_with_no_art_stops_retrying() {
+        let mut art = ArtTracker::default();
+        art.begin_track("silent".to_owned());
+        for _ in 0..MAX_ART_ATTEMPTS {
+            assert!(art.is_settling());
+            art.attempts += 1;
+        }
+        assert!(!art.is_settling());
+    }
+
+    #[test]
+    fn an_idle_tracker_never_polls() {
+        assert!(!ArtTracker::idle().is_settling());
     }
 }
