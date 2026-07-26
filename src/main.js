@@ -27,13 +27,18 @@ const LABEL_R = 26;
 /**
  * Pivot to stylus, and the bearing of the stylus in the arm's drawn pose.
  *
- * The headshell is rotated 21 degrees at the offset angle, which swings the
- * stylus tip off the tube's axis to (191.66, 140.52). So the arm is not simply
- * "pointing down": pivot to stylus measures 98.73 at 93.68 degrees, not 98 at
- * 90. Both are derived from the drawn geometry, because using 90 here would
- * put the stylus about four degrees off the groove it is meant to be tracking.
+ * The contact point is the underside of the cartridge at (198, 137.4), not a
+ * drawn stylus: seen from directly above, the stylus is hidden beneath the
+ * cartridge, so nothing is drawn there. The headshell is then rotated 21
+ * degrees at the offset angle, which swings that point off the tube's axis to
+ * (193.20, 136.51).
+ *
+ * So the arm is not simply "pointing down": pivot to contact measures 94.63 at
+ * 92.91 degrees, not 98 at 90. Both are derived from the drawn geometry,
+ * because assuming 90 would leave the cartridge sitting several degrees off
+ * the groove it is meant to be tracking.
  */
-const ARM_LEN = 98.73;
+const ARM_LEN = 94.63;
 const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
 
 const R_LEAD_IN = RECORD_R * 0.92;
@@ -41,7 +46,7 @@ const R_RUN_OUT = LABEL_R + 3;
 
 const BASE_ANGLE =
   (Math.atan2(CENTER.y - PIVOT.y, CENTER.x - PIVOT.x) * 180) / Math.PI;
-const DRAWN_ANGLE = 93.68;
+const DRAWN_ANGLE = 92.91;
 
 /**
  * Parked. Zero, not an offset: the arm is drawn pointing straight down from
