@@ -274,8 +274,9 @@ function render() {
   $("btnNext").disabled = !hasSession || !snapshot.canNext;
   $("btnPrev").disabled = !hasSession || !snapshot.canPrevious;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
-  $("deckHit").style.cursor =
-    hasSession && snapshot.canPlayPause ? "pointer" : "default";
+  const grabbable = hasSession && snapshot.canPlayPause ? "pointer" : "default";
+  $("deckHit").style.cursor = grabbable;
+  $("cue").style.cursor = grabbable;
 
   if (!hasSession) {
     $("uiTitle").textContent = "No session";
@@ -349,6 +350,8 @@ function bindTransport() {
   $("btnPrev").addEventListener("click", () => skip("previous"));
   // The record itself is the pause control; the needle lifts with it.
   $("deckHit").addEventListener("click", toggle);
+  // And so is the cue lever, which is what actually raises the arm on a deck.
+  $("cue").addEventListener("click", toggle);
 }
 
 function adopt(next) {

@@ -109,6 +109,27 @@
             <rect x="193.2" y="117.4" width="9.6" height="5.2" rx="2.4"
                   fill="#17181b" stroke="rgba(255,255,255,.10)" stroke-width=".6" />
           </g>
+
+          <!-- Cue lever. On a real deck this is the pause: it raises the arm
+               hydraulically while the platter keeps turning. Down means the
+               stylus is in the groove. Sits beside the arm rest, where a
+               Technics puts it. Clicking it toggles playback. -->
+          <g id="cue" cursor="pointer">
+            <!-- machined slot -->
+            <rect x="212.5" y="96" width="10" height="27" rx="5" fill="#0d0f12" />
+            <rect x="212.5" y="96" width="10" height="27" rx="5" fill="none"
+                  stroke="rgba(255,255,255,.08)" stroke-width=".7" />
+            <g id="cueKnob">
+              <rect x="208.4" y="110.5" width="18.2" height="9.6" rx="3" fill="url(#gCw)"
+                    stroke="#191b1f" stroke-width=".8" />
+              <rect x="208.4" y="110.5" width="18.2" height="3.2" rx="1.6"
+                    fill="rgba(255,255,255,.16)" />
+              <path d="M210.8 115.4 H224.2 M210.8 117.4 H224.2"
+                    stroke="rgba(0,0,0,.34)" stroke-width=".6" />
+            </g>
+            <!-- generous hit area; the lever itself is small -->
+            <rect x="203" y="92" width="28" height="36" fill="transparent" />
+          </g>
           <g id="armBase">
             <circle cx="198" cy="42" r="13.5" fill="#1f2125" stroke="#2c2e33" stroke-width="1" />
           </g>
@@ -156,24 +177,34 @@
           </div>
         </div>
 
-        <!-- Only ever shows what PlaybackInfo.Controls says the source
-             supports. A dead skip button on a livestream is a bug. -->
+        <!-- Controls take the form of the real thing they correspond to.
+             Play/pause is the round START/STOP button a Technics puts at the
+             front left. Skip has no analogue on any turntable, so it borrows
+             the form of the 33/45 speed selector, which does exist, rather
+             than inventing hardware that never existed.
+
+             Only ever shows what PlaybackInfo.Controls says the source
+             supports: a dead skip button on a livestream is a bug. -->
         <div class="controls">
-          <button id="btnPrev" class="tbtn" type="button" aria-label="Previous track">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+          <button id="btnPrev" class="selector" type="button" aria-label="Previous track">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
               <path d="M6.2 5.2h2.3v13.6H6.2zM18.9 6.1v11.8c0 .95-1.05 1.52-1.85.98l-8.6-5.9a1.18 1.18 0 0 1 0-1.96l8.6-5.9c.8-.54 1.85.03 1.85.98z" />
             </svg>
           </button>
-          <button id="btnPlay" class="tbtn play" type="button" aria-label="Play">
-            <svg id="icPlay" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-              <path d="M8.6 5.5v13c0 .96 1.06 1.54 1.86 1.02l10-6.5c.74-.48.74-1.56 0-2.04l-10-6.5C9.66 3.96 8.6 4.54 8.6 5.5z" />
-            </svg>
-            <svg id="icPause" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-              <path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z" />
-            </svg>
+
+          <button id="btnPlay" class="startstop" type="button" aria-label="Play">
+            <span class="startstop-face">
+              <svg id="icPlay" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+                <path d="M8.6 5.5v13c0 .96 1.06 1.54 1.86 1.02l10-6.5c.74-.48.74-1.56 0-2.04l-10-6.5C9.66 3.96 8.6 4.54 8.6 5.5z" />
+              </svg>
+              <svg id="icPause" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+                <path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z" />
+              </svg>
+            </span>
           </button>
-          <button id="btnNext" class="tbtn" type="button" aria-label="Next track">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+
+          <button id="btnNext" class="selector" type="button" aria-label="Next track">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
               <path d="M15.5 5.2h2.3v13.6h-2.3zM5.1 6.1v11.8c0 .95 1.05 1.52 1.85.98l8.6-5.9c.78-.53.78-1.43 0-1.96l-8.6-5.9C6.15 4.58 5.1 5.15 5.1 6.1z" />
             </svg>
           </button>
