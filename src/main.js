@@ -28,18 +28,26 @@ const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
  *
  * The tube runs straight to (860,105), bends to (990,128), and the headshell
  * is set there at a 30 degree offset. The contact point is the underside of
- * the cartridge, local (36,19) inside that rotated group, which lands at
- * (1011.7, 162.5) absolute.
+ * the cartridge, local (26.5, 19) inside that rotated group.
  *
- * So the arm is not "pointing along +x": pivot to contact measures 376.1 at
- * 8.79 degrees. Both are derived from the drawn geometry, because assuming
- * zero would leave the cartridge several degrees off the groove it is meant
- * to be tracking.
+ * So the arm is not "pointing along +x": pivot to contact measures 368.6 at
+ * 8.5 degrees. Both are derived from the drawn geometry, because assuming zero
+ * would leave the cartridge several degrees off the groove it is tracking.
  */
-const ARM_LEN = 376.1;
-const DRAWN_ANGLE = 8.79;
+const ARM_LEN = 368.6;
+const DRAWN_ANGLE = 8.5;
 
-const R_LEAD_IN = 294;
+/**
+ * Where the stylus sits at the start and end of a track.
+ *
+ * The lead-in is well inside the record's 303 rather than at the outermost
+ * groove. A real deck does start at the very rim, but the headshell is a solid
+ * body extending back toward the pivot, so at the rim it overhangs the edge
+ * and the head reads as sitting outside the vinyl. Measured: at a lead-in of
+ * 294 the headshell's rear corner landed at 324.7, some 22 units beyond the
+ * rim.
+ */
+const R_LEAD_IN = 267;
 const R_RUN_OUT = 128;
 
 const BASE_ANGLE =
@@ -54,8 +62,9 @@ function armRotationFor(radius) {
 }
 
 /**
- * Parked. Derived, not guessed: a stylus radius of 340 is beyond the record's
- * 303, which puts the arm over its rest and clear of the vinyl.
+ * Parked, when there is no session at all. Derived, not guessed: a stylus
+ * radius of 340 is beyond the record's 303, so the arm swings clear of the
+ * vinyl rather than hovering over a record that is not there.
  */
 const REST_ROTATION = armRotationFor(340);
 
@@ -312,9 +321,6 @@ function bindTransport() {
   $("btnPrev").addEventListener("click", () => skip("previous"));
   $("btnShuffle").addEventListener("click", toggleShuffle);
   $("btnRepeat").addEventListener("click", cycleRepeat);
-  // The cue lever, which is what actually raises the arm on a deck. Two ways
-  // to pause, matching real hardware: this and the START/STOP button.
-  $("cue").addEventListener("click", toggle);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -408,8 +414,6 @@ function render() {
   $("btnShuffle").disabled = !hasSession || !snapshot.canShuffle;
   $("btnRepeat").disabled = !hasSession || !snapshot.canRepeat;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
-  $("cue").style.cursor =
-    hasSession && snapshot.canPlayPause ? "pointer" : "default";
 
   $("btnShuffle").setAttribute(
     "aria-pressed",

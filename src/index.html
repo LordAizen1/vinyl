@@ -100,10 +100,6 @@
             <circle class="screw-edge" cx="40" cy="625" r="22" fill="none" stroke-width="1" />
             <circle class="screw-inner" cx="40" cy="625" r="12.5" fill="none" stroke-width="1.6" />
 
-            <!-- arm rest, where the arm parks when nothing is playing -->
-            <ellipse cx="643" cy="500" rx="26" ry="15" fill="#000" opacity=".16" filter="url(#fB4)" />
-            <rect class="rest" x="620" y="480" width="44" height="24" rx="12" stroke-width="1.4" />
-
             <circle cx="345" cy="361" r="303" fill="#000" opacity=".32" filter="url(#fB16)" />
 
             <!-- ─── the record ─── -->
@@ -163,15 +159,17 @@
               <g transform="translate(990 128) rotate(30)">
                 <!-- collar over the tube joint -->
                 <rect class="head-collar" x="-9" y="-6.5" width="18" height="13" rx="6.5" />
-                <!-- body -->
-                <rect x="2" y="-9.5" width="46" height="19" rx="5" fill="url(#gHead)"
+                <!-- Body. Kept short deliberately: a longer headshell overhangs
+                     the record rim at the lead-in, so the head reads as sitting
+                     outside the vinyl at the moment a track starts. -->
+                <rect x="2" y="-9" width="34" height="18" rx="5" fill="url(#gHead)"
                       stroke="#0c0d0f" stroke-width=".9" />
-                <rect x="6" y="-7.4" width="38" height="3.2" rx="1.6" fill="rgba(255,255,255,.38)" />
+                <rect x="5.5" y="-7" width="27" height="3" rx="1.5" fill="rgba(255,255,255,.38)" />
                 <!-- finger lift on the nose -->
-                <path d="M48 -9.5 l10 5 -10 5 z" fill="url(#gHead)" stroke="#0c0d0f" stroke-width=".8" />
+                <path d="M36 -9 l9 4.5 -9 4.5 z" fill="url(#gHead)" stroke="#0c0d0f" stroke-width=".8" />
                 <!-- cartridge, slung under the front of the headshell -->
-                <rect class="cart" x="26" y="9" width="21" height="11" rx="2.5" />
-                <rect x="29" y="11" width="15" height="2.4" rx="1.2" fill="rgba(255,255,255,.22)" />
+                <rect class="cart" x="17" y="8.5" width="19" height="10.5" rx="2.5" />
+                <rect x="20" y="10.5" width="13" height="2.2" rx="1.1" fill="rgba(255,255,255,.22)" />
               </g>
             </g>
 
@@ -183,22 +181,6 @@
             <circle cx="640" cy="105" r="21" fill="url(#gCapIn)" />
             <circle cx="640" cy="105" r="21" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.1" />
             <circle class="bearing-pin" cx="640" cy="105" r="4.2" />
-
-            <!-- Cue lever. On a real deck this is the pause: it raises the arm
-                 hydraulically while the platter keeps turning. Deliberately a
-                 lever, not a knob: a second round chrome shape beside the
-                 bearing just reads as a second counterweight. -->
-            <g id="cue" cursor="pointer">
-              <rect class="slot" x="681" y="70" width="26" height="74" rx="13" />
-              <rect class="slot-rim" x="681" y="70" width="26" height="74" rx="13" fill="none" stroke-width="1.4" />
-              <g id="cueKnob">
-                <rect x="674" y="108" width="40" height="26" rx="8" fill="url(#gCw)"
-                      stroke="rgba(0,0,0,.35)" stroke-width="1" />
-                <rect x="674" y="108" width="40" height="9" rx="4.5" fill="rgba(255,255,255,.4)" />
-                <path d="M681 122 H707 M681 128 H707" stroke="rgba(0,0,0,.3)" stroke-width="1.6" />
-              </g>
-              <rect x="668" y="60" width="52" height="96" fill="transparent" />
-            </g>
           </svg>
         </div>
 
