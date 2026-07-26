@@ -16,7 +16,24 @@ It's not trying to replace your music player. You can't browse anything, there's
 
 Grab the installer from [Releases](../../releases) and run it. Windows 10 or 11.
 
-Heads up: it isn't code-signed, because certificates cost more per year than this project is worth. So Windows will show you a **"Windows protected your PC"** box the first time. Click **More info**, then **Run anyway**. Entirely up to you whether you trust a stranger's turntable, and completely fair if you'd rather build it yourself from source.
+Windows will show you a **"Windows protected your PC"** box the first time. That's expected, see below.
+
+## Is it safe?
+
+Reasonable question. It's an unsigned .exe from a stranger on the internet, and you should want an answer before running it.
+
+**That Windows warning.** The installer isn't code-signed. Signing certificates run a few hundred a year, which is a lot for a turntable I made for my sister. The message means Windows doesn't recognise who made it, not that it found anything wrong with it. Click **More info** then **Run anyway**, or skip it entirely and build from source, instructions are further down.
+
+**What leaves your computer.** One thing, and only if lyrics are switched on: the song title and artist go to lrclib.net so it can look up the words. That's the only address this app ever contacts, and you don't have to take my word for it, it appears exactly once in the whole codebase, in [`src-tauri/src/lyrics.rs`](src-tauri/src/lyrics.rs). Untick **Show lyrics** and it makes no internet requests at all, ever.
+
+**What doesn't.** Everything else. It reads what's playing from Windows' own media session, the same thing that powers the popup when you hit the volume keys. Album art is kept in memory and never written to disk. No telemetry, no analytics, no accounts, no update pings, nothing phoning home.
+
+**What it writes.** Two files, both local:
+
+- `%APPDATA%\dev.lordaizen.vinyl\config.json`, your settings
+- `%LOCALAPPDATA%\vinyl\vinyl.log`, for when something breaks
+
+Worth knowing the log notes down each song it looked up, so it is a small record of what you played. It's wiped every time the app starts, and you can delete it whenever you like.
 
 ## Using it
 
@@ -65,7 +82,7 @@ In the menu you'll find:
 
 Windows tells the app what's playing, but it has no idea about lyrics, nobody does. So when a song starts, it asks [LRCLIB](https://lrclib.net), a free community-run lyrics database, whether it knows that one.
 
-Which means: **the song title and artist get sent to lrclib.net.** Nothing else leaves your machine, and if you untick **Show lyrics** the app makes no internet requests at all, ever.
+Which is the one time the app talks to the internet, as above.
 
 Fair warning, it doesn't always find them. Apps like Spotify and Apple Music report nice clean song names so those usually work. YouTube reports the whole video title, `Some Artist - Song Name (Official Video) [4K]`, which is a bit more of a guessing game. It tries its best.
 
