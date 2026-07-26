@@ -79,10 +79,9 @@
 
   --ink: #26282b;
   --ink-soft: #3d3f43;
-  --ink-mute: rgba(38, 40, 43, 0.55);
+  /* The one warm colour, and it earns its place once: the play button's hover
+     ring. CLAUDE.md reserves it deliberately. */
   --lamp: #cf7f28;
-  --lamp-soft: rgba(207, 127, 40, 0.45);
-  --lamp-off: rgba(38, 40, 43, 0.3);
 
   --track-c: rgba(30, 31, 33, 0.32);
   --fill-c: #232426;
@@ -140,10 +139,7 @@
 
     --ink: #e6e8ea;
     --ink-soft: #b3b7bc;
-    --ink-mute: rgba(230, 232, 234, 0.5);
     --lamp: #ffb454;
-    --lamp-soft: rgba(255, 180, 84, 0.5);
-    --lamp-off: rgba(230, 232, 234, 0.22);
 
     --track-c: rgba(255, 255, 255, 0.18);
     --fill-c: #d8dbde;
@@ -350,48 +346,11 @@ body {
   flex-direction: column;
 }
 
-.np {
-  margin-top: 5.55cqw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5cqw;
-  font-size: 1.62cqw;
-  font-weight: 600;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  color: var(--ink);
-  text-indent: 0.42em;
-  white-space: nowrap;
-}
-
-.np .lamp {
-  font-style: normal;
-  width: 0.55cqw;
-  height: 0.55cqw;
-  border-radius: 50%;
-  background: var(--lamp-off);
-  flex: none;
-  text-indent: 0;
-  transition:
-    background 0.35s,
-    box-shadow 0.35s;
-}
-
-.widget.loaded .np .lamp {
-  background: var(--lamp-soft);
-}
-
-.widget.playing .np .lamp {
-  background: var(--lamp);
-  box-shadow: 0 0 0.9cqw 0.15cqw var(--lamp-soft);
-}
-
 /* ── the screen ── */
 .screen {
   position: relative;
-  margin-top: 2.15cqw;
-  height: 33.2cqw;
+  margin-top: 6cqw;
+  height: 36cqw;
   flex: none;
   border-radius: 1.9cqw;
   background: linear-gradient(180deg, var(--screen-hi) 0%, var(--screen) 55%, var(--screen-lo) 100%);
@@ -400,6 +359,9 @@ body {
     inset 0 -0.1cqw 0.25cqw rgba(255, 255, 255, 0.25),
     0 0.1cqw 0.12cqw rgba(255, 255, 255, 0.7);
   overflow: hidden;
+  /* Eased, so a track change washes from one album's hue into the next rather
+     than snapping. */
+  transition: background 700ms ease;
 }
 
 .screen::after {

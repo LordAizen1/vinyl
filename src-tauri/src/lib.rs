@@ -86,6 +86,11 @@ pub fn run() {
                         http::header::CACHE_CONTROL,
                         "public, max-age=31536000, immutable",
                     )
+                    // The frontend samples the cover on a canvas to tint the
+                    // screen. This scheme is a different origin to the webview,
+                    // so without this the canvas is tainted and getImageData
+                    // throws a SecurityError.
+                    .header(http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                     .body(bytes.to_vec())
                     .unwrap_or_default(),
                 None => http::Response::builder()

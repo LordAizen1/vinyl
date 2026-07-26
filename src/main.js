@@ -1,4 +1,9 @@
-import { artLabel, fitLabelText, proceduralLabel } from "./label.js";
+import {
+  artLabel,
+  fitLabelText,
+  proceduralHue,
+  proceduralLabel,
+} from "./label.js";
 
 const { invoke, convertFileSrc } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -262,6 +267,146 @@ function syncLabel() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * Screen tint
+ *
+ * The screen takes its hue from the cover art, so After Hours gives a red
+ * screen and so on. Only the hue is taken: saturation and lightness are pinned
+ * to a narrow band, because the text on the screen is white and an unclamped
+ * cover would eventually produce pale yellow and make it unreadable. The
+ * result stays "dusty" like the reference and only ever shifts in hue.
+ * ══════════════════════════════════════════════════════════════════════ */
+const DARK = matchMedia("(prefers-color-scheme: dark)");
+
+/** Lightness and saturation bands that keep white type legible. */
+function screenBand() {
+  return DARK.matches
+    ? { light: 0.22, sat: [0.14, 0.32] }
+    : { light: 0.6, sat: [0.16, 0.36] };
+}
+
+function hslCss(h, s, l) {
+  return `hsl(${h.toFixed(1)} ${(s * 100).toFixed(1)}% ${(l * 100).toFixed(1)}%)`;
+}
+
+function applyTint(hue, saturation) {
+  const band = screenBand();
+  const s = Math.min(band.sat[1], Math.max(band.sat[0], saturation));
+  const root = document.documentElement.style;
+  root.setProperty("--screen-hi", hslCss(hue, s, band.light + 0.045));
+  root.setProperty("--screen", hslCss(hue, s, band.light));
+  root.setProperty("--screen-lo", hslCss(hue, s, band.light - 0.045));
+}
+
+/**
+ * Finds the dominant hue of an image.
+ *
+ * Sampled at 24x24, which is ample for a hue and costs nothing. Near-black,
+ * near-white and washed-out pixels are skipped: a cover that is mostly a dark
+ * background should be judged on its actual colour, not on the background.
+ */
+function dominantHue(image) {
+  const size = 24;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(image, 0, 0, size, size);
+
+  const { data } = ctx.getImageData(0, 0, size, size);
+
+  // 24 hue buckets, weighted by saturation so a small vivid area outvotes a
+  // large muddy one, which is how a person would read a cover.
+  const buckets = new Float64Array(24);
+  const sats = new Float64Array(24);
+  const counts = new Float64Array(24);
+  let counted = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i] / 255;
+    const g = data[i + 1] / 255;
+    const b = data[i + 2] / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    if (l < 0.08 || l > 0.94) continue; // near-black or blown out
+    const d = max - min;
+    if (d < 0.08) continue; // effectively grey
+    const s = d / (1 - Math.abs(2 * l - 1));
+
+    let h;
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+
+    const bucket = Math.floor(h / 15);
+    buckets[bucket] += s * s;
+    sats[bucket] += s;
+    counts[bucket] += 1;
+    counted += 1;
+  }
+
+  if (!counted) return null;
+
+  let best = 0;
+  for (let i = 1; i < buckets.length; i += 1) {
+    if (buckets[i] > buckets[best]) best = i;
+  }
+  if (buckets[best] <= 0) return null;
+
+  return {
+    hue: best * 15 + 7.5,
+    saturation: sats[best] / counts[best],
+  };
+}
+
+let tintKey = null;
+
+function syncTint() {
+  const key = snapshot
+    ? `${snapshot.artId ?? ""}|${snapshot.title ?? ""}|${snapshot.artist ?? ""}`
+    : "none";
+  if (key === tintKey) return;
+  tintKey = key;
+
+  if (!snapshot || snapshot.status === "noSession") {
+    // Back to the default dusty rose rather than holding the last track's hue.
+    for (const name of ["--screen-hi", "--screen", "--screen-lo"]) {
+      document.documentElement.style.removeProperty(name);
+    }
+    return;
+  }
+
+  if (!snapshot.artId) {
+    // No cover: take the hue from the procedural label instead, so the screen
+    // and the record still belong to each other.
+    applyTint(
+      proceduralHue({
+        title: snapshot.title,
+        artist: snapshot.artist,
+        sourceApp: snapshot.sourceApp,
+      }),
+      0.26,
+    );
+    return;
+  }
+
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.onload = () => {
+    try {
+      const found = dominantHue(image);
+      if (found) applyTint(found.hue, found.saturation);
+    } catch (error) {
+      // A tainted canvas or a decode failure is not worth breaking over; the
+      // screen simply keeps its default colour.
+      console.warn("could not sample cover art for the screen tint", error);
+    }
+  };
+  image.src = artUrlFor(snapshot.artId);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * Transport
  *
  * The click updates the UI immediately and the real SMTC event reconciles it
@@ -445,6 +590,7 @@ function adopt(next) {
 
   buildWave();
   syncLabel();
+  syncTint();
   render();
 }
 

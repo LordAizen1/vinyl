@@ -62,6 +62,36 @@ const PALETTES = [
   ],
 ];
 
+/**
+ * The hue this track's procedural label is built around, so the screen can be
+ * tinted to match even when there is no cover art to sample.
+ *
+ * @returns {number} hue in degrees
+ */
+export function proceduralHue(track) {
+  const seed = hashOf(
+    `${track.artist || ""}|${track.title || ""}|${track.sourceApp || ""}`,
+  );
+  const palette = PALETTES[seed % PALETTES.length];
+  // The stop nearest the middle carries the palette's character; the ends are
+  // the near-black and near-white extremes.
+  const mid = palette[Math.floor(palette.length / 2)];
+  return rgbToHue(mid[1], mid[2], mid[3]);
+}
+
+function rgbToHue(r, g, b) {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max === min) return 0;
+  const d = max - min;
+  let h;
+  if (max === r) h = ((g - b) / d) % 6;
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  h *= 60;
+  return h < 0 ? h + 360 : h;
+}
+
 /** FNV-1a, so a given track always presses the same label. */
 export function hashOf(input) {
   let hash = 2166136261;

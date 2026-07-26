@@ -36,18 +36,20 @@
     <div id="shell"></div>
 
     <script>
-      /* A stand-in for the real album art, drawn here rather than sourced. */
+      /* Stand-in album art, drawn here rather than sourced. `?art=` picks one,
+         so the screen tint can be checked against covers of different hues. */
+      const ART_HUES = { red: "#a8232c", teal: "#12776f", indigo: "#2f3d8f", amber: "#c8861a" };
+      const artName = new URLSearchParams(location.search).get("art") || "red";
+      const artColour = ART_HUES[artName] || ART_HUES.red;
+
       const FAKE_ART =
         "data:image/svg+xml;utf8," +
         encodeURIComponent(
           `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-             <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-               <stop offset="0%" stop-color="#26323f"/><stop offset="100%" stop-color="#5e2b34"/>
-             </linearGradient></defs>
-             <rect width="200" height="200" fill="url(#g)"/>
-             <circle cx="70" cy="68" r="38" fill="#e8e9eb" opacity="0.85"/>
-             <rect x="38" y="130" width="122" height="9" fill="#ffb454" opacity="0.9"/>
-             <rect x="38" y="150" width="72" height="9" fill="#e8e9eb" opacity="0.5"/>
+             <rect width="200" height="200" fill="${artColour}"/>
+             <circle cx="70" cy="68" r="38" fill="#f2efe9" opacity="0.9"/>
+             <rect x="38" y="130" width="122" height="9" fill="#f2efe9" opacity="0.75"/>
+             <rect x="38" y="150" width="72" height="9" fill="#f2efe9" opacity="0.45"/>
            </svg>`,
         );
 
