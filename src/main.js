@@ -33,7 +33,14 @@ const R_RUN_OUT = LABEL_R + 3;
 const BASE_ANGLE =
   (Math.atan2(CENTER.y - PIVOT.y, CENTER.x - PIVOT.x) * 180) / Math.PI;
 const DRAWN_ANGLE = 90;
-const REST_ROTATION = -8.5;
+
+/**
+ * Parked. Zero, not an offset: the arm is drawn pointing straight down from
+ * the pivot, and the arm rest sits directly beneath it at (198, 120), so the
+ * tube lies across the rest exactly when the rotation is zero. Any offset
+ * swings the stylus off the rest and out over bare plinth.
+ */
+const REST_ROTATION = 0;
 
 function armRotationFor(radius) {
   const cos =

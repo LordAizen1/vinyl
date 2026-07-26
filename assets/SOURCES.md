@@ -9,8 +9,8 @@ Vinyl and brushed-metal grain are generated with `feTurbulence`, not sourced.
 |---|---|---|---|---|
 | src/assets/fonts/ArchivoNarrow-latin.woff2 | fonts.google.com/specimen/Archivo+Narrow | OFL 1.1 | 2026-07-26 | None. Latin subset as served by Google Fonts. Variable weight axis, covers 500 and 600. |
 | src/assets/fonts/JetBrainsMono-latin.woff2 | fonts.google.com/specimen/JetBrains+Mono | OFL 1.1 | 2026-07-26 | None. Latin subset as served by Google Fonts. |
-| src/assets/fonts/PlayfairDisplay-latin.woff2 | fonts.google.com/specimen/Playfair+Display | OFL 1.1 | 2026-07-26 | None. Latin subset as served by Google Fonts. Variable weight axis, 400 to 900. |
-| src/assets/fonts/PlayfairDisplay-OFL.txt | github.com/google/fonts/blob/main/ofl/playfairdisplay/OFL.txt | OFL 1.1 | 2026-07-26 | None |
+| src/assets/fonts/PirataOne-latin.woff2 | fonts.google.com/specimen/Pirata+One | OFL 1.1 | 2026-07-26 | None. Latin subset as served by Google Fonts. |
+| src/assets/fonts/PirataOne-OFL.txt | github.com/google/fonts/blob/main/ofl/pirataone/OFL.txt | OFL 1.1 | 2026-07-26 | None |
 | src/assets/fonts/ArchivoNarrow-OFL.txt | github.com/google/fonts/blob/main/ofl/archivonarrow/OFL.txt | OFL 1.1 | 2026-07-26 | None |
 | src/assets/fonts/JetBrainsMono-OFL.txt | github.com/google/fonts/blob/main/ofl/jetbrainsmono/OFL.txt | OFL 1.1 | 2026-07-26 | None |
 

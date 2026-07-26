@@ -106,14 +106,21 @@ function rim(p) {
  * Sits at CY-9 so its descender clears the spindle hole at CY. Centred on the
  * label it looked like the hole had been punched through the letterform.
  */
-function mark(letter, fill, size = 18) {
+function mark(letter, fill, size = 19) {
   return `<text x="${CX}" y="${CY - 9}" font-family="var(--font-display)" font-size="${size}"
-      font-weight="700" fill="${fill}" text-anchor="middle" dominant-baseline="middle"
+      fill="${fill}" text-anchor="middle" dominant-baseline="middle"
     >${escapeXml(letter)}</text>`;
 }
 
-function arced(pathId, text, size, fill, spacing, weight = 500) {
-  return `<text class="lbl-fit" data-arc="${pathId}" font-family="var(--font-display)" font-size="${size}"
+/**
+ * The arced line uses the grotesque, not the display face.
+ *
+ * It renders around 3.5px. Blackletter at that size is an unreadable smear;
+ * a condensed grotesque in caps still holds. The display face is reserved for
+ * the initial, which is large enough to carry it.
+ */
+function arced(pathId, text, size, fill, spacing, weight = 600) {
+  return `<text class="lbl-fit" data-arc="${pathId}" font-family="var(--font-label)" font-size="${size}"
       font-weight="${weight}" letter-spacing="${spacing}" fill="${fill}" text-anchor="middle"
     ><textPath href="#${pathId}" startOffset="50%">${escapeXml(text)}</textPath></text>`;
 }
@@ -222,16 +229,20 @@ export function proceduralLabel(track) {
   );
 }
 
-/** The real-artwork label: the art itself, ringed like a pressed label. */
+/**
+ * The real-artwork label: the cover itself, ringed like a pressed label.
+ *
+ * Deliberately no shading over the image. The procedural labels get a radial
+ * shade because they are flat vector fills that need it, but real album art
+ * already carries its own light, and tinting it just dulls the cover.
+ */
 export function artLabel(url) {
   return `
     <g clip-path="url(#cLab)">
       <image href="${escapeXml(url)}" x="${CX - R}" y="${CY - R}" width="${R * 2}" height="${R * 2}"
              preserveAspectRatio="xMidYMid slice"/>
-      <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#gLabShade)"/>
     </g>
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".9"/>
-    <circle cx="${CX}" cy="${CY}" r="${R - 0.7}" fill="none" stroke="#8a8f98" stroke-opacity=".22" stroke-width=".5"/>
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".9"/>
     ${spindle}`;
 }
 

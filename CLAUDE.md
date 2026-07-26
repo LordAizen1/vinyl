@@ -231,12 +231,14 @@ Type roles:
   leaves the former empty and repeats the packed string in the latter. Split once on
   ` — ` and strip Apple's ` - Single` and ` - EP` suffixes.
 - **Timecode** — a mono face with tabular figures so digits don't jitter. Small.
-- **Display** — a classic high-contrast serif, added in Phase 5 on request. Two uses
-  only: the `VINYL` brand plate on the plinth, where a real deck carries the maker's
-  name, and the procedural label, which is set the way old record labels actually were.
-  This is the one place the "avoid a serif display face" line above is deliberately
-  overridden: that warning was about the whole cream-and-terracotta package, and a
-  single classic wordmark on a near-black plinth is not that. Do not let it spread.
+- **Display** — a medieval blackletter, added in Phase 5 on request. Two uses only: the
+  `Vinyl` brand plate on the plinth, where a real deck carries the maker's name, and the
+  large initial on the procedural label, where a gothic capital is an old convention.
+  **Never in all caps**: at plinth size, blackletter capitals collapse into an
+  unreadable smear, so the wordmark is mixed case. The label's small arced line stays in
+  the grotesque, because it renders at around 3.5px. This is the one place the "avoid a
+  serif display face" line above is deliberately overridden; it was aimed at the whole
+  cream-and-terracotta package, which this is not. Do not let it spread further.
 - No third face.
 
 **Signature element: the needle drop.** On play, the tonearm swings over and settles,

@@ -39,16 +39,21 @@ it, then write the SVG.
 |---|---|---|---|
 | UI text | **Archivo Narrow** | OFL 1.1 | Title, artist, source. Caps, `letter-spacing` around 0.1em. |
 | Timecode | **JetBrains Mono** | OFL 1.1 | Monospaced, so figures are tabular by default and digits never jitter. |
-| Display | **Playfair Display** | OFL 1.1 | Added in Phase 5, on request. Two uses only: the `VINYL` brand plate, and the procedural label. |
+| Display | **Pirata One** | OFL 1.1 | Added in Phase 5, on request. Two uses only: the `Vinyl` brand plate, and the initial on the procedural label. |
 | ~~Label alternate~~ | ~~Bebas Neue~~ | — | Never used. Archivo Narrow held up fine on the arc. |
 
-**Three faces, and that is the limit.** Playfair was added deliberately rather than by
-drift: the procedural label is set the way old record labels actually were, and a
-condensed grotesque cannot carry that. Its weight axis also matters, because the brand
-plate renders at 11.5px and a single-weight display face would have had its hairlines
-disappear at that size.
+**Three faces, and that is the limit.** The blackletter was added deliberately rather
+than by drift, and it does two jobs: the maker's name on the plinth, and the initial on
+the procedural label, where a gothic capital is a very old convention.
 
-If you believe a fourth is needed, stop and ask.
+**Never set it in all caps.** Rendered at plinth size, `VINYL` in blackletter collapses
+into an unreadable smear, close to `BJNBL`; mixed case `Vinyl` reads cleanly because the
+ascenders and x-height give the eye something to hold. This was measured against four
+candidate faces, not assumed. For the same reason the label's small arced line stays in
+Archivo Narrow: it renders around 3.5px, where blackletter is hopeless.
+
+Playfair Display was briefly used here and removed when the brief turned out to mean
+medieval rather than Victorian. If you believe a fourth face is needed, stop and ask.
 
 ### Bundling rules
 

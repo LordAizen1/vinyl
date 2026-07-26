@@ -21,16 +21,17 @@
   src: url("assets/fonts/JetBrainsMono-latin.woff2") format("woff2");
 }
 
-/* The third face, added deliberately. ASSETS.md pins two, and this one earns
-   its place doing real work in two spots: the brand plate on the plinth, and
-   the procedural label, which is set the way old record labels actually were.
-   Nowhere else uses it. */
+/* The third face, added deliberately. Two uses only: the brand plate on the
+   plinth, and the initial on the procedural label. A gothic initial on a
+   record label is a very old convention, so it earns both. Nothing else uses
+   it, and it is never set in all caps: at plinth sizes VINYL in blackletter
+   collapses into an unreadable smear, where Vinyl reads fine. */
 @font-face {
-  font-family: "Playfair Display";
+  font-family: "Pirata One";
   font-style: normal;
-  font-weight: 400 900;
+  font-weight: 400;
   font-display: block;
-  src: url("assets/fonts/PlayfairDisplay-latin.woff2") format("woff2");
+  src: url("assets/fonts/PirataOne-latin.woff2") format("woff2");
 }
 
 :root {
@@ -48,7 +49,7 @@
   --radius: 14px;
   --font-label: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
-  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-display: "Pirata One", "UnifrakturMaguntia", Georgia, serif;
 }
 
 * {
@@ -201,14 +202,17 @@ body {
   box-shadow: 0 0 7px 1.5px var(--lamp-soft);
 }
 
-/* Brand plate. Set in the display face at 11.5px rather than the 9px the
-   grotesque used: Playfair's thin strokes disappear below about 11. */
+/* Brand plate. Mixed case, not caps: rendered at plinth size, blackletter
+   capitals run together into an unreadable smear, while the ascenders and
+   x-height of mixed case keep the word legible. Tracking stays near zero,
+   since blackletter is designed to sit tight. */
 .brand {
   font-family: var(--font-display);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: #7d838c;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #8b9098;
+  line-height: 1;
   transform: translateY(0.5px);
 }
 
