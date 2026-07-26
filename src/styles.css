@@ -400,7 +400,6 @@ button {
 }
 
 #icPlay {
-  margin-left: 1px;
   transition:
     opacity 0.16s,
     transform 0.16s;

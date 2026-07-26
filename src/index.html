@@ -98,11 +98,6 @@
             <circle cx="96" cy="112" r="2.2" fill="url(#gCap)" stroke="rgba(0,0,0,.6)" stroke-width=".4" />
           </g>
 
-          <!-- PLAN.md Phase 5: clicking the record pauses, and the needle
-               lifts. The physical ritual and the command are one action.
-               Sits above the record so it actually receives the click. -->
-          <circle id="deckHit" cx="96" cy="112" r="86" fill="transparent" cursor="pointer" />
-
           <!-- ─── tonearm ─── -->
           <g id="armRest">
             <ellipse cx="198" cy="122.5" rx="6.5" ry="2" fill="#000" opacity=".4" filter="url(#fB2)" />
@@ -195,7 +190,13 @@
           <button id="btnPlay" class="startstop" type="button" aria-label="Play">
             <span class="startstop-face">
               <svg id="icPlay" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
-                <path d="M8.6 5.5v13c0 .96 1.06 1.54 1.86 1.02l10-6.5c.74-.48.74-1.56 0-2.04l-10-6.5C9.66 3.96 8.6 4.54 8.6 5.5z" />
+                <!-- The glyph's own bounding box is centred at x 14.81 against
+                     a viewBox centre of 12, which is why it read as shifted
+                     right. Measured and corrected rather than eyeballed. -->
+                <path
+                  transform="translate(-2.81 0)"
+                  d="M8.6 5.5v13c0 .96 1.06 1.54 1.86 1.02l10-6.5c.74-.48.74-1.56 0-2.04l-10-6.5C9.66 3.96 8.6 4.54 8.6 5.5z"
+                />
               </svg>
               <svg id="icPause" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
                 <path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z" />

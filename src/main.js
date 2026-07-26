@@ -274,9 +274,8 @@ function render() {
   $("btnNext").disabled = !hasSession || !snapshot.canNext;
   $("btnPrev").disabled = !hasSession || !snapshot.canPrevious;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
-  const grabbable = hasSession && snapshot.canPlayPause ? "pointer" : "default";
-  $("deckHit").style.cursor = grabbable;
-  $("cue").style.cursor = grabbable;
+  $("cue").style.cursor =
+    hasSession && snapshot.canPlayPause ? "pointer" : "default";
 
   if (!hasSession) {
     $("uiTitle").textContent = "No session";
@@ -348,9 +347,9 @@ function bindTransport() {
   $("btnPlay").addEventListener("click", toggle);
   $("btnNext").addEventListener("click", () => skip("next"));
   $("btnPrev").addEventListener("click", () => skip("previous"));
-  // The record itself is the pause control; the needle lifts with it.
-  $("deckHit").addEventListener("click", toggle);
-  // And so is the cue lever, which is what actually raises the arm on a deck.
+  // The cue lever, which is what actually raises the arm on a deck. The record
+  // itself used to toggle too, but three ways to pause was one too many and
+  // clicking the platter was the least discoverable of them.
   $("cue").addEventListener("click", toggle);
 }
 

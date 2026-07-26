@@ -196,8 +196,11 @@ Send transport commands back through SMTC: `TryTogglePlayPauseAsync()`,
 
 - Read `PlaybackInfo.Controls` and only show a control the session actually supports.
   A disabled skip button on a livestream is a bug.
-- Clicking the record or a discreet button pauses. **The needle lifts.** The physical
-  ritual is the whole point — the visual and the command must feel like one action.
+- Pausing lifts the needle. **The physical ritual is the whole point** — the visual and
+  the command must feel like one action. Two controls do it, matching real hardware: the
+  round START/STOP button, and the cue lever beside the arm rest. Clicking the record
+  itself was tried and removed; three ways to pause was one too many, and the platter was
+  the least discoverable of them.
 - Optimistically update the UI on click, then reconcile with the real SMTC event.
 - ~~Hover reveals controls; they stay hidden otherwise.~~ **Reversed during Phase 5.**
   The transport row is permanently visible. Hiding it left a conspicuous empty band in
