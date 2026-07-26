@@ -24,7 +24,16 @@ const CENTER = { x: 96, y: 112 };
 const PIVOT = { x: 198, y: 42 };
 const RECORD_R = 72;
 const LABEL_R = 26;
-const ARM_LEN = 98;
+/**
+ * Pivot to stylus, and the bearing of the stylus in the arm's drawn pose.
+ *
+ * The headshell is rotated 21 degrees at the offset angle, which swings the
+ * stylus tip off the tube's axis to (191.66, 140.52). So the arm is not simply
+ * "pointing down": pivot to stylus measures 98.73 at 93.68 degrees, not 98 at
+ * 90. Both are derived from the drawn geometry, because using 90 here would
+ * put the stylus about four degrees off the groove it is meant to be tracking.
+ */
+const ARM_LEN = 98.73;
 const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
 
 const R_LEAD_IN = RECORD_R * 0.92;
@@ -32,7 +41,7 @@ const R_RUN_OUT = LABEL_R + 3;
 
 const BASE_ANGLE =
   (Math.atan2(CENTER.y - PIVOT.y, CENTER.x - PIVOT.x) * 180) / Math.PI;
-const DRAWN_ANGLE = 90;
+const DRAWN_ANGLE = 93.68;
 
 /**
  * Parked. Zero, not an offset: the arm is drawn pointing straight down from
@@ -142,10 +151,10 @@ function buildGrooves() {
   };
 
   for (let r = R_RUN_OUT; r <= R_LEAD_IN; r += 1.05 + rand() * 0.5) {
-    ring(r, 0.03 + rand() * 0.035, 0.55);
+    ring(r, 0.055 + rand() * 0.05, 0.6);
   }
-  [40.5, 50.5, 59.5].forEach((r) => ring(r, 0.13, 0.9)); // track gaps
-  ring(R_LEAD_IN + 1.4, 0.1, 0.9); // lead-in
+  [40.5, 50.5, 59.5].forEach((r) => ring(r, 0.21, 1)); // track gaps
+  ring(R_LEAD_IN + 1.4, 0.17, 1); // lead-in
 }
 
 /* ══════════════════════════════════════════════════════════════════════

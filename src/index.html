@@ -30,9 +30,9 @@
             <linearGradient
               id="gTube"
               gradientUnits="userSpaceOnUse"
-              x1="195.9"
+              x1="195.25"
               y1="0"
-              x2="200.1"
+              x2="200.75"
               y2="0"
             >
               <stop offset="0" stop-color="#4e535b" />
@@ -103,8 +103,8 @@
             <!-- Fixed-light sheen: the grooves turn beneath it, which is what
                  real vinyl does. Outside #spinG on purpose. -->
             <g mask="url(#mV)" pointer-events="none">
-              <path d="M96 112 L14 4 L138 -18 Z" fill="#cdd8e8" opacity=".07" filter="url(#fB7)" />
-              <path d="M96 112 L186 218 L96 236 Z" fill="#aebbd0" opacity=".04" filter="url(#fB7)" />
+              <path d="M96 112 L14 4 L138 -18 Z" fill="#d5dfee" opacity=".13" filter="url(#fB7)" />
+              <path d="M96 112 L186 218 L96 236 Z" fill="#b6c3d8" opacity=".075" filter="url(#fB7)" />
             </g>
             <circle cx="96" cy="112" r="2.2" fill="url(#gCap)" stroke="rgba(0,0,0,.6)" stroke-width=".4" />
           </g>
@@ -140,33 +140,46 @@
             <circle cx="198" cy="42" r="13.5" fill="#1f2125" stroke="#2c2e33" stroke-width="1" />
           </g>
           <g id="armG" transform="rotate(0 198 42)">
-            <circle cx="198" cy="23.5" r="7" fill="url(#gCw)" stroke="#1f2125" stroke-width=".8" />
-            <path d="M192.4 21.6 H203.6 M192 23.5 H204 M192.4 25.4 H203.6"
-                  stroke="rgba(0,0,0,.35)" stroke-width=".7" />
-            <rect x="196.9" y="29" width="2.2" height="8" fill="#6b6f76" />
+            <!-- counterweight: a machined capsule, which is what a real arm
+                 carries and what the reference shows, not a knurled sphere -->
+            <rect x="192.4" y="14.5" width="11.2" height="17" rx="5.6" fill="url(#gCw)"
+                  stroke="#1d1f23" stroke-width=".8" />
+            <rect x="193.2" y="15.4" width="9.6" height="4.6" rx="2.3" fill="#a3a9b1" opacity=".3" />
+            <path d="M193.8 21.5 H202.2 M193.6 24 H202.4 M193.8 26.5 H202.2"
+                  stroke="rgba(0,0,0,.3)" stroke-width=".6" />
+            <rect x="196.6" y="30" width="2.8" height="7.6" fill="#6b6f76" />
             <circle cx="198" cy="42" r="6" fill="url(#gCap)" stroke="#212327" stroke-width=".8" />
             <circle cx="198" cy="42" r="1" fill="#32353a" />
-            <line x1="198" y1="47" x2="198" y2="125" stroke="rgba(0,0,0,.35)" stroke-width="5.6" stroke-linecap="round" />
-            <line x1="198" y1="47" x2="198" y2="125" stroke="url(#gTube)" stroke-width="4.2" stroke-linecap="round" />
-            <line x1="197.1" y1="49" x2="197.1" y2="123" stroke="rgba(255,255,255,.5)" stroke-width=".7"
+
+            <!-- Tube, 5.5 wide. A real tonearm is about 3.5% of the record
+                 diameter and the reference illustration exaggerates to roughly
+                 5.5%; this sits between the two. -->
+            <line x1="198" y1="47" x2="198" y2="124" stroke="rgba(0,0,0,.4)" stroke-width="7.2" stroke-linecap="round" />
+            <line x1="198" y1="47" x2="198" y2="124" stroke="url(#gTube)" stroke-width="5.5" stroke-linecap="round" />
+            <line x1="196.5" y1="49" x2="196.5" y2="122" stroke="rgba(255,255,255,.55)" stroke-width=".8"
                   stroke-linecap="round" opacity=".5" />
-            <!-- headshell -->
-            <path d="M194.2 123.5 h7.6 l1 12.4 a3.2 3.2 0 0 1 -3.2 3.5 h-3.2 a3.2 3.2 0 0 1 -3.2 -3.5 Z"
-                  fill="#3a3e45" stroke="#141517" stroke-width=".8" />
-            <path d="M194.2 123.5 h7.6 l.2 2.6 h-8 Z" fill="#5e646d" />
-            <!-- cartridge, lifted off the headshell so it reads as a separate
-                 body rather than a dark patch -->
-            <rect x="195.5" y="130.8" width="5" height="6.6" rx="1.1" fill="#1a1c20" stroke="#0b0c0e" stroke-width=".5" />
-            <rect x="196.2" y="131.6" width="3.6" height="1.2" rx=".6" fill="#6d737b" opacity=".7" />
-            <!-- stylus -->
-            <path d="M197.1 137.6 l.9 4 .9 -4 Z" fill="#dfe3e8" />
-            <!-- finger lift: a tab on the headshell's flank, not a floating
-                 hook. Real arms have a small lever here. -->
-            <path d="M201.6 127.4 h5.2 a1.5 1.5 0 0 1 0 3 h-5.2 z" fill="#8f959e" />
-            <path d="M201.6 127.4 h5.2 a1.5 1.5 0 0 1 .6 .5 h-5.8 z" fill="#b6bcc4" opacity=".8" />
-            <!-- contact shadow: pulls tight when the stylus is down, which is
-                 how a top-down view expresses height -->
-            <ellipse id="needleSh" cx="197.9" cy="143.4" rx="3.4" ry="1" fill="#000" opacity="0" filter="url(#fB2)" />
+
+            <!-- Headshell, kicked out at the offset angle. A pivoted arm angles
+                 the cartridge toward the spindle so the stylus sits nearer to
+                 tangent in the groove, and it is the detail that most makes
+                 this read as a tonearm rather than a stick. The 21 degrees is
+                 accounted for in main.js, which corrects ARM_LEN and the drawn
+                 bearing so the stylus still tracks the right groove radius. -->
+            <g transform="rotate(21 198 124)">
+              <path d="M193.8 123 h8.4 l1 12.6 a3.4 3.4 0 0 1 -3.4 3.7 h-3.6 a3.4 3.4 0 0 1 -3.4 -3.7 Z"
+                    fill="#3a3e45" stroke="#141517" stroke-width=".8" />
+              <path d="M193.8 123 h8.4 l.2 2.8 h-8.8 Z" fill="#616770" />
+              <!-- cartridge, a separate darker body beneath the headshell -->
+              <rect x="195.3" y="130.6" width="5.4" height="6.8" rx="1.1" fill="#1a1c20" stroke="#0b0c0e" stroke-width=".5" />
+              <rect x="196" y="131.5" width="4" height="1.3" rx=".65" fill="#6d737b" opacity=".7" />
+              <path d="M197.1 137.6 l.9 4.1 .9 -4.1 Z" fill="#dfe3e8" />
+              <!-- finger lift, on the headshell's flank -->
+              <path d="M202 127 h5.4 a1.5 1.5 0 0 1 0 3 h-5.4 z" fill="#8f959e" />
+              <path d="M202 127 h5.4 a1.5 1.5 0 0 1 .6 .5 h-6 z" fill="#b6bcc4" opacity=".8" />
+              <!-- contact shadow: pulls tight when the stylus is down, which is
+                   how a top-down view expresses height -->
+              <ellipse id="needleSh" cx="197.9" cy="143.4" rx="3.4" ry="1" fill="#000" opacity="0" filter="url(#fB2)" />
+            </g>
           </g>
         </svg>
       </div>
