@@ -17,7 +17,9 @@ fn get_state(state: tauri::State<'_, SharedState>) -> PlaybackState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    env_logger::init();
+    // Default to info so a dev run says something useful without needing
+    // RUST_LOG set. Override with RUST_LOG as usual.
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let shared = state::shared();
     let cache = Arc::new(ArtCache::default());
@@ -40,6 +42,15 @@ pub fn run() {
                     .body(Vec::new())
                     .unwrap_or_default();
             };
+
+            log::info!(
+                "art: request for {id:?} -> {}",
+                if cache.get(&id).is_some() {
+                    "hit"
+                } else {
+                    "MISS"
+                }
+            );
 
             match cache.get(&id) {
                 Some(bytes) => http::Response::builder()

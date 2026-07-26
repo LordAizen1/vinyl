@@ -221,8 +221,10 @@ fn describe(
     // fit the idle CPU budget in CLAUDE.md constraint 4.
     let art_key = format!("{source_app}|{identity}");
     if artwork.identity != art_key {
+        log::info!("art: track changed to {art_key:?}, reading thumbnail");
         artwork.identity = art_key;
         artwork.art_id = read_thumbnail(&media).map(|bytes| art.insert(bytes));
+        log::info!("art: art_id is now {:?}", artwork.art_id);
     }
 
     Ok(PlaybackState {
@@ -253,30 +255,86 @@ struct ArtTracker {
 
 /// Pulls the thumbnail bytes out of a session.
 ///
-/// Every step is fallible and every failure is simply "no art", which is the
-/// common case: Phase 0 found browsers, local files and livestreams routinely
-/// have no thumbnail at all. That is what the procedural label is for.
+/// Every step is fallible, and a failure usually just means "no art", which is
+/// the common case: Phase 0 found browsers, local files and livestreams
+/// routinely have no thumbnail. That is what the procedural label is for. Each
+/// step logs its own failure, because "no art" and "art we failed to read" look
+/// identical from the outside and need telling apart.
 fn read_thumbnail(media: &MediaProperties) -> Option<Vec<u8>> {
-    let reference = media.Thumbnail().ok()?;
-    let stream = block_on(reference.OpenReadAsync().ok()?).ok()?;
+    let reference = match media.Thumbnail() {
+        Ok(reference) => reference,
+        Err(error) => {
+            log::info!("art: no thumbnail published ({error})");
+            return None;
+        }
+    };
 
-    let size = stream.Size().ok()?;
+    let open = match reference.OpenReadAsync() {
+        Ok(operation) => operation,
+        Err(error) => {
+            log::warn!("art: OpenReadAsync call failed ({error})");
+            return None;
+        }
+    };
+
+    let stream = match block_on(open) {
+        Ok(stream) => stream,
+        Err(error) => {
+            log::warn!("art: OpenReadAsync did not complete ({error})");
+            return None;
+        }
+    };
+
+    let size = match stream.Size() {
+        Ok(size) => size,
+        Err(error) => {
+            log::warn!("art: stream has no size ({error})");
+            return None;
+        }
+    };
+
     if size == 0 {
+        log::info!("art: thumbnail stream is empty");
         return None;
     }
 
-    let readable = u32::try_from(size).ok()?;
-    let reader = DataReader::CreateDataReader(&stream).ok()?;
-    let loaded = block_on(reader.LoadAsync(readable).ok()?).ok()?;
+    let readable = match u32::try_from(size) {
+        Ok(readable) => readable,
+        Err(_) => {
+            log::warn!("art: thumbnail is implausibly large ({size} bytes)");
+            return None;
+        }
+    };
+
+    let reader = match DataReader::CreateDataReader(&stream) {
+        Ok(reader) => reader,
+        Err(error) => {
+            log::warn!("art: could not create a DataReader ({error})");
+            return None;
+        }
+    };
+
+    let loaded = match reader.LoadAsync(readable).and_then(block_on) {
+        Ok(loaded) => loaded,
+        Err(error) => {
+            log::warn!("art: LoadAsync failed ({error})");
+            return None;
+        }
+    };
 
     let mut bytes = vec![0_u8; loaded as usize];
-    reader.ReadBytes(&mut bytes).ok()?;
+    if let Err(error) = reader.ReadBytes(&mut bytes) {
+        log::warn!("art: ReadBytes failed after loading {loaded} bytes ({error})");
+        return None;
+    }
 
     if bytes.is_empty() {
-        None
-    } else {
-        Some(bytes)
+        log::info!("art: thumbnail read returned zero bytes");
+        return None;
     }
+
+    log::info!("art: read {} bytes", bytes.len());
+    Some(bytes)
 }
 
 // ---------------------------------------------------------------------------
