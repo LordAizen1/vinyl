@@ -419,6 +419,22 @@ mod tests {
         );
     }
 
+    /// A backward scrub must pull the clock back, not keep counting up. Confirmed
+    /// against Apple Music seeking from 1:23 to 0:53.
+    #[test]
+    fn backward_seek_re_anchors() {
+        let mut anchors = HashMap::new();
+
+        sample(&mut anchors, 83 * 10_000_000, true);
+        thread::sleep(Duration::from_millis(120));
+
+        let seeked = sample(&mut anchors, 53 * 10_000_000, true);
+        assert!(
+            (53_000..53_500).contains(&seeked),
+            "backward seek should re-anchor near 53 s, got {seeked} ms"
+        );
+    }
+
     /// A paused session must not creep forward.
     #[test]
     fn paused_clock_holds() {

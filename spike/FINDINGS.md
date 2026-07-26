@@ -288,13 +288,33 @@ Practical consequence for Phase 1: `updated_at` must be the source's `LastUpdate
 converted to the local clock, **not** the time we happened to poll. Anchoring to poll
 time would restart the extrapolation from zero on every read and freeze the arm.
 
-- Does seeking produce an immediate timeline update? Still unmeasured. Worth one run
-  with a deliberate scrub, since a seek that does *not* push a fresh anchor would leave
-  the extrapolation confidently wrong until the next natural update.
-- Do position or duration values jump backwards? Not observed, but not deliberately
-  exercised either. Note that with anchors this stale, a correction arriving 26 seconds
-  late could be a large one, so the "interpolate corrections under 1500 ms, never jump
-  backwards" rule in constraint 1 matters more than it first appeared.
+**Does seeking produce an immediate timeline update?** On Apple Music, yes, in both
+directions. Measured with a deliberate scrub:
+
+```
+forward   0:19 -> 1:18 | anchor 0.5s ago, extrapolated 1:18 | reckoned 1:18
+backward  1:23 -> 0:53 | anchor 0.1s ago                    | reckoned 0:53
+```
+
+The anchor resets to near zero on the seek, so the source pushes a fresh timeline update
+straight away and both strategies land on the correct value. The backward scrub pulled
+the local clock back rather than letting it keep counting up, which is the behaviour the
+tonearm depends on. Now covered by `backward_seek_re_anchors` in the tests.
+
+Pause and resume around the seek also behaved: paused at `1:23` with the anchor ageing
+`0.8s`, `1.8s`, `2.8s` while `reckoned` stayed frozen, then a scrub while still paused,
+then resume from `0:53` with the anchor back to `0.0s`.
+
+**Seeking in Edge is still untested** and remains the risky case. Edge routinely goes
+minutes without pushing an update, so if it stays silent through a scrub, both the
+extrapolation and the local clock would be confidently wrong until it next speaks, and
+the eventual correction could be tens of seconds in either direction. Worth exercising
+during Phase 1 with the real widget visible.
+
+- Do position or duration values jump backwards? Only on a deliberate seek, which is
+  correct and handled. With anchors as stale as Edge's, though, a correction arriving
+  half a minute late could still be large, so the "interpolate corrections under
+  1500 ms, never jump backwards" rule in constraint 1 stands.
 
 ## Recommendation
 
@@ -357,3 +377,8 @@ Untested and carrying risk into later phases:
 - No livestream was tested, so a zero or unknown `EndTime` has never actually been
   seen. `PLAN.md` Phase 3 requires handling it; implement that from the spec rather
   than from observation.
+- Seeking was measured on Apple Music only. Edge, the source with the stalest anchors,
+  was never scrubbed. Exercise it during Phase 1.
+- The Edge stale-thumbnail suspicion was never confirmed by comparing bytes. It would
+  cause the wrong cover art to display, so settle it before building the Phase 3 art
+  cache on top of a byte hash.
