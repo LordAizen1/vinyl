@@ -522,8 +522,8 @@ body {
   position: absolute;
   right: 0;
   top: 0.9cqw;
-  width: 3.6cqw;
-  height: 3.6cqw;
+  width: 4.5cqw;
+  height: 4.5cqw;
   color: var(--screen-faint);
   pointer-events: none;
 }
@@ -658,8 +658,8 @@ button {
 
 .tbtn {
   color: var(--ink);
-  width: 4.1cqw;
-  height: 4.1cqw;
+  width: 6.3cqw;
+  height: 6.3cqw;
   display: grid;
   place-items: center;
   border-radius: 0.9cqw;
@@ -671,14 +671,14 @@ button {
 }
 
 .tbtn svg {
-  width: 2.75cqw;
-  height: 2.75cqw;
+  width: 4.3cqw;
+  height: 4.3cqw;
   display: block;
 }
 
 .big {
-  width: 7.5cqw;
-  height: 7.5cqw;
+  width: 11.4cqw;
+  height: 11.4cqw;
   border-radius: 50%;
   border: 0.3cqw solid var(--big-ring);
   background: linear-gradient(180deg, var(--big-hi) 0%, var(--big-lo) 100%);
@@ -697,8 +697,8 @@ button {
 
 .big svg {
   grid-area: 1/1;
-  width: 2.9cqw;
-  height: 2.9cqw;
+  width: 3.6cqw;
+  height: 3.6cqw;
 }
 
 .big:hover:not(:disabled) {

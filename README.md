@@ -2,17 +2,16 @@
 
 A little turntable that sits on your desktop and plays along with whatever you're listening to.
 
+The idea was my little sister's. I just brought it to life.
+
 Put something on (Spotify, Apple Music, a YouTube tab, honestly anything) and the record starts spinning. The tonearm drifts inwards as the song goes on, the way a real one does. The album art becomes the label in the middle. If the song has lyrics, they scroll past on the little screen.
 
 That's the whole thing, really.
 
-## Why
-
-I kept catching myself glancing at the corner of my screen to see what was playing, and the answer was always some tiny bit of text in a taskbar somewhere. One day it occurred to me that a record player would be a much nicer way to be told, and then I couldn't stop thinking about it. So here we are.
-
 It's not trying to replace your music player. You can't browse anything, there's no library, no playlists. It just sits there and spins.
 
-<!-- TODO: drop a screenshot or a gif in here -->
+<!-- Screenshot or gif goes here. A gif of the record spinning and the arm
+     moving across sells it far better than a still. -->
 
 ## Getting it
 
