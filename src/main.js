@@ -9,57 +9,40 @@ const RM = matchMedia("(prefers-reduced-motion: reduce)");
 const widget = $("widget");
 const spinG = $("spinG");
 const armG = $("armG");
+const armSh = $("armSh");
 const labelG = $("labelG");
-const needleSh = $("needleSh");
 
 /* ══════════════════════════════════════════════════════════════════════
- * Geometry
+ * Geometry, in the deck's 715x700 viewBox.
  *
- * Platter centre (96,112), record r 76, label r 26, arm pivot (198,42).
+ * Record centre (335,345) r 303, label r 92, arm pivot (640,105). The arm is
+ * drawn pointing along +x with its tip at pivot + 392, so a rotation is the
+ * absolute bearing of the stylus from the pivot.
  * ══════════════════════════════════════════════════════════════════════ */
-const CENTER = { x: 96, y: 112 };
-const PIVOT = { x: 198, y: 42 };
-const RECORD_R = 76;
-const LABEL_R = 26;
+const CENTER = { x: 335, y: 345 };
+const PIVOT = { x: 640, y: 105 };
+const ARM_LEN = 392;
 const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
 
-/**
- * Pivot to stylus, and the bearing of the stylus in the arm's drawn pose.
- *
- * The contact point is the underside of the cartridge at (198, 137.4), not a
- * drawn stylus: seen from directly above the stylus is hidden beneath the
- * cartridge, so nothing is drawn there. The headshell is then rotated 21
- * degrees at the offset angle, which swings that point to (193.20, 136.51).
- *
- * So the arm is not simply "pointing down": pivot to contact measures 94.63 at
- * 92.91 degrees, not 98 at 90. Both are derived from the drawn geometry;
- * assuming 90 leaves the cartridge several degrees off the groove it is meant
- * to be tracking.
- */
-const ARM_LEN = 94.63;
-const DRAWN_ANGLE = 92.91;
-
-const R_LEAD_IN = RECORD_R * 0.92;
-/** The arm physically cannot reach closer than PIVOT_DIST - ARM_LEN, 29.08. */
-const R_RUN_OUT = LABEL_R + 5;
+const R_LEAD_IN = 294;
+const R_RUN_OUT = 128;
 
 const BASE_ANGLE =
   (Math.atan2(CENTER.y - PIVOT.y, CENTER.x - PIVOT.x) * 180) / Math.PI;
-
-/**
- * Parked. Zero, not an offset: the arm is drawn pointing straight down from
- * the pivot, and the arm rest sits directly beneath it, so the tube lies
- * across the rest exactly when the rotation is zero.
- */
-const REST_ROTATION = 0;
 
 function armRotationFor(radius) {
   const cos =
     (ARM_LEN * ARM_LEN + PIVOT_DIST * PIVOT_DIST - radius * radius) /
     (2 * ARM_LEN * PIVOT_DIST);
   const theta = (Math.acos(Math.min(1, Math.max(-1, cos))) * 180) / Math.PI;
-  return BASE_ANGLE - theta - DRAWN_ANGLE;
+  return BASE_ANGLE - theta;
 }
+
+/**
+ * Parked. Derived, not guessed: a stylus radius of 340 is beyond the record's
+ * 303, which puts the arm over its rest and clear of the vinyl.
+ */
+const REST_ROTATION = armRotationFor(340);
 
 /* ══════════════════════════════════════════════════════════════════════
  * State
@@ -139,23 +122,31 @@ function seededRandom(seed) {
 function buildGrooves() {
   const NS = "http://www.w3.org/2000/svg";
   const grooves = $("grooves");
-  const rand = seededRandom(20220517);
+  const frag = document.createDocumentFragment();
 
-  const ring = (r, opacity, width) => {
+  const ring = (r, opacity, width, sep) => {
     const c = document.createElementNS(NS, "circle");
     c.setAttribute("cx", CENTER.x);
     c.setAttribute("cy", CENTER.y);
     c.setAttribute("r", r.toFixed(2));
+    c.setAttribute("fill", "none");
     c.setAttribute("stroke-width", width);
     c.setAttribute("opacity", opacity.toFixed(3));
-    grooves.appendChild(c);
+    if (sep) c.setAttribute("class", "sep");
+    frag.appendChild(c);
   };
 
-  for (let r = R_RUN_OUT; r <= R_LEAD_IN; r += 1.05 + rand() * 0.5) {
-    ring(r, 0.055 + rand() * 0.05, 0.6);
+  // Varied pitch rather than uniform rings, which is what stops it reading as
+  // graph paper. Deterministic, so the record presses identically every launch.
+  for (let r = 126; r <= 296; r += 1.7) {
+    const opacity = 0.14 + 0.1 * Math.abs(Math.sin(r * 0.33)) + (((r * 7919) % 13) / 13) * 0.05;
+    ring(r, opacity, 1.05, false);
   }
-  [43, 53, 63].forEach((r) => ring(r, 0.21, 1)); // track separations
-  ring(R_LEAD_IN + 1.5, 0.17, 1); // lead-in
+  // The wider bands a real pressing shows between tracks.
+  [152, 180, 208, 236, 262, 286].forEach((r) => ring(r, 1, 2.6, true));
+  ring(298.5, 1, 3, true); // lead-in
+
+  grooves.appendChild(frag);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -306,8 +297,9 @@ function bindTransport() {
   $("btnPrev").addEventListener("click", () => skip("previous"));
   $("btnShuffle").addEventListener("click", toggleShuffle);
   $("btnRepeat").addEventListener("click", cycleRepeat);
-  // The cue lever, which is what actually raises the arm on a deck.
-  $("cue").addEventListener("click", toggle);
+  // Clicking the record pauses, and the needle lifts. The physical ritual and
+  // the command are one action.
+  $("deckHit").addEventListener("click", toggle);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -382,9 +374,17 @@ function render() {
   const rotation = hasSession ? armRotationFor(radius) : REST_ROTATION;
   if (rotation !== lastRotation) {
     lastRotation = rotation;
-    armG.setAttribute("transform", `rotate(${rotation.toFixed(3)} 198 42)`);
+    const spin = `rotate(${rotation.toFixed(3)} ${PIVOT.x} ${PIVOT.y})`;
+    armG.setAttribute("transform", spin);
+    // The shadow sits further out and softer when the arm is lifted, which is
+    // how a top-down view expresses height at all.
+    const lift = playing ? 0 : 1;
+    armSh.setAttribute(
+      "transform",
+      `translate(${(7 + 5 * lift).toFixed(1)} ${(12 + 7 * lift).toFixed(1)}) ${spin}`,
+    );
   }
-  needleSh.setAttribute("opacity", playing ? "0.5" : "0");
+  armSh.setAttribute("opacity", playing ? "0.3" : "0.16");
 
   // Only offer what the source says it supports.
   $("btnPlay").disabled = !hasSession || !snapshot.canPlayPause;
@@ -393,7 +393,7 @@ function render() {
   $("btnShuffle").disabled = !hasSession || !snapshot.canShuffle;
   $("btnRepeat").disabled = !hasSession || !snapshot.canRepeat;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
-  $("cue").style.cursor =
+  $("deckHit").style.cursor =
     hasSession && snapshot.canPlayPause ? "pointer" : "default";
 
   $("btnShuffle").setAttribute(
@@ -405,6 +405,10 @@ function render() {
   // The little "1" only appears for single-track repeat, which is how every
   // player distinguishes the two modes.
   $("btnRepeat").classList.toggle("repeat-one", repeat === "track");
+  $("btnShuffle").classList.toggle(
+    "on",
+    Boolean(hasSession && snapshot.shuffle),
+  );
 
   if (!hasSession) {
     $("uiTitle").textContent = "No session";

@@ -10,268 +10,265 @@
 
   <body>
     <!--
-      Every colour in this SVG comes from a CSS class, never a fill attribute.
-      Chromium does not resolve var() inside SVG presentation attributes, so
-      fill="var(--x)" fails silently; styling by class is what makes the two
-      palettes possible at all.
+      Geometry and proportions follow the supplied silver reference build.
+      What differs is the engine: the platter runs as one composited animation
+      and the arm on a transition, rather than a rAF loop writing SVG
+      transforms every frame. See CLAUDE.md constraint 4.
+
+      Every colour comes from a CSS class, never a fill attribute: Chromium
+      does not resolve var() inside SVG presentation attributes, so
+      fill="var(--x)" fails silently and theming would break.
     -->
-    <div class="vinyl-widget" id="widget" role="group" aria-label="Now playing">
-      <!-- ─── deck: the platter in a machined recess ─── -->
-      <div class="deck">
-        <svg
-          viewBox="0 0 232 232"
-          preserveAspectRatio="xMidYMid meet"
-          aria-hidden="true"
-        >
-          <defs>
-            <radialGradient id="gPlatter" cx="42%" cy="34%" r="68%">
-              <stop offset="0" class="s-platter-hi" />
-              <stop offset="0.5" class="s-platter-mid" />
-              <stop offset="1" class="s-platter-lo" />
-            </radialGradient>
-            <linearGradient
-              id="gTube"
-              gradientUnits="userSpaceOnUse"
-              x1="195.25"
-              y1="0"
-              x2="200.75"
-              y2="0"
-            >
-              <stop offset="0" class="s-metal-lo" />
-              <stop offset="0.3" class="s-metal-hi" />
-              <stop offset="0.55" class="s-metal-mid" />
-              <stop offset="1" class="s-metal-lo" />
-            </linearGradient>
-            <radialGradient id="gCap" cx="36%" cy="30%" r="78%">
-              <stop offset="0" class="s-metal-hi" />
-              <stop offset="0.55" class="s-metal-mid" />
-              <stop offset="1" class="s-metal-lo" />
-            </radialGradient>
-            <radialGradient id="gCw" cx="38%" cy="30%" r="80%">
-              <stop offset="0" class="s-metal-hi" />
-              <stop offset="0.6" class="s-metal-mid" />
-              <stop offset="1" class="s-metal-lo" />
-            </radialGradient>
-            <linearGradient id="gWell" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0" class="s-well-hi" />
-              <stop offset="1" class="s-well-lo" />
-            </linearGradient>
-            <radialGradient id="gBolt" cx="35%" cy="30%" r="75%">
-              <stop offset="0" class="s-metal-hi" />
-              <stop offset="1" class="s-metal-lo" />
-            </radialGradient>
-            <radialGradient id="gLabShade" cx="42%" cy="34%" r="72%">
-              <stop offset="0" stop-color="rgba(255,255,255,.10)" />
-              <stop offset="0.45" stop-color="rgba(255,255,255,0)" />
-              <stop offset="1" stop-color="rgba(0,0,0,.34)" />
-            </radialGradient>
-            <filter id="fB7" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="7" />
-            </filter>
-            <filter id="fB5" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="5" />
-            </filter>
-            <filter id="fB2" x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation="1.4" />
-            </filter>
-            <mask id="mV">
-              <rect x="0" y="0" width="232" height="232" fill="#000" />
-              <circle cx="96" cy="112" r="76" fill="#fff" />
-            </mask>
-            <clipPath id="cLab">
-              <circle cx="96" cy="112" r="26" />
-            </clipPath>
-          </defs>
+    <div class="widget" id="widget">
+      <div class="face">
+        <!-- ─── the plate: a raised panel, record straight onto it ─── -->
+        <div class="plate">
+          <svg viewBox="0 0 715 700" aria-hidden="true">
+            <defs>
+              <radialGradient id="gVinyl" cx="46%" cy="42%" r="65%">
+                <stop offset="0" class="s-vinyl-hi" />
+                <stop offset=".45" class="s-vinyl-mid" />
+                <stop offset=".78" class="s-vinyl-lo" />
+                <stop offset="1" class="s-vinyl-edge" />
+              </radialGradient>
+              <radialGradient id="gScrew" cx="35%" cy="30%" r="75%">
+                <stop offset="0" class="s-metal-hi" />
+                <stop offset=".45" class="s-metal-mid" />
+                <stop offset=".8" class="s-metal-lo" />
+                <stop offset="1" class="s-metal-deep" />
+              </radialGradient>
+              <radialGradient id="gBase" cx="36%" cy="30%" r="80%">
+                <stop offset="0" class="s-metal-hi" />
+                <stop offset=".5" class="s-metal-mid" />
+                <stop offset=".85" class="s-metal-lo" />
+                <stop offset="1" class="s-metal-deep" />
+              </radialGradient>
+              <radialGradient id="gCapIn" cx="40%" cy="32%" r="80%">
+                <stop offset="0" class="s-metal-hi" />
+                <stop offset=".6" class="s-metal-lo" />
+                <stop offset="1" class="s-metal-deep" />
+              </radialGradient>
+              <linearGradient id="gTube" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" class="s-metal-hi" />
+                <stop offset=".45" class="s-metal-mid" />
+                <stop offset="1" class="s-metal-deep" />
+              </linearGradient>
+              <linearGradient id="gHead" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" class="s-head-hi" />
+                <stop offset=".5" class="s-head-mid" />
+                <stop offset="1" class="s-head-lo" />
+              </linearGradient>
+              <radialGradient id="gCw" cx="35%" cy="30%" r="80%">
+                <stop offset="0" class="s-metal-mid" />
+                <stop offset=".6" class="s-metal-lo" />
+                <stop offset="1" class="s-metal-deep" />
+              </radialGradient>
+              <radialGradient id="gSpin" cx="35%" cy="30%" r="80%">
+                <stop offset="0" class="s-metal-hi" />
+                <stop offset=".55" class="s-metal-mid" />
+                <stop offset="1" class="s-metal-lo" />
+              </radialGradient>
+              <radialGradient id="gLabShade" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#fff" stop-opacity=".10" />
+                <stop offset=".62" stop-color="#000" stop-opacity="0" />
+                <stop offset="1" stop-color="#000" stop-opacity=".28" />
+              </radialGradient>
+              <linearGradient id="gSheen" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#fff" stop-opacity=".13" />
+                <stop offset="1" stop-color="#fff" stop-opacity="0" />
+              </linearGradient>
+              <filter id="fB16" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="16" />
+              </filter>
+              <filter id="fB8" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="8" />
+              </filter>
+              <filter id="fB4" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="4" />
+              </filter>
+              <clipPath id="cLab"><circle cx="335" cy="345" r="92" /></clipPath>
+              <clipPath id="cRec"><circle cx="335" cy="345" r="303" /></clipPath>
+            </defs>
 
-          <!-- Recessed well: the platter sits in a machined pocket rather than
-               on a flat face, with bolt heads at its left corners. -->
-          <rect class="well-edge" x="6" y="12" width="220" height="208" rx="12" />
-          <rect class="well-face" x="8" y="14" width="216" height="204" rx="10.5" fill="url(#gWell)" />
-          <rect class="well-rim" x="8" y="14" width="216" height="204" rx="10.5" fill="none" stroke-width="1" />
+            <!-- corner screws -->
+            <ellipse cx="63" cy="70" rx="23" ry="21" fill="#000" opacity=".18" filter="url(#fB4)" />
+            <circle cx="60" cy="65" r="22" fill="url(#gScrew)" />
+            <circle class="screw-edge" cx="60" cy="65" r="22" fill="none" stroke-width="1" />
+            <circle class="screw-inner" cx="60" cy="65" r="12.5" fill="none" stroke-width="1.6" />
+            <ellipse cx="43" cy="630" rx="23" ry="21" fill="#000" opacity=".18" filter="url(#fB4)" />
+            <circle cx="40" cy="625" r="22" fill="url(#gScrew)" />
+            <circle class="screw-edge" cx="40" cy="625" r="22" fill="none" stroke-width="1" />
+            <circle class="screw-inner" cx="40" cy="625" r="12.5" fill="none" stroke-width="1.6" />
 
-          <circle class="bolt-shadow" cx="22" cy="30" r="6.4" />
-          <circle class="bolt-face" cx="22" cy="29.4" r="5.6" fill="url(#gBolt)" stroke-width=".7" />
-          <path class="bolt-slot" d="M18.6 29.4 H25.4" stroke-width="1.1" />
-          <circle class="bolt-shadow" cx="22" cy="202" r="6.4" />
-          <circle class="bolt-face" cx="22" cy="201.4" r="5.6" fill="url(#gBolt)" stroke-width=".7" />
-          <path class="bolt-slot" d="M18.6 201.4 H25.4" stroke-width="1.1" />
+            <!-- arm rest, where the arm parks when nothing is playing -->
+            <ellipse cx="643" cy="500" rx="26" ry="15" fill="#000" opacity=".16" filter="url(#fB4)" />
+            <rect class="rest" x="620" y="480" width="44" height="24" rx="12" stroke-width="1.4" />
 
-          <!-- platter -->
-          <circle cx="96" cy="117" r="90" fill="#000" opacity=".45" filter="url(#fB5)" />
-          <circle class="platter-well" cx="96" cy="112" r="92" />
-          <circle class="platter-face" cx="96" cy="112" r="88" fill="url(#gPlatter)" stroke-width="1" />
-          <circle class="strobe" cx="96" cy="112" r="84" fill="none" opacity=".85"
-                  stroke-width="2" stroke-dasharray="1.15 3.8" />
-          <circle class="mat" cx="96" cy="112" r="80" />
-          <g class="mat-ring" fill="none" stroke-width=".7">
-            <circle cx="96" cy="112" r="34" />
-            <circle cx="96" cy="112" r="49" />
-            <circle cx="96" cy="112" r="63" />
-            <circle cx="96" cy="112" r="74" />
-          </g>
-          <circle class="spindle-hole" cx="96" cy="112" r="3.2" />
+            <circle cx="345" cy="361" r="303" fill="#000" opacity=".32" filter="url(#fB16)" />
 
-          <!-- ─── the record ─── -->
-          <g id="vinylG">
-            <g id="spinG">
-              <circle class="vinyl" cx="96" cy="112" r="76" />
-              <circle cx="96" cy="112" r="76" fill="none" stroke="#000" stroke-width="1" />
-              <g id="grooves" fill="none"></g>
-              <path class="seam" d="M 96 36.4 L 96 41.4" stroke-width=".8" opacity=".8" />
-              <g id="labelG"></g>
+            <!-- ─── the record ─── -->
+            <g id="vinylG">
+              <circle cx="335" cy="345" r="303" fill="url(#gVinyl)" />
+              <g id="spinG">
+                <g id="grooves"></g>
+                <g id="labelG"></g>
+              </g>
+
+              <!-- Fixed-light sheen above the rotating surface: the grooves
+                   turn beneath it, which is what real vinyl does. -->
+              <g clip-path="url(#cRec)" opacity=".55">
+                <path d="M335 345 L95 105 A339 339 0 0 1 260 22 Z" fill="url(#gSheen)" filter="url(#fB8)" />
+                <path d="M335 345 L575 585 A339 339 0 0 1 410 668 Z" fill="url(#gSheen)" filter="url(#fB8)" opacity=".7" />
+              </g>
+              <circle cx="335" cy="345" r="301.5" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.7" />
+
+              <circle cx="335" cy="345" r="14" fill="url(#gSpin)" />
+              <circle cx="335" cy="345" r="14" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1" />
+              <circle class="spindle-pin" cx="335" cy="345" r="5.4" />
+              <circle cx="331.6" cy="341.4" r="1.8" fill="#fff" opacity=".85" />
             </g>
-            <g mask="url(#mV)" pointer-events="none">
-              <path class="sheen-a" d="M96 112 L10 0 L140 -22 Z" opacity=".13" filter="url(#fB7)" />
-              <path class="sheen-b" d="M96 112 L190 224 L96 244 Z" opacity=".075" filter="url(#fB7)" />
+
+            <!-- ─── tonearm ─── -->
+            <g clip-path="url(#cRec)">
+              <path
+                id="armSh"
+                d="M670 105 C 780 89, 890 97, 988 107"
+                transform="translate(7 12) rotate(90 640 105)"
+                fill="none"
+                stroke="#000"
+                stroke-width="13"
+                stroke-linecap="round"
+                opacity=".3"
+                filter="url(#fB8)"
+              />
             </g>
-            <circle cx="96" cy="112" r="2.2" fill="url(#gCap)" stroke="rgba(0,0,0,.6)" stroke-width=".4" />
-          </g>
 
-          <!-- ─── tonearm ─── -->
-          <g id="armRest">
-            <ellipse cx="198" cy="122.5" rx="6.5" ry="2" fill="#000" opacity=".4" filter="url(#fB2)" />
-            <rect class="rest" x="193.2" y="117.4" width="9.6" height="5.2" rx="2.4" stroke-width=".6" />
-          </g>
-
-          <g id="cue" cursor="pointer">
-            <rect class="slot" x="212.5" y="96" width="10" height="27" rx="5" />
-            <rect class="well-rim" x="212.5" y="96" width="10" height="27" rx="5" fill="none" stroke-width=".7" />
-            <g id="cueKnob">
-              <rect class="metal-edge" x="208.4" y="110.5" width="18.2" height="9.6" rx="3"
-                    fill="url(#gCw)" stroke-width=".8" />
-              <rect x="208.4" y="110.5" width="18.2" height="3.2" rx="1.6" fill="rgba(255,255,255,.16)" />
-              <path d="M210.8 115.4 H224.2 M210.8 117.4 H224.2" stroke="rgba(0,0,0,.34)" stroke-width=".6" />
+            <g id="armG" transform="rotate(90 640 105)">
+              <circle cx="582" cy="105" r="13.5" fill="url(#gCw)" />
+              <circle cx="582" cy="105" r="13.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1" />
+              <rect x="588" y="97.5" width="28" height="15" rx="7.5" fill="url(#gTube)" />
+              <path d="M670 105 C 780 89, 890 97, 988 107" fill="none"
+                    stroke="url(#gTube)" stroke-width="12" stroke-linecap="round" />
+              <path d="M672 101.8 C 780 86, 888 94, 985 103.6" fill="none"
+                    stroke="rgba(255,255,255,.6)" stroke-width="2.6" stroke-linecap="round" opacity=".8" />
+              <!-- headshell and cartridge at the arm tip. The stylus itself is
+                   not drawn: it points down into the record, so from directly
+                   above it sits beneath the cartridge. -->
+              <g transform="translate(1032 105) rotate(118)">
+                <rect x="-47" y="-8" width="47" height="16" rx="4.5" fill="url(#gHead)"
+                      stroke="#0c0d0f" stroke-width=".8" />
+                <rect class="head-collar" x="-52" y="-3.4" width="9" height="6.8" rx="3" />
+                <rect class="cart" x="-30" y="7" width="19" height="8" rx="2" />
+                <rect x="-45" y="-6.6" width="42" height="2.6" rx="1.3" fill="rgba(255,255,255,.35)" />
+              </g>
             </g>
-            <rect x="203" y="92" width="28" height="36" fill="transparent" />
-          </g>
 
-          <g id="armBase">
-            <circle class="arm-base" cx="198" cy="42" r="13.5" stroke-width="1" />
-          </g>
-
-          <g id="armG" transform="rotate(0 198 42)">
-            <line x1="198" y1="26" x2="198" y2="43" stroke="rgba(0,0,0,.45)" stroke-width="4.8" />
-            <line x1="198" y1="26" x2="198" y2="43" stroke="url(#gTube)" stroke-width="3.2" />
-
-            <rect class="metal-edge" x="192.4" y="14.5" width="11.2" height="17" rx="5.6"
-                  fill="url(#gCw)" stroke-width=".8" />
-            <path d="M193.8 21.5 H202.2 M193.6 24 H202.4 M193.8 26.5 H202.2"
-                  stroke="rgba(0,0,0,.26)" stroke-width=".55" />
-
-            <circle class="metal-edge" cx="198" cy="42" r="6" fill="url(#gCap)" stroke-width=".8" />
-            <circle class="bearing-pin" cx="198" cy="42" r="1" />
-
-            <line x1="198" y1="47" x2="198" y2="124" stroke="rgba(0,0,0,.4)" stroke-width="7.2" stroke-linecap="round" />
-            <line x1="198" y1="47" x2="198" y2="124" stroke="url(#gTube)" stroke-width="5.5" stroke-linecap="round" />
-            <line x1="196.5" y1="49" x2="196.5" y2="122" stroke="rgba(255,255,255,.55)" stroke-width=".8"
-                  stroke-linecap="round" opacity=".5" />
-
-            <g transform="rotate(21 198 124)">
-              <path class="shell" d="M193.8 123 h8.4 l1 12.6 a3.4 3.4 0 0 1 -3.4 3.7 h-3.6 a3.4 3.4 0 0 1 -3.4 -3.7 Z"
-                    stroke-width=".8" />
-              <path class="shell-top" d="M193.8 123 h8.4 l.2 2.8 h-8.8 Z" />
-              <!-- The stylus is deliberately not drawn: it points down into the
-                   record, so from directly above it sits beneath the cartridge. -->
-              <rect class="cart" x="195.3" y="130.6" width="5.4" height="6.8" rx="1.1" stroke-width=".5" />
-              <rect class="metal-mid-fill" x="196" y="131.5" width="4" height="1.3" rx=".65" opacity=".7" />
-              <path class="metal-mid-fill" d="M202 127 h5.4 a1.5 1.5 0 0 1 0 3 h-5.4 z" />
-              <path class="metal-hi-fill" d="M202 127 h5.4 a1.5 1.5 0 0 1 .6 .5 h-6 z" opacity=".8" />
-              <ellipse id="needleSh" cx="197.9" cy="138.8" rx="3" ry=".9" fill="#000" opacity="0" filter="url(#fB2)" />
+            <!-- fixed pivot base -->
+            <ellipse cx="646" cy="115" rx="37" ry="34" fill="#000" opacity=".22" filter="url(#fB8)" />
+            <g transform="rotate(-64 640 105)">
+              <rect x="664" y="95" width="42" height="20" rx="10" fill="url(#gTube)" />
+              <circle cx="710" cy="105" r="12" fill="url(#gCapIn)" />
+              <circle cx="710" cy="105" r="12" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1" />
             </g>
-          </g>
-        </svg>
-      </div>
+            <circle cx="640" cy="105" r="34" fill="url(#gBase)" />
+            <path d="M609 96 A 34 34 0 0 1 671 96" fill="none" stroke="rgba(255,255,255,.75)"
+                  stroke-width="2.4" stroke-linecap="round" />
+            <circle cx="640" cy="105" r="21" fill="url(#gCapIn)" />
+            <circle cx="640" cy="105" r="21" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.1" />
+            <circle class="bearing-pin" cx="640" cy="105" r="4.2" />
 
-      <!-- ─── panel ─── -->
-      <div class="panel">
-        <div class="header">
-          <span class="lamp" id="uiLamp" aria-hidden="true"></span>
-          <span class="header-text">Now Playing</span>
-          <span class="header-dot" aria-hidden="true"></span>
+            <!-- Clicking the record pauses, and the needle lifts. -->
+            <circle id="deckHit" cx="335" cy="345" r="303" fill="transparent" cursor="pointer" />
+          </svg>
         </div>
 
-        <!-- The screen. The reference fills this with lyrics; PLAN.md defers
-             lyrics, so it carries what we actually have: the track, and a
-             waveform whose lit portion is the real playback position. -->
-        <div class="screen">
-          <div class="screen-inner">
-            <svg class="note" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">
-              <path d="M21 3v13.5a3.5 3.5 0 1 1-2-3.16V6.9l-9 1.8v9.8a3.5 3.5 0 1 1-2-3.16V5.2l13-2.2z" />
-            </svg>
+        <!-- ─── right column ─── -->
+        <div class="side">
+          <div class="np">
+            <i class="lamp" id="uiLamp"></i>Now&nbsp;Playing<i class="lamp"></i>
+          </div>
 
-            <div class="now">
+          <!-- The reference fills this with lyrics; PLAN.md defers lyrics and
+               we have no source for them, so it carries what we do have. -->
+          <div class="screen">
+            <div class="screen-body">
               <div class="title" id="uiTitle">No session</div>
               <div class="artist" id="uiArtist">Nothing is playing</div>
               <div class="album" id="uiAlbum"></div>
               <div class="source" id="uiSource"></div>
             </div>
 
-            <!-- Deterministic per track, and the lit portion is real progress,
-                 so it is a readout rather than decoration. Real audio-reactive
-                 bars need the peak metering in Phase 6. -->
+            <div class="note-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13.2 3.6 20 2v3.3l-5.2 1.3v9.1a3.2 3.2 0 1 1-1.6-2.77Z" />
+              </svg>
+            </div>
+
+            <!-- Deterministic per track, lit to the real playback position, so
+                 it is a readout rather than decoration. Audio-reactive bars
+                 need the peak metering in Phase 6. -->
             <div class="wave" aria-hidden="true">
               <div class="wave-row" id="uiWaveDim"></div>
               <div class="wave-row wave-lit" id="uiWaveLit"></div>
             </div>
           </div>
-        </div>
 
-        <div class="progress">
-          <span class="time" id="uiElapsed">0:00</span>
-          <div class="bar">
-            <i id="uiBar"></i>
-            <span class="knob" id="uiKnob"></span>
+          <!-- A readout, not a control: PLAN.md excludes seek, so it must not
+               look grabbable. -->
+          <div class="seekrow">
+            <div class="bar"><i id="uiBar"></i><span class="knob" id="uiKnob"></span></div>
           </div>
-          <span class="time" id="uiTotal">–:––</span>
-        </div>
+          <div class="times">
+            <span id="uiElapsed">0:00</span><span id="uiTotal">–:––</span>
+          </div>
 
-        <!-- Every control here is real. Each is disabled unless the source
-             reports it supported, so nothing offers what it cannot do. -->
-        <div class="controls">
-          <button id="btnShuffle" class="ghost" type="button" aria-label="Shuffle" aria-pressed="false">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M16 3h5v5" /><path d="M4 20 21 3" /><path d="M21 16v5h-5" />
-              <path d="m15 15 6 6" /><path d="M4 4l5 5" />
-            </svg>
-          </button>
+          <!-- Every control is real, and disabled unless the source reports it
+               supported, so nothing offers what it cannot do. -->
+          <div class="controls">
+            <button class="tbtn mode" id="btnShuffle" type="button" aria-pressed="false" aria-label="Shuffle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 7h3.3c5.6 0 7.8 10 13.4 10H20" />
+                <path d="M2 17h3.3c2.4 0 4.1-1.8 5.5-3.9" />
+                <path d="M13.2 10.9C14.6 8.8 16.3 7 18.7 7H20" />
+                <path d="m18 3.6 3.4 3.4L18 10.4" />
+                <path d="m18 13.6 3.4 3.4L18 20.4" />
+              </svg>
+            </button>
 
-          <button id="btnPrev" class="ghost" type="button" aria-label="Previous track">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M19 20 9 12l10-8z" /><path d="M5 19V5" />
-            </svg>
-          </button>
+            <button class="tbtn" id="btnPrev" type="button" aria-label="Previous track">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M11.6 12 21 6.2v11.6ZM2.6 12 12 6.2v11.6Z" />
+              </svg>
+            </button>
 
-          <button id="btnPlay" class="playpause" type="button" aria-label="Play">
-            <svg id="icPlay" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-              <!-- The glyph's own bounding box is centred at x 14.81 against a
-                   viewBox centre of 12, so it needs shifting to sit true. -->
-              <path
-                transform="translate(-2.81 0)"
-                d="M8.6 5.5v13c0 .96 1.06 1.54 1.86 1.02l10-6.5c.74-.48.74-1.56 0-2.04l-10-6.5C9.66 3.96 8.6 4.54 8.6 5.5z"
-              />
-            </svg>
-            <svg id="icPause" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-              <path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z" />
-            </svg>
-          </button>
+            <button class="big" id="btnPlay" type="button" aria-label="Play">
+              <svg id="icPause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6.2" y="4.8" width="4.1" height="14.4" rx="1.2" />
+                <rect x="13.7" y="4.8" width="4.1" height="14.4" rx="1.2" />
+              </svg>
+              <svg id="icPlay" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5.1v13.8L19.4 12Z" />
+              </svg>
+            </button>
 
-          <button id="btnNext" class="ghost" type="button" aria-label="Next track">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="m5 4 10 8-10 8z" /><path d="M19 5v14" />
-            </svg>
-          </button>
+            <button class="tbtn" id="btnNext" type="button" aria-label="Next track">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M3 6.2 12.4 12 3 17.8ZM12.4 6.2 21.8 12l-9.4 5.8Z" />
+              </svg>
+            </button>
 
-          <button id="btnRepeat" class="ghost" type="button" aria-label="Repeat" aria-pressed="false">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" />
-              <path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" />
-            </svg>
-            <span class="badge" id="uiRepeatOne" aria-hidden="true">1</span>
-          </button>
+            <button class="tbtn mode" id="btnRepeat" type="button" aria-pressed="false" aria-label="Repeat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 9V8a4 4 0 0 0-4-4H5.6" />
+                <path d="m8.4 1.6-3.4 2.4 3.4 2.4" />
+                <path d="M4 15v1a4 4 0 0 0 4 4h10.4" />
+                <path d="m15.6 22.4 3.4-2.4-3.4-2.4" />
+              </svg>
+              <span class="badge" id="uiRepeatOne" aria-hidden="true">1</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

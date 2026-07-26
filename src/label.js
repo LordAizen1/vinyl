@@ -5,34 +5,61 @@
  * broken rather than minimal. So a missing thumbnail produces a designed label
  * instead of a hole. This is a feature, not a fallback.
  *
- * The seed includes the source app, not just artist and title. Phase 0 found
- * that Windows Photos, Netflix and WhatsApp all report blank or generic
- * metadata, so seeding on `artist + title` alone would give every one of them
- * the identical label. See docs/FINDINGS.md.
+ * The look is the iridescent mother-of-pearl label from the reference design:
+ * a seeded fractal-noise swirl, with the artist's initial reversed out of it.
+ * The seed includes the source app, not just artist and title, because Phase 0
+ * found that Windows Photos, Netflix and WhatsApp all report blank or generic
+ * metadata; seeding on artist and title alone would give every one of them the
+ * identical label. See docs/FINDINGS.md.
  *
  * Same input always yields the same label.
- *
- * Built around a monogram rather than a block of text. The label renders about
- * 52px across, where set type turns to mush; a large letterform still reads as
- * a deliberate mark at that size, which is how real labels survive being small.
  */
 
-/* Label geometry, in the deck's 232x220 viewBox. */
-const CX = 96;
-const CY = 112;
-const R = 26;
+/* Label geometry, in the deck's 232x232 viewBox. */
+const CX = 335;
+const CY = 345;
+const R = 92;
 
 /**
- * Five palettes, all dark-field with light ink so they sit inside the hi-fi
- * register rather than drifting to the cream-and-terracotta look CLAUDE.md
- * rules out.
+ * Abalone palettes as [stop, r, g, b]. Teal and green through to violet, which
+ * is what real paua shell does and what the reference shows.
  */
 const PALETTES = [
-  { field: "#2b2f35", ink: "#eceef0", accent: "#8d2731", sub: "#9aa0a8" },
-  { field: "#1c282c", ink: "#e2eaec", accent: "#2f8079", sub: "#8ba0a2" },
-  { field: "#2e2b24", ink: "#efece5", accent: "#c4862f", sub: "#a89c88" },
-  { field: "#232839", ink: "#e4e9f5", accent: "#5169a6", sub: "#939bb2" },
-  { field: "#2c2621", ink: "#efe7dd", accent: "#96562f", sub: "#a5968a" },
+  [
+    [0, 15, 63, 58],
+    [0.22, 31, 119, 102],
+    [0.42, 83, 184, 151],
+    [0.58, 205, 240, 221],
+    [0.72, 143, 180, 214],
+    [0.86, 154, 111, 184],
+    [1, 217, 169, 214],
+  ],
+  [
+    [0, 40, 26, 66],
+    [0.25, 84, 52, 128],
+    [0.45, 158, 105, 199],
+    [0.6, 236, 214, 244],
+    [0.74, 120, 144, 214],
+    [0.88, 72, 178, 190],
+    [1, 190, 240, 235],
+  ],
+  [
+    [0, 7, 44, 66],
+    [0.24, 14, 90, 118],
+    [0.46, 46, 158, 164],
+    [0.62, 196, 235, 226],
+    [0.76, 120, 196, 164],
+    [0.9, 206, 182, 120],
+    [1, 240, 226, 190],
+  ],
+  [
+    [0, 48, 20, 34],
+    [0.24, 104, 42, 74],
+    [0.46, 176, 92, 120],
+    [0.62, 244, 214, 214],
+    [0.78, 150, 168, 206],
+    [1, 96, 196, 190],
+  ],
 ];
 
 /** FNV-1a, so a given track always presses the same label. */
@@ -54,7 +81,7 @@ function escapeXml(value) {
 
 /**
  * The monogram: the first letter of the artist, or of the title when there is
- * no artist, or a record glyph when there is neither.
+ * no artist, or a note glyph when there is neither.
  *
  * Takes the first letter-or-digit rather than the first character, so a title
  * opening with a bracket or a quote does not produce a punctuation monogram.
@@ -64,7 +91,7 @@ function monogramOf(track) {
   for (const char of source) {
     if (/\p{L}|\p{N}/u.test(char)) return char.toUpperCase();
   }
-  return "♪"; // an eighth note, for a source that tells us nothing at all
+  return "♪";
 }
 
 /** A plausible catalogue number, derived from the same hash. */
@@ -73,136 +100,143 @@ function catalogueOf(seed) {
   return `${prefix} ${1000 + ((seed >>> 7) % 9000)}`;
 }
 
-/* Arc paths. sweep-flag 1 in a y-down system gives the upper arc; sweep-flag 0
-   gives the lower one, traversed left to right so the type reads correctly. */
-function arcs() {
-  return `
-    <defs>
-      <path id="lblTop" d="M ${CX - 18.5} ${CY} A 18.5 18.5 0 0 1 ${CX + 18.5} ${CY}" fill="none"/>
-      <path id="lblTopWide" d="M ${CX - 21} ${CY} A 21 21 0 0 1 ${CX + 21} ${CY}" fill="none"/>
-      <path id="lblBottom" d="M ${CX - 19.5} ${CY} A 19.5 19.5 0 0 0 ${CX + 19.5} ${CY}" fill="none"/>
-    </defs>`;
-}
-
-const spindle = `
-  <circle cx="${CX}" cy="${CY}" r="2.6" fill="#0b0c0d"/>
-  <circle cx="${CX}" cy="${CY}" r="2.6" fill="none" stroke="rgba(0,0,0,.55)" stroke-width=".4"/>`;
-
-function field(p) {
-  return `
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="${p.field}"/>
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#gLabShade)"/>`;
-}
-
-function rim(p) {
-  return `
-    <circle cx="${CX}" cy="${CY}" r="${R - 0.7}" fill="none" stroke="${p.sub}" stroke-opacity=".34" stroke-width=".5"/>
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".9"/>`;
-}
-
-/**
- * The monogram itself.
+/* ═══════════════════════════ abalone ═══════════════════════════
  *
- * Sits at CY-9 so its descender clears the spindle hole at CY. Centred on the
- * label it looked like the hole had been punched through the letterform.
- */
-function mark(letter, fill, size = 19) {
-  return `<text x="${CX}" y="${CY - 9}" font-family="var(--font-display)" font-size="${size}"
-      fill="${fill}" text-anchor="middle" dominant-baseline="middle"
-    >${escapeXml(letter)}</text>`;
-}
-
-/**
- * The arced line uses the grotesque, not the display face.
+ * Generated from seeded fractal noise with domain warping, which is what turns
+ * smooth noise into the banded, shell-like swirl.
  *
- * It renders around 3.5px. Blackletter at that size is an unreadable smear;
- * a condensed grotesque in caps still holds. The display face is reserved for
- * the initial, which is large enough to carry it.
+ * Rendered once per track and cached. It is the one genuinely expensive thing
+ * in the frontend, so the texture is deliberately small (128px, upscaled by the
+ * SVG) with a low octave count. That is affordable on a track change and would
+ * not be on a timer.
  */
-function arced(pathId, text, size, fill, spacing, weight = 600) {
-  return `<text class="lbl-fit" data-arc="${pathId}" font-family="var(--font-label)" font-size="${size}"
-      font-weight="${weight}" letter-spacing="${spacing}" fill="${fill}" text-anchor="middle"
-    ><textPath href="#${pathId}" startOffset="50%">${escapeXml(text)}</textPath></text>`;
+const ABALONE_SIZE = 128;
+const abaloneCache = new Map();
+
+/** Small, fast PRNG. Same seed, same swirl. */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
-function catalogue(y, text, fill) {
-  return `<text x="${CX}" y="${y}" font-family="var(--font-mono)" font-size="2.9" fill="${fill}"
-      fill-opacity=".7" text-anchor="middle">${escapeXml(text)}</text>`;
+function abaloneTexture(seed) {
+  const key = String(seed);
+  const cached = abaloneCache.get(key);
+  if (cached) return cached;
+
+  const palette = PALETTES[seed % PALETTES.length];
+  const size = ABALONE_SIZE;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const image = ctx.createImageData(size, size);
+  const data = image.data;
+
+  // Value-noise lattice, shuffled by the seed.
+  const rng = mulberry32(seed);
+  const perm = new Uint8Array(512);
+  const order = new Uint8Array(256);
+  for (let i = 0; i < 256; i += 1) order[i] = i;
+  for (let i = 255; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = order[i];
+    order[i] = order[j];
+    order[j] = tmp;
+  }
+  for (let i = 0; i < 512; i += 1) perm[i] = order[i & 255];
+
+  const values = new Float32Array(256);
+  for (let i = 0; i < 256; i += 1) values[i] = rng();
+
+  const lattice = (ix, iy) => values[perm[(ix + perm[iy & 255]) & 255]];
+  const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+
+  function noise(x, y) {
+    const ix = Math.floor(x);
+    const iy = Math.floor(y);
+    const fx = x - ix;
+    const fy = y - iy;
+    const a = lattice(ix, iy);
+    const b = lattice(ix + 1, iy);
+    const c = lattice(ix, iy + 1);
+    const d = lattice(ix + 1, iy + 1);
+    const u = fade(fx);
+    const v = fade(fy);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+
+  function fbm(x, y, octaves) {
+    let sum = 0;
+    let amp = 0.5;
+    let freq = 1;
+    for (let k = 0; k < octaves; k += 1) {
+      sum += amp * noise(x * freq, y * freq);
+      amp *= 0.5;
+      freq *= 2.03;
+    }
+    return sum / (1 - 0.5 ** octaves);
+  }
+
+  function sample(t) {
+    const clamped = Math.min(1, Math.max(0, t));
+    for (let k = 1; k < palette.length; k += 1) {
+      if (clamped <= palette[k][0]) {
+        const lo = palette[k - 1];
+        const hi = palette[k];
+        const u = (clamped - lo[0]) / (hi[0] - lo[0] || 1);
+        return [
+          lo[1] + (hi[1] - lo[1]) * u,
+          lo[2] + (hi[2] - lo[2]) * u,
+          lo[3] + (hi[3] - lo[3]) * u,
+        ];
+      }
+    }
+    const last = palette[palette.length - 1];
+    return [last[1], last[2], last[3]];
+  }
+
+  let offset = 0;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const nx = x / size;
+      const ny = y / size;
+      // Domain warping: this is what turns smooth noise into shell banding.
+      const wx = fbm(nx * 3 + 11.7, ny * 3 + 4.2, 3);
+      const wy = fbm(nx * 3 + 5.2, ny * 3 + 1.3, 3);
+      let t = fbm(nx * 2.4 + 2.4 * wx, ny * 2.4 + 2.4 * wy, 3);
+      const band = 0.5 + 0.5 * Math.sin((nx * 3.6 + wx * 3.2) * 5.6 + t * 7);
+      t = t * 0.55 + band * 0.45;
+
+      const shimmer = 0.82 + 0.36 * fbm(nx * 9 + 8.8, ny * 9 + 3.1, 2);
+      const rgb = sample(t);
+      data[offset] = Math.min(255, rgb[0] * shimmer);
+      data[offset + 1] = Math.min(255, rgb[1] * shimmer);
+      data[offset + 2] = Math.min(255, rgb[2] * shimmer);
+      data[offset + 3] = 255;
+      offset += 4;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+  const url = canvas.toDataURL("image/png");
+  abaloneCache.set(key, url);
+  return url;
 }
 
-/* ─────────────────────────── archetypes ───────────────────────────
-   Each is one monogram, one arced line, and at most one ring device.
+/* ═══════════════════════════ the labels ═══════════════════════════ */
 
-   Vertical budget, so nothing collides: monogram CY-15 to CY-3, spindle hole
-   CY±2.6, top arc around CY-19, bottom arc around CY+19. An archetype using
-   the bottom arc puts its catalogue number at CY+10, between the hole and the
-   arc; one using the top arc puts it at CY+20, below everything. */
-
-/** A ruled circle around the mark. The quiet one. */
-function ringed(p, mono, title, cat) {
-  return `
-    ${field(p)}
-    <circle cx="${CX}" cy="${CY}" r="17" fill="none" stroke="${p.accent}" stroke-width="1"/>
-    ${mark(mono, p.ink)}
-    ${arced("lblTopWide", title, 3.6, p.sub, 0.35)}
-    ${catalogue(CY + 20, cat, p.sub)}
-    ${rim(p)}${spindle}`;
-}
-
-/** The mark reversed out of a solid accent disc. The loud one. */
-function disc(p, mono, title, cat) {
-  return `
-    ${field(p)}
-    <circle cx="${CX}" cy="${CY - 3}" r="17" fill="${p.accent}"/>
-    ${mark(mono, "#f6f4f1")}
-    ${arced("lblTopWide", title, 3.6, p.sub, 0.35)}
-    ${catalogue(CY + 20, cat, p.sub)}
-    ${rim(p)}${spindle}`;
-}
-
-/** A band behind the mark, Blue Note by way of a monogram. */
-function banded(p, mono, title, cat) {
-  return `
-    ${field(p)}
-    <path d="M ${CX - 25.8} ${CY - 17.5} h 51.6 v 16.5 h -51.6 z" fill="${p.accent}"
-          opacity=".92" clip-path="url(#cLab)"/>
-    ${mark(mono, "#f6f4f1")}
-    ${arced("lblBottom", title, 3.5, p.sub, 0.35)}
-    ${catalogue(CY + 10, cat, p.sub)}
-    ${rim(p)}${spindle}`;
-}
-
-/** A quarter arc in the outer band. The asymmetric one, and the one that most
-    obviously reads as turning. */
-function quartered(p, mono, title, cat) {
-  const ringR = 22.6;
-  const quarter = (2 * Math.PI * ringR) / 4;
-  return `
-    ${field(p)}
-    <circle cx="${CX}" cy="${CY}" r="${ringR}" fill="none" stroke="${p.accent}" stroke-width="5"
-            stroke-dasharray="${quarter.toFixed(2)} ${(quarter * 3).toFixed(2)}"
-            transform="rotate(-86 ${CX} ${CY})" opacity=".92"/>
-    ${mark(mono, p.ink)}
-    ${arced("lblBottom", title, 3.5, p.sub, 0.35)}
-    ${catalogue(CY + 10, cat, p.sub)}
-    ${rim(p)}${spindle}`;
-}
-
-/** Hairline rules above and below the mark. The formal one. */
-function ruled(p, mono, title, cat) {
-  return `
-    ${field(p)}
-    <path d="M ${CX - 14} ${CY - 18} h 28 M ${CX - 14} ${CY + 5.5} h 28"
-          stroke="${p.accent}" stroke-width="1.1"/>
-    <path d="M ${CX - 14} ${CY - 16.2} h 28 M ${CX - 14} ${CY + 7.3} h 28"
-          stroke="${p.accent}" stroke-opacity=".45" stroke-width=".5"/>
-    ${mark(mono, p.ink)}
-    ${arced("lblBottom", title, 3.5, p.sub, 0.35)}
-    ${catalogue(CY + 13, cat, p.sub)}
-    ${rim(p)}${spindle}`;
-}
-
-const ARCHETYPES = [ringed, disc, banded, quartered, ruled];
+/* The record's own rings around the label. The spindle itself is drawn by the
+   deck, above the rotating group, since it does not turn with the record. */
+const rim = `
+  <circle cx="${CX}" cy="${CY}" r="${R + 1}" fill="none" stroke="#0b0c0e" stroke-width="3.4"/>
+  <circle cx="${CX}" cy="${CY}" r="${R + 3.6}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1.6"/>`;
 
 /**
  * Builds the label markup for a track.
@@ -211,72 +245,46 @@ const ARCHETYPES = [ringed, disc, banded, quartered, ruled];
  * @returns {string} SVG markup for the contents of the label group
  */
 export function proceduralLabel(track) {
-  // The arced line carries the artist when we have one, since the panel
-  // already shows the title in full a few pixels away. When there is no
-  // artist it falls back to the title rather than repeating the source app,
-  // which would put a process name on the record. See docs/FINDINGS.md.
-  const line = (track.artist || track.title || "").toUpperCase();
-
   const seed = hashOf(
     `${track.artist || ""}|${track.title || ""}|${track.sourceApp || ""}`,
   );
 
-  const palette = PALETTES[seed % PALETTES.length];
-  const archetype = ARCHETYPES[(seed >>> 11) % ARCHETYPES.length];
+  const mono = monogramOf(track);
+  const catalogue = catalogueOf(seed);
 
-  return (
-    arcs() + archetype(palette, monogramOf(track), line, catalogueOf(seed))
-  );
+  return `
+    <defs>
+      <filter id="lblInk" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.45"/>
+      </filter>
+    </defs>
+    <g clip-path="url(#cLab)">
+      <image href="${abaloneTexture(seed)}" x="${CX - R}" y="${CY - R}"
+             width="${R * 2}" height="${R * 2}" preserveAspectRatio="xMidYMid slice"/>
+      <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#gLabShade)"/>
+    </g>
+    <text x="${CX}" y="${CY - 26}" font-family="var(--font-display)" font-size="62"
+          fill="#ffffff" fill-opacity=".92" text-anchor="middle"
+          dominant-baseline="middle" filter="url(#lblInk)">${escapeXml(mono)}</text>
+    <text x="${CX}" y="${CY + 52}" font-family="var(--font-mono)" font-size="10"
+          fill="#ffffff" fill-opacity=".6" text-anchor="middle"
+    >${escapeXml(catalogue)}</text>
+    ${rim}`;
 }
 
-/**
- * The real-artwork label: the cover itself, ringed like a pressed label.
- *
- * Deliberately no shading over the image. The procedural labels get a radial
- * shade because they are flat vector fills that need it, but real album art
- * already carries its own light, and tinting it just dulls the cover.
- */
+/** The real-artwork label: the cover itself, ringed like a pressed label. */
 export function artLabel(url) {
   return `
     <g clip-path="url(#cLab)">
       <image href="${escapeXml(url)}" x="${CX - R}" y="${CY - R}" width="${R * 2}" height="${R * 2}"
              preserveAspectRatio="xMidYMid slice"/>
     </g>
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".9"/>
-    ${spindle}`;
+    ${rim}`;
 }
 
 /**
- * Truncates any label text that would overrun its arc.
- *
- * Must run after the markup is in the document, because it measures rendered
- * glyphs. Phase 0 found artist strings like "The Weeknd — After Hours
- * (Deluxe)", which comfortably overrun a 26px label.
+ * Kept for the caller's benefit: the abalone label has no arced type to fit, so
+ * there is nothing to measure. Retained so main.js does not need to know which
+ * label style is in use.
  */
-export function fitLabelText(root) {
-  for (const el of root.querySelectorAll(".lbl-fit")) {
-    const arcId = el.dataset.arc;
-    const limit = arcId
-      ? arcLengthOf(root, arcId) * 0.92
-      : Number(el.dataset.width || 40);
-
-    // Write to the textPath, not to the <text>. Setting textContent on the
-    // parent replaces the textPath child with a bare text node, which silently
-    // drops the string off the arc and renders it at the origin instead.
-    // SVGTextPathElement extends SVGTextContentElement, so it measures itself.
-    const target = el.querySelector("textPath") ?? el;
-
-    const full = target.textContent;
-    if (target.getComputedTextLength() <= limit) continue;
-
-    for (let cut = full.length - 1; cut > 0; cut -= 1) {
-      target.textContent = `${full.slice(0, cut).trimEnd()}…`;
-      if (target.getComputedTextLength() <= limit) break;
-    }
-  }
-}
-
-function arcLengthOf(root, id) {
-  const path = root.querySelector(`#${id}`);
-  return path ? path.getTotalLength() : 40;
-}
+export function fitLabelText() {}

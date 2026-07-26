@@ -1,14 +1,15 @@
 /*
- * The widget.
+ * The widget. Proportions follow the supplied silver reference build: sized in
+ * cqw throughout, so it scales with its container rather than snapping at
+ * breakpoints.
  *
- * Silver is the default, matching the reference design: brushed aluminium
- * chassis, mauve screen, minimal line icons. A dark scheme follows the Windows
- * setting, because CLAUDE.md's original reasoning still holds on a dark
- * desktop, where a bright slab reads as a hole rather than an object.
+ * Silver is the default. A dark scheme follows the Windows setting, because
+ * CLAUDE.md's original reasoning still holds on a dark desktop, where a bright
+ * slab reads as a hole rather than an object.
  *
- * Every SVG colour is applied by CSS class, never by a fill attribute.
+ * Every SVG colour is applied by CSS class, never by a fill attribute:
  * Chromium does not resolve var() inside SVG presentation attributes, so
- * fill="var(--x)" fails silently. This is what makes theming possible.
+ * fill="var(--x)" fails silently and theming would break.
  */
 
 @font-face {
@@ -27,9 +28,8 @@
   src: url("assets/fonts/JetBrainsMono-latin.woff2") format("woff2");
 }
 
-/* Two uses only: the brand plate, and the initial on the procedural label.
-   Never in all caps: at plinth size blackletter capitals collapse into an
-   unreadable smear, where mixed case reads fine. */
+/* One use only: the initial on the procedural label. Never in all caps, where
+   blackletter capitals collapse into an unreadable smear. */
 @font-face {
   font-family: "Pirata One";
   font-style: normal;
@@ -40,77 +40,61 @@
 
 /* ═══════════════ silver, the default ═══════════════ */
 :root {
-  --chassis-hi: #f4f5f6;
-  --chassis: #dcdfe2;
-  --chassis-lo: #bcc1c6;
-  --chassis-edge: rgba(0, 0, 0, 0.16);
-
-  --well-hi: #eaecee;
-  --well-lo: #c9cdd1;
-  --well-rim-c: rgba(255, 255, 255, 0.9);
+  --steel-hi: #f6f7f8;
+  --steel: #dcdee0;
+  --steel-lo: #c3c5c8;
+  --plate-hi: #eceef0;
+  --plate-lo: #d5d7da;
 
   --metal-hi: #ffffff;
-  --metal-mid: #b7bcc3;
-  --metal-lo: #6f747a;
-  --metal-edge-c: #878d93;
+  --metal-mid: #c9ccd0;
+  --metal-lo: #96999c;
+  --metal-deep: #6b6e72;
 
-  --platter-hi: #a4aab1;
-  --platter-mid: #868c93;
-  --platter-lo: #676d74;
-  --platter-well-c: #b0b5ba;
-  --platter-edge-c: #8d9399;
-  --strobe-c: #3c4147;
+  --vinyl-hi: #212226;
+  --vinyl-mid: #121317;
+  --vinyl-lo: #0a0b0d;
+  --vinyl-edge: #050506;
+  --groove: #000000;
+  --groove-sep: rgba(255, 255, 255, 0.05);
 
-  --mat-c: #232528;
-  --mat-ring-c: rgba(255, 255, 255, 0.05);
-  --spindle-hole-c: #151719;
+  --head-hi: #5a5d61;
+  --head-mid: #33363a;
+  --head-lo: #1b1d20;
+  --cart-c: #17181b;
+  --collar-c: #494c50;
+  --spindle-pin-c: #75787c;
+  --bearing-pin-c: #9a9da1;
+  --screw-edge-c: rgba(0, 0, 0, 0.25);
+  --screw-inner-c: rgba(0, 0, 0, 0.18);
+  --rest-fill: #cdd0d3;
+  --rest-stroke: rgba(0, 0, 0, 0.22);
 
-  --vinyl-c: #141517;
-  --groove-c: #c2c9d1;
-  --seam-c: #7b818a;
-  --sheen-a-c: #ffffff;
-  --sheen-b-c: #e6ecf4;
+  --screen-hi: #b98e92;
+  --screen: #b08386;
+  --screen-lo: #a67a7e;
+  --screen-ink: rgba(255, 248, 247, 0.97);
+  --screen-sub: rgba(255, 248, 247, 0.78);
+  --screen-faint: rgba(255, 248, 247, 0.52);
+  --wave-dim: rgba(255, 247, 246, 0.3);
+  --wave-lit: rgba(255, 247, 246, 0.88);
 
-  --rest-fill: #a9aeb4;
-  --rest-stroke: rgba(0, 0, 0, 0.24);
-  --slot-c: #9ea3a9;
-  --arm-base-fill: #d0d4d8;
-  --arm-base-stroke: #adb2b8;
-  --bearing-pin-c: #686d74;
-  --shell-fill: #8a9097;
-  --shell-edge-c: #595e64;
-  --shell-top-c: #c0c5cb;
-  --cart-fill: #474c52;
-  --cart-edge-c: #303439;
-  --bolt-shadow-c: #a6abb1;
-  --bolt-slot-c: #888e95;
+  --ink: #26282b;
+  --ink-soft: #3d3f43;
+  --ink-mute: rgba(38, 40, 43, 0.55);
+  --lamp: #cf7f28;
+  --lamp-soft: rgba(207, 127, 40, 0.45);
+  --lamp-off: rgba(38, 40, 43, 0.3);
 
-  /* the dusty rose screen */
-  --screen-bg: #b9959a;
-  --screen-bg-lo: #a8858a;
-  --screen-bezel: rgba(255, 255, 255, 0.85);
-  --screen-shadow: rgba(0, 0, 0, 0.3);
-  --screen-ink: #ffffff;
-  --screen-sub: rgba(255, 255, 255, 0.78);
-  --screen-faint: rgba(255, 255, 255, 0.5);
-  --wave-dim: rgba(255, 255, 255, 0.28);
-  --wave-lit: rgba(255, 255, 255, 0.82);
+  --track-c: rgba(30, 31, 33, 0.32);
+  --fill-c: #232426;
+  --knob-hi: #ffffff;
+  --knob-mid: #e7e9eb;
+  --knob-lo: #c9cbce;
+  --big-ring: #2b2c2e;
+  --big-hi: #f7f8f9;
+  --big-lo: #dfe1e3;
 
-  --text: #23262a;
-  --steel: #5b6067;
-  --faint: #878d94;
-  --lamp: #d4842a;
-  --lamp-soft: rgba(212, 132, 42, 0.45);
-  --lamp-off: #b2b7bc;
-
-  --glyph: #2c3035;
-  --glyph-hover: #0d0f11;
-  --btn-face-hi: #fdfdfe;
-  --btn-face-lo: #dfe3e6;
-  --btn-edge: #a9aeb4;
-  --track: rgba(0, 0, 0, 0.16);
-
-  --radius: 14px;
   --font-label: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   --font-display: "Pirata One", "UnifrakturMaguntia", Georgia, serif;
@@ -119,196 +103,218 @@
 /* ═══════════════ dark, on a dark desktop ═══════════════ */
 @media (prefers-color-scheme: dark) {
   :root {
-    --chassis-hi: #24272c;
-    --chassis: #191b1f;
-    --chassis-lo: #0e1013;
-    --chassis-edge: rgba(255, 255, 255, 0.075);
+    --steel-hi: #26292e;
+    --steel: #1a1c20;
+    --steel-lo: #101215;
+    --plate-hi: #1c1f23;
+    --plate-lo: #121417;
 
-    --well-hi: #131519;
-    --well-lo: #0a0b0d;
-    --well-rim-c: rgba(255, 255, 255, 0.08);
+    --metal-hi: #c3c8ce;
+    --metal-mid: #8f959c;
+    --metal-lo: #5c6167;
+    --metal-deep: #383c41;
 
-    --metal-hi: #b4bac2;
-    --metal-mid: #8b9199;
-    --metal-lo: #43474d;
-    --metal-edge-c: #1d1f23;
+    --vinyl-hi: #1a1b1e;
+    --vinyl-mid: #0e0f12;
+    --vinyl-lo: #08090b;
+    --vinyl-edge: #040405;
+    --groove: #000000;
+    --groove-sep: rgba(255, 255, 255, 0.045);
 
-    --platter-hi: #6c727b;
-    --platter-mid: #4a4e56;
-    --platter-lo: #33363c;
-    --platter-well-c: #0c0d0f;
-    --platter-edge-c: #2b2e33;
-    --strobe-c: #0e1013;
-
-    --mat-c: #121316;
-    --mat-ring-c: rgba(255, 255, 255, 0.03);
-    --spindle-hole-c: #08090a;
-
-    --vinyl-c: #0b0b0d;
-    --groove-c: #8f96a2;
-    --seam-c: #565b64;
-    --sheen-a-c: #d5dfee;
-    --sheen-b-c: #b6c3d8;
-
-    --rest-fill: #17181b;
+    --head-hi: #5a5d61;
+    --head-mid: #33363a;
+    --head-lo: #1b1d20;
+    --cart-c: #131417;
+    --collar-c: #494c50;
+    --spindle-pin-c: #6a6d71;
+    --bearing-pin-c: #8a8d91;
+    --screw-edge-c: rgba(0, 0, 0, 0.5);
+    --screw-inner-c: rgba(0, 0, 0, 0.4);
+    --rest-fill: #24262a;
     --rest-stroke: rgba(255, 255, 255, 0.1);
-    --slot-c: #0d0f12;
-    --arm-base-fill: #1f2125;
-    --arm-base-stroke: #2c2e33;
-    --bearing-pin-c: #32353a;
-    --shell-fill: #3a3e45;
-    --shell-edge-c: #141517;
-    --shell-top-c: #616770;
-    --cart-fill: #1a1c20;
-    --cart-edge-c: #0b0c0e;
-    --bolt-shadow-c: #08090b;
-    --bolt-slot-c: #24272c;
 
-    --screen-bg: #4a3438;
-    --screen-bg-lo: #3a282c;
-    --screen-bezel: rgba(255, 255, 255, 0.08);
-    --screen-shadow: rgba(0, 0, 0, 0.65);
-    --screen-ink: #f3ebec;
-    --screen-sub: rgba(243, 235, 236, 0.72);
-    --screen-faint: rgba(243, 235, 236, 0.45);
-    --wave-dim: rgba(243, 235, 236, 0.22);
-    --wave-lit: rgba(243, 235, 236, 0.78);
+    --screen-hi: #4d3539;
+    --screen: #422e32;
+    --screen-lo: #37262a;
+    --screen-ink: rgba(250, 240, 240, 0.95);
+    --screen-sub: rgba(250, 240, 240, 0.72);
+    --screen-faint: rgba(250, 240, 240, 0.45);
+    --wave-dim: rgba(250, 240, 240, 0.22);
+    --wave-lit: rgba(250, 240, 240, 0.8);
 
-    --text: #e8e9eb;
-    --steel: #8a8f98;
-    --faint: #5f646c;
+    --ink: #e6e8ea;
+    --ink-soft: #b3b7bc;
+    --ink-mute: rgba(230, 232, 234, 0.5);
     --lamp: #ffb454;
     --lamp-soft: rgba(255, 180, 84, 0.5);
-    --lamp-off: #34363a;
+    --lamp-off: rgba(230, 232, 234, 0.22);
 
-    --glyph: #b9bec5;
-    --glyph-hover: #f2f4f6;
-    --btn-face-hi: #33373d;
-    --btn-face-lo: #1d2024;
-    --btn-edge: #0d0f12;
-    --track: rgba(255, 255, 255, 0.16);
+    --track-c: rgba(255, 255, 255, 0.18);
+    --fill-c: #d8dbde;
+    --knob-hi: #ffffff;
+    --knob-mid: #d3d6d9;
+    --knob-lo: #9ea2a6;
+    --big-ring: #4d5157;
+    --big-hi: #2e3238;
+    --big-lo: #1c1f23;
   }
 }
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html,
 body {
   height: 100%;
-  margin: 0;
   overflow: hidden;
   background: transparent;
 }
 
 body {
   font-family: var(--font-label);
-  color: var(--text);
+  color: var(--ink);
 }
 
 /* ─────────────────────────── chassis ─────────────────────────── */
-.vinyl-widget {
-  container: vinylw / size;
+.widget {
+  container-type: inline-size;
+  width: 100%;
+  height: 100%;
+  padding: 0.62cqw;
+  border-radius: 4.15cqw;
+  background: linear-gradient(180deg, var(--steel-hi) 0%, var(--steel) 30%, var(--steel-lo) 100%);
+  box-shadow:
+    0 1.7cqw 3.6cqw rgba(18, 20, 23, 0.34),
+    0 0.4cqw 1cqw rgba(18, 20, 23, 0.22);
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.face {
   position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  padding: 10px;
-  border-radius: var(--radius);
-  background: linear-gradient(
-    166deg,
-    var(--chassis-hi) 0%,
-    var(--chassis) 46%,
-    var(--chassis-lo) 100%
-  );
-  border: 1px solid var(--chassis-edge);
+  border-radius: 3.55cqw;
+  background: linear-gradient(180deg, var(--steel-hi) 0%, var(--steel) 46%, var(--steel-lo) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    0 22px 44px -20px rgba(0, 0, 0, 0.45),
-    0 5px 14px rgba(0, 0, 0, 0.22);
+    inset 0 0.16cqw 0.3cqw rgba(255, 255, 255, 0.9),
+    inset 0 -0.35cqw 0.8cqw rgba(0, 0, 0, 0.16);
   overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  user-select: none;
 }
 
-/* Brushed machining. A static layer: never on the spinning group, where a
-   live filter would re-evaluate every frame. */
-.vinyl-widget::before {
+/* Brushed striations under a fine grain. Static layers: never on the spinning
+   group, where a live filter would re-evaluate every frame. */
+.face::before {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
   border-radius: inherit;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.02 1.4' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.55'/></svg>");
-  opacity: 0.07;
-  mix-blend-mode: overlay;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.045) 0 0.07cqw,
+      rgba(0, 0, 0, 0.032) 0.07cqw 0.14cqw,
+      transparent 0.14cqw 0.24cqw
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
 }
 
-/* ─────────────────────────── deck ─────────────────────────── */
-.deck {
-  flex: none;
-  height: 100%;
-  aspect-ratio: 1;
-  position: relative;
+/* A broad diagonal sweep of light across the faceplate. */
+.face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    112deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0) 26%,
+    rgba(0, 0, 0, 0.05) 58%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
 }
 
-.deck svg {
+/* ─────────────────────────── the plate ─────────────────────────── */
+.plate {
+  position: absolute;
+  left: 6.2cqw;
+  top: 7.8cqw;
+  width: 46.5cqw;
+  height: 45.6cqw;
+  border-radius: 2.6cqw;
+  background: linear-gradient(180deg, var(--plate-hi) 0%, var(--plate-lo) 100%);
+  box-shadow:
+    0 1.1cqw 2.3cqw rgba(15, 17, 20, 0.2),
+    0 0.25cqw 0.6cqw rgba(15, 17, 20, 0.14),
+    inset 0 0.14cqw 0.25cqw rgba(255, 255, 255, 0.85),
+    inset 0 -0.3cqw 0.7cqw rgba(0, 0, 0, 0.1);
+}
+
+.plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0 0.07cqw,
+    rgba(0, 0, 0, 0.03) 0.07cqw 0.14cqw,
+    transparent 0.14cqw 0.26cqw
+  );
+  opacity: 0.6;
+}
+
+.plate svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
 }
 
 /* ── SVG palette. Classes, not fill attributes: see the note at the top. ── */
-.s-platter-hi { stop-color: var(--platter-hi); }
-.s-platter-mid { stop-color: var(--platter-mid); }
-.s-platter-lo { stop-color: var(--platter-lo); }
 .s-metal-hi { stop-color: var(--metal-hi); }
 .s-metal-mid { stop-color: var(--metal-mid); }
 .s-metal-lo { stop-color: var(--metal-lo); }
-.s-well-hi { stop-color: var(--well-hi); }
-.s-well-lo { stop-color: var(--well-lo); }
+.s-metal-deep { stop-color: var(--metal-deep); }
+.s-vinyl-hi { stop-color: var(--vinyl-hi); }
+.s-vinyl-mid { stop-color: var(--vinyl-mid); }
+.s-vinyl-lo { stop-color: var(--vinyl-lo); }
+.s-vinyl-edge { stop-color: var(--vinyl-edge); }
+.s-head-hi { stop-color: var(--head-hi); }
+.s-head-mid { stop-color: var(--head-mid); }
+.s-head-lo { stop-color: var(--head-lo); }
 
-.well-edge { fill: rgba(0, 0, 0, 0.22); }
-.well-rim { stroke: var(--well-rim-c); }
-.bolt-shadow { fill: var(--bolt-shadow-c); }
-.bolt-face { stroke: var(--well-rim-c); }
-.bolt-slot { stroke: var(--bolt-slot-c); }
-.platter-well { fill: var(--platter-well-c); }
-.platter-face { stroke: var(--platter-edge-c); }
-.strobe { stroke: var(--strobe-c); }
-.mat { fill: var(--mat-c); }
-.mat-ring { stroke: var(--mat-ring-c); }
-.spindle-hole { fill: var(--spindle-hole-c); }
-.vinyl { fill: var(--vinyl-c); }
-.seam { stroke: var(--seam-c); }
-.sheen-a { fill: var(--sheen-a-c); }
-.sheen-b { fill: var(--sheen-b-c); }
-.rest { fill: var(--rest-fill); stroke: var(--rest-stroke); }
-.slot { fill: var(--slot-c); }
-.arm-base { fill: var(--arm-base-fill); stroke: var(--arm-base-stroke); }
-.metal-edge { stroke: var(--metal-edge-c); }
+.screw-edge { stroke: var(--screw-edge-c); }
+.screw-inner { stroke: var(--screw-inner-c); }
+.spindle-pin { fill: var(--spindle-pin-c); }
 .bearing-pin { fill: var(--bearing-pin-c); }
-.shell { fill: var(--shell-fill); stroke: var(--shell-edge-c); }
-.shell-top { fill: var(--shell-top-c); }
-.cart { fill: var(--cart-fill); stroke: var(--cart-edge-c); }
-.metal-mid-fill { fill: var(--metal-mid); }
-.metal-hi-fill { fill: var(--metal-hi); }
-#grooves circle { stroke: var(--groove-c); }
+.cart { fill: var(--cart-c); }
+.head-collar { fill: var(--collar-c); }
+.rest { fill: var(--rest-fill); stroke: var(--rest-stroke); }
+#grooves circle { stroke: var(--groove); }
+#grooves circle.sep { stroke: var(--groove-sep); }
 
+/* The record settles onto the plate when a session appears. */
 #vinylG {
   opacity: 0;
-  transform: scale(0.962);
+  transform: scale(0.975);
   transform-box: view-box;
-  transform-origin: 96px 112px;
+  transform-origin: 335px 345px;
   transition:
     opacity 0.5s ease,
     transform 0.62s cubic-bezier(0.2, 0.75, 0.22, 1);
 }
 
-.vinyl-widget.loaded #vinylG {
+.widget.loaded #vinylG {
   opacity: 1;
   transform: scale(1);
 }
@@ -318,7 +324,7 @@ body {
    forbids writing this per frame, and nothing does. */
 #spinG {
   transform-box: view-box;
-  transform-origin: 96px 112px;
+  transform-origin: 335px 345px;
   will-change: transform;
 }
 
@@ -326,116 +332,101 @@ body {
   transition: opacity 0.22s ease;
 }
 
-#armG {
-  transition: transform 420ms cubic-bezier(0.34, 1.36, 0.64, 1);
+/* The arm sweeps on a transition. Real state moves it about twice a second. */
+#armG,
+#armSh {
+  transition: transform 520ms cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-#needleSh {
-  transition: opacity 240ms ease-out;
+#armSh {
+  transition:
+    transform 520ms cubic-bezier(0.34, 1.2, 0.64, 1),
+    opacity 260ms ease-out;
 }
 
-#cueKnob {
-  transform: translateY(0);
-  transition: transform 320ms cubic-bezier(0.32, 0.72, 0.24, 1);
-}
-
-.vinyl-widget:not(.playing) #cueKnob {
-  transform: translateY(-14px);
-}
-
-#cue:hover #cueKnob {
-  filter: brightness(1.12);
-}
-
-/* ─────────────────────────── panel ─────────────────────────── */
-.panel {
-  flex: 1;
-  min-width: 0;
+/* ─────────────────────────── right column ─────────────────────────── */
+.side {
+  position: absolute;
+  left: 56.3cqw;
+  right: 7.2cqw;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  padding: 2px 4px 2px 6px;
 }
 
-/* ── • NOW PLAYING • ── */
-.header {
+.np {
+  margin-top: 5.55cqw;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  min-height: 14px;
-}
-
-.header-text {
-  font-size: 9.5px;
+  gap: 1.5cqw;
+  font-size: 1.62cqw;
   font-weight: 600;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: var(--steel);
+  color: var(--ink);
+  text-indent: 0.42em;
+  white-space: nowrap;
 }
 
-.lamp,
-.header-dot {
-  width: 5px;
-  height: 5px;
+.np .lamp {
+  font-style: normal;
+  width: 0.55cqw;
+  height: 0.55cqw;
   border-radius: 50%;
   background: var(--lamp-off);
   flex: none;
+  text-indent: 0;
   transition:
     background 0.35s,
     box-shadow 0.35s;
 }
 
-.vinyl-widget.loaded .lamp,
-.vinyl-widget.loaded .header-dot {
+.widget.loaded .np .lamp {
   background: var(--lamp-soft);
 }
 
-.vinyl-widget.playing .lamp,
-.vinyl-widget.playing .header-dot {
+.widget.playing .np .lamp {
   background: var(--lamp);
-  box-shadow: 0 0 6px 1px var(--lamp-soft);
+  box-shadow: 0 0 0.9cqw 0.15cqw var(--lamp-soft);
 }
 
 /* ── the screen ── */
 .screen {
-  margin-top: 7px;
-  flex: 1;
-  min-height: 0;
-  border-radius: 10px;
-  padding: 1.5px;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.28) 0%,
-    var(--screen-bezel) 100%
-  );
-}
-
-.screen-inner {
   position: relative;
-  height: 100%;
-  border-radius: 9px;
-  padding: 10px 12px;
-  background: linear-gradient(165deg, var(--screen-bg) 0%, var(--screen-bg-lo) 100%);
-  box-shadow: inset 0 2px 6px var(--screen-shadow);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  margin-top: 2.15cqw;
+  height: 33.2cqw;
+  flex: none;
+  border-radius: 1.9cqw;
+  background: linear-gradient(180deg, var(--screen-hi) 0%, var(--screen) 55%, var(--screen-lo) 100%);
+  box-shadow:
+    inset 0 0.22cqw 0.7cqw rgba(60, 30, 32, 0.35),
+    inset 0 -0.1cqw 0.25cqw rgba(255, 255, 255, 0.25),
+    0 0.1cqw 0.12cqw rgba(255, 255, 255, 0.7);
   overflow: hidden;
 }
 
-.note {
+.screen::after {
+  content: "";
   position: absolute;
-  top: 10px;
-  right: 11px;
-  color: var(--screen-faint);
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 22%);
 }
 
-.now {
+.screen-body {
+  position: absolute;
+  left: 3.4cqw;
+  right: 8cqw;
+  top: 50%;
+  transform: translateY(-58%);
   min-width: 0;
 }
 
 .title {
-  font-size: 16px;
+  font-size: 3.3cqw;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -446,8 +437,8 @@ body {
 }
 
 .artist {
-  margin-top: 2px;
-  font-size: 11px;
+  margin-top: 0.5cqw;
+  font-size: 2.2cqw;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -459,7 +450,7 @@ body {
 
 .album,
 .source {
-  font-size: 9px;
+  font-size: 1.75cqw;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -470,13 +461,13 @@ body {
 }
 
 .album {
-  margin-top: 3px;
+  margin-top: 0.7cqw;
 }
 
 .source {
-  margin-top: 1px;
+  margin-top: 0.25cqw;
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 1.5cqw;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -486,13 +477,30 @@ body {
   display: none;
 }
 
-/* ── waveform: deterministic bars, lit to the real playback position ── */
+.note-ic {
+  position: absolute;
+  right: 2.5cqw;
+  top: 41%;
+  width: 3.6cqw;
+  height: 3.6cqw;
+  color: var(--screen-faint);
+  pointer-events: none;
+}
+
+.note-ic svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── waveform ── */
 .wave {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 9px;
-  height: 22px;
+  left: 3.4cqw;
+  right: 5.8cqw;
+  bottom: 1.85cqw;
+  height: 3.3cqw;
+  pointer-events: none;
 }
 
 .wave-row {
@@ -500,12 +508,13 @@ body {
   inset: 0;
   display: flex;
   align-items: flex-end;
-  gap: 1.5px;
+  gap: 0.32cqw;
 }
 
 .wave-row i {
   flex: 1;
-  border-radius: 1px;
+  min-width: 0.22cqw;
+  border-radius: 0.2cqw;
   background: var(--wave-dim);
 }
 
@@ -520,36 +529,28 @@ body {
   mask-image: linear-gradient(90deg, #000 0 var(--played, 0%), transparent var(--played, 0%));
 }
 
-/* ── progress: times flank the bar, as in the reference ── */
-.progress {
+/* ── progress ── */
+.seekrow {
+  margin-top: 3.35cqw;
+  height: 2.2cqw;
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-top: 9px;
-}
-
-.time {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
-  flex: none;
 }
 
 .bar {
   position: relative;
-  flex: 1;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--track);
+  width: 100%;
+  height: 0.5cqw;
+  border-radius: 0.25cqw;
+  background: var(--track-c);
 }
 
 .bar i {
   display: block;
   height: 100%;
   width: 0;
-  border-radius: 2px;
-  background: var(--lamp);
+  border-radius: 0.25cqw;
+  background: var(--fill-c);
 }
 
 /* A position marker, not a drag handle: PLAN.md excludes seek, so it must not
@@ -558,194 +559,180 @@ body {
   position: absolute;
   top: 50%;
   left: 0;
-  width: 9px;
-  height: 9px;
-  margin: -4.5px 0 0 -4.5px;
+  width: 2.15cqw;
+  height: 2.15cqw;
+  margin: -1.07cqw 0 0 -1.07cqw;
   border-radius: 50%;
-  background: linear-gradient(180deg, var(--btn-face-hi), var(--btn-face-lo));
-  border: 1px solid var(--btn-edge);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  background: radial-gradient(circle at 34% 30%, var(--knob-hi) 0%, var(--knob-mid) 45%, var(--knob-lo) 100%);
+  border: 0.07cqw solid rgba(0, 0, 0, 0.18);
+  box-shadow:
+    0 0.3cqw 0.65cqw rgba(0, 0, 0, 0.35),
+    inset 0 0.12cqw 0.18cqw rgba(255, 255, 255, 0.9);
   pointer-events: none;
 }
 
-.vinyl-widget.live .bar,
-.vinyl-widget.live .knob {
+.times {
+  margin-top: 0.55cqw;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 1.7cqw;
+  font-weight: 500;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.widget.live .bar,
+.widget.live .knob {
   opacity: 0.25;
 }
 
-/* ─────────────────────────── transport ───────────────────────────
-   Minimal line icons throughout; only play/pause is circled. */
+/* ── transport ── */
 .controls {
+  margin-top: 1.75cqw;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 9px;
+  justify-content: space-between;
 }
 
 button {
   appearance: none;
-  margin: 0;
-  padding: 0;
+  border: 0;
+  background: none;
   cursor: pointer;
   font: inherit;
 }
 
-.ghost {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  border: 0;
-  border-radius: 6px;
+.tbtn {
+  color: var(--ink);
+  width: 4.1cqw;
+  height: 4.1cqw;
   display: grid;
   place-items: center;
-  background: transparent;
-  color: var(--glyph);
+  border-radius: 0.9cqw;
+  position: relative;
   transition:
     color 0.15s,
     background 0.15s,
     opacity 0.2s;
 }
 
-.ghost:hover:not(:disabled) {
-  background: rgba(128, 128, 128, 0.16);
-  color: var(--glyph-hover);
+.tbtn svg {
+  width: 2.75cqw;
+  height: 2.75cqw;
+  display: block;
 }
 
-.ghost[aria-pressed="true"] {
-  color: var(--lamp);
+.tbtn.mode {
+  color: var(--ink-mute);
+}
+
+.tbtn.mode[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.tbtn.mode[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.1cqw;
+  transform: translateX(-50%);
+  width: 0.5cqw;
+  height: 0.5cqw;
+  border-radius: 50%;
+  background: var(--lamp);
 }
 
 .badge {
   position: absolute;
   right: 0;
-  bottom: 1px;
+  bottom: 0.15cqw;
   font-family: var(--font-mono);
-  font-size: 7px;
+  font-size: 1.3cqw;
   line-height: 1;
   color: var(--lamp);
   display: none;
 }
 
-.ghost.repeat-one .badge {
+.tbtn.repeat-one .badge {
   display: block;
 }
 
-.playpause {
-  position: relative;
-  width: 38px;
-  height: 38px;
+.tbtn.repeat-one::after {
+  display: none;
+}
+
+.big {
+  width: 7.5cqw;
+  height: 7.5cqw;
   border-radius: 50%;
+  border: 0.3cqw solid var(--big-ring);
+  background: linear-gradient(180deg, var(--big-hi) 0%, var(--big-lo) 100%);
+  box-shadow:
+    0 0.55cqw 1.15cqw rgba(0, 0, 0, 0.22),
+    inset 0 0.12cqw 0.15cqw rgba(255, 255, 255, 0.95);
   display: grid;
   place-items: center;
-  color: var(--glyph);
-  background: linear-gradient(180deg, var(--btn-face-hi), var(--btn-face-lo));
-  border: 1px solid var(--btn-edge);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 1px 3px rgba(0, 0, 0, 0.22);
+  color: var(--ink);
   transition:
     box-shadow 0.12s,
     transform 0.08s,
-    color 0.15s,
+    border-color 0.15s,
     opacity 0.2s;
 }
 
-.playpause svg {
+.big svg {
   grid-area: 1/1;
+  width: 2.9cqw;
+  height: 2.9cqw;
 }
 
-.playpause:hover:not(:disabled) {
-  color: var(--glyph-hover);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 0 0 1px var(--lamp-soft),
-    0 1px 3px rgba(0, 0, 0, 0.22);
+.big:hover:not(:disabled) {
+  border-color: var(--lamp);
 }
 
-.playpause:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.28);
+.big:active:not(:disabled) {
+  transform: translateY(0.12cqw);
+  box-shadow: 0 0.3cqw 0.7cqw rgba(0, 0, 0, 0.22);
 }
 
 /* Unsupported by the source: dimmed and inert rather than hidden, so the
    layout does not jump between a track and a livestream. */
-.ghost:disabled,
-.playpause:disabled {
+.tbtn:disabled,
+.big:disabled {
   opacity: 0.3;
   cursor: default;
 }
 
 #icPlay {
-  transition:
-    opacity 0.16s,
-    transform 0.16s;
+  display: none;
 }
 
 #icPause {
-  opacity: 0;
-  transform: scale(0.7);
-  transition:
-    opacity 0.16s,
-    transform 0.16s;
+  display: block;
 }
 
-.vinyl-widget.playing #icPlay {
-  opacity: 0;
-  transform: scale(0.7);
+.widget:not(.playing) #icPlay {
+  display: block;
 }
 
-.vinyl-widget.playing #icPause {
-  opacity: 1;
-  transform: scale(1);
+.widget:not(.playing) #icPause {
+  display: none;
 }
 
-:where(button):focus-visible,
-#cue:focus-visible {
-  outline: 2px solid var(--lamp);
-  outline-offset: 2px;
-}
-
-/* ─────────────────────────── responsive ─────────────────────────── */
-@container vinylw (max-width: 430px) {
-  .title {
-    font-size: 14px;
-  }
-  .album {
-    display: none;
-  }
-  .controls {
-    gap: 10px;
-  }
-}
-
-@container vinylw (max-height: 275px) {
-  .wave {
-    height: 16px;
-  }
-  .title {
-    font-size: 14px;
-  }
-  .source {
-    display: none;
-  }
-  .controls {
-    margin-top: 7px;
-  }
-  .playpause {
-    width: 34px;
-    height: 34px;
-  }
+:is(.tbtn, .big):focus-visible,
+#deckHit:focus-visible {
+  outline: 0.26cqw solid var(--ink);
+  outline-offset: 0.3cqw;
 }
 
 /* PLAN.md: cut the needle-drop swing to an instant cut. Rotation stays,
    because the rotation is the product. */
 @media (prefers-reduced-motion: reduce) {
   #armG,
-  #needleSh,
+  #armSh,
   #vinylG,
-  #labelG,
-  #cueKnob {
+  #labelG {
     transition: none;
   }
 }
