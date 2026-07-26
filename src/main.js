@@ -299,28 +299,10 @@ function skip(action) {
   send(action);
 }
 
-function toggleShuffle() {
-  if (!snapshot?.canShuffle) return;
-  snapshot = { ...snapshot, shuffle: !snapshot.shuffle };
-  render();
-  send("shuffle");
-}
-
-/** Off, then the whole list, then the single track, then off again. */
-function cycleRepeat() {
-  if (!snapshot?.canRepeat) return;
-  const next = { off: "list", list: "track", track: "off" }[snapshot.repeat];
-  snapshot = { ...snapshot, repeat: next };
-  render();
-  send("repeat");
-}
-
 function bindTransport() {
   $("btnPlay").addEventListener("click", toggle);
   $("btnNext").addEventListener("click", () => skip("next"));
   $("btnPrev").addEventListener("click", () => skip("previous"));
-  $("btnShuffle").addEventListener("click", toggleShuffle);
-  $("btnRepeat").addEventListener("click", cycleRepeat);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -411,23 +393,7 @@ function render() {
   $("btnPlay").disabled = !hasSession || !snapshot.canPlayPause;
   $("btnNext").disabled = !hasSession || !snapshot.canNext;
   $("btnPrev").disabled = !hasSession || !snapshot.canPrevious;
-  $("btnShuffle").disabled = !hasSession || !snapshot.canShuffle;
-  $("btnRepeat").disabled = !hasSession || !snapshot.canRepeat;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
-
-  $("btnShuffle").setAttribute(
-    "aria-pressed",
-    String(Boolean(hasSession && snapshot.shuffle)),
-  );
-  const repeat = hasSession ? snapshot.repeat : "off";
-  $("btnRepeat").setAttribute("aria-pressed", String(repeat !== "off"));
-  // The little "1" only appears for single-track repeat, which is how every
-  // player distinguishes the two modes.
-  $("btnRepeat").classList.toggle("repeat-one", repeat === "track");
-  $("btnShuffle").classList.toggle(
-    "on",
-    Boolean(hasSession && snapshot.shuffle),
-  );
 
   if (!hasSession) {
     $("uiTitle").textContent = "No session";

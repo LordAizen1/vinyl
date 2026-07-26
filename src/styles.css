@@ -587,7 +587,8 @@ body {
   margin-top: 1.75cqw;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 6cqw;
 }
 
 button {
@@ -616,45 +617,6 @@ button {
   width: 2.75cqw;
   height: 2.75cqw;
   display: block;
-}
-
-.tbtn.mode {
-  color: var(--ink-mute);
-}
-
-.tbtn.mode[aria-pressed="true"] {
-  color: var(--ink);
-}
-
-.tbtn.mode[aria-pressed="true"]::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 0.1cqw;
-  transform: translateX(-50%);
-  width: 0.5cqw;
-  height: 0.5cqw;
-  border-radius: 50%;
-  background: var(--lamp);
-}
-
-.badge {
-  position: absolute;
-  right: 0;
-  bottom: 0.15cqw;
-  font-family: var(--font-mono);
-  font-size: 1.3cqw;
-  line-height: 1;
-  color: var(--lamp);
-  display: none;
-}
-
-.tbtn.repeat-one .badge {
-  display: block;
-}
-
-.tbtn.repeat-one::after {
-  display: none;
 }
 
 .big {
