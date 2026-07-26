@@ -1,59 +1,319 @@
 /*
- * Phase 1 only. Deliberately plain: this window is a data readout, not the
- * product. The visual work happens in Phase 2, standalone, in a browser.
+ * The widget, ported from design/turntable.html once Gate 2 passed.
+ *
+ * Fonts are linked here rather than embedded as data URIs; that trick is only
+ * needed in the design harness, which has to run over file://.
  */
+
+@font-face {
+  font-family: "Archivo Narrow";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: block;
+  src: url("assets/fonts/ArchivoNarrow-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("assets/fonts/JetBrainsMono-latin.woff2") format("woff2");
+}
 
 :root {
   --plinth: #16171a;
+  --plinth-hi: #1e2024;
+  --plinth-lo: #101115;
+  --vinyl: #0b0b0d;
+  --mat: #121316;
   --steel: #8a8f98;
   --lamp: #ffb454;
+  --lamp-soft: rgba(255, 180, 84, 0.5);
+  --text: #e8e9eb;
+  --faint: #5f646c;
 
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 15px;
-  color: #e8e9eb;
-  background-color: var(--plinth);
+  --radius: 14px;
+  --font-label: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
+  height: 100%;
   margin: 0;
-  padding: 1.5rem;
+  overflow: hidden;
+  background: transparent;
 }
 
-.note {
-  margin: 0 0 1.25rem;
-  color: var(--steel);
-  font-size: 0.85rem;
+body {
+  font-family: var(--font-label);
+  color: var(--text);
 }
 
-dl {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.5rem 1.25rem;
-  margin: 0;
-  align-items: baseline;
+/* ─────────────────────────── widget ─────────────────────────── */
+.vinyl-widget {
+  container: vinylw / size;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius);
+  background: linear-gradient(
+    178deg,
+    var(--plinth-hi) 0%,
+    var(--plinth) 46%,
+    var(--plinth-lo) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 22px 44px -20px rgba(0, 0, 0, 0.7),
+    0 5px 14px rgba(0, 0, 0, 0.38);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
 }
 
-dt {
-  color: var(--steel);
-  font-size: 0.8rem;
+/* Brushed machining. A static layer: never on the spinning group, where a
+   live filter would re-evaluate every frame. */
+.vinyl-widget::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.02 1.4' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.55'/></svg>");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+
+/* ─────────────────────────── deck ─────────────────────────── */
+.deck {
+  flex: none;
+  height: 100%;
+  aspect-ratio: 232/220;
+  max-width: 56%;
+  position: relative;
+}
+
+.deck svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* The record settles onto the platter when a session appears, and lifts off
+   when everything stops. */
+#vinylG {
+  opacity: 0;
+  transform: scale(0.962);
+  transform-box: view-box;
+  transform-origin: 96px 112px;
+  transition:
+    opacity 0.5s ease,
+    transform 0.62s cubic-bezier(0.2, 0.75, 0.22, 1);
+}
+
+.vinyl-widget.loaded #vinylG {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* The only continuously animated thing in the widget: one composited
+   transform animation, rate-controlled from JS. CLAUDE.md constraint 4
+   forbids writing this per frame, and nothing does. */
+#spinG {
+  transform-box: view-box;
+  transform-origin: 96px 112px;
+  will-change: transform;
+}
+
+/* Fades the label rather than flashing empty on a track change. */
+#labelG {
+  transition: opacity 0.22s ease;
+}
+
+/* The arm sweeps on a transition. Real state moves it about twice a second. */
+#armG {
+  transition: transform 420ms cubic-bezier(0.34, 1.36, 0.64, 1);
+}
+
+#needleSh {
+  transition: opacity 240ms ease-out;
+}
+
+/* ─────────────────────────── panel ─────────────────────────── */
+.panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px 13px 6px;
+}
+
+.flex {
+  flex: 1;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 16px;
+}
+
+.lamp {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34363a;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.7);
+  transition:
+    background 0.35s,
+    box-shadow 0.35s;
+}
+
+.vinyl-widget.loaded .lamp {
+  background: rgba(255, 180, 84, 0.38);
+}
+
+.vinyl-widget.playing .lamp {
+  background: var(--lamp);
+  box-shadow: 0 0 7px 1.5px var(--lamp-soft);
+}
+
+.brand {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--faint);
+}
+
+.speed {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 45%;
+}
+
+.track {
+  margin-top: auto;
+  min-width: 0;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-dd {
-  margin: 0;
-  overflow-wrap: anywhere;
+.artist {
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--steel);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-#status {
-  color: var(--lamp);
+/* A readout, not a control: Phase 5 has no seek. */
+.progress {
+  margin-top: 10px;
 }
 
-.mono {
-  font-family: ui-monospace, Consolas, monospace;
+.bar {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.11);
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--lamp);
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint);
   font-variant-numeric: tabular-nums;
+}
+
+/* A livestream has no duration, so there is no progress to show. */
+.vinyl-widget.live .bar {
+  opacity: 0.25;
+}
+
+/* ─────────────────────────── responsive ─────────────────────────── */
+@container vinylw (max-width: 378px) {
+  .brand {
+    display: none;
+  }
+  .panel {
+    padding-right: 14px;
+  }
+}
+
+@container vinylw (max-width: 352px) {
+  .speed {
+    display: none;
+  }
+  .deck {
+    max-width: 52%;
+  }
+  .title {
+    font-size: 13.5px;
+  }
+}
+
+@container vinylw (max-height: 198px) {
+  .panel {
+    padding-top: 9px;
+    padding-bottom: 10px;
+  }
+  .title {
+    font-size: 13.5px;
+  }
+  .artist {
+    margin-top: 2px;
+  }
+  .progress {
+    margin-top: 7px;
+  }
+}
+
+/* PLAN.md: cut the needle-drop swing to an instant cut. Rotation stays,
+   because the rotation is the product. */
+@media (prefers-reduced-motion: reduce) {
+  #armG,
+  #needleSh,
+  #vinylG,
+  #labelG {
+    transition: none;
+  }
 }

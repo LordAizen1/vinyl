@@ -25,10 +25,13 @@ use tauri::{AppHandle, Emitter};
 use windows::Foundation::TypedEventHandler;
 use windows::Media::Control::{
     GlobalSystemMediaTransportControlsSession, GlobalSystemMediaTransportControlsSessionManager,
+    GlobalSystemMediaTransportControlsSessionMediaProperties as MediaProperties,
     GlobalSystemMediaTransportControlsSessionPlaybackStatus as SmtcStatus,
 };
+use windows::Storage::Streams::DataReader;
 use windows::Win32::System::WinRT::{RoInitialize, RO_INIT_MULTITHREADED};
 
+use crate::art::ArtCache;
 use crate::state::{PlaybackState, SharedState, Status};
 
 /// Safety net only. Events drive the updates; this bounds how long a missed
@@ -40,15 +43,15 @@ const WATCHDOG: Duration = Duration::from_secs(5);
 const UNIX_EPOCH_IN_1601_TICKS: i64 = 116_444_736_000_000_000;
 
 /// Starts the worker. Never blocks the caller.
-pub fn spawn(app: AppHandle, state: SharedState) {
+pub fn spawn(app: AppHandle, state: SharedState, art: Arc<ArtCache>) {
     thread::spawn(move || {
-        if let Err(error) = run(&app, &state) {
+        if let Err(error) = run(&app, &state, &art) {
             log::error!("SMTC worker stopped: {error:#}");
         }
     });
 }
 
-fn run(app: &AppHandle, state: &SharedState) -> Result<()> {
+fn run(app: &AppHandle, state: &SharedState, art: &ArtCache) -> Result<()> {
     // SAFETY: first WinRT call on this thread, and every WinRT call made by this
     // worker stays on it. MTA means event callbacks arrive on pool threads
     // without needing a message pump.
@@ -71,13 +74,14 @@ fn run(app: &AppHandle, state: &SharedState) -> Result<()> {
 
     let mut subscriptions = Subscriptions::default();
     let mut anchors: HashMap<String, Anchor> = HashMap::new();
+    let mut artwork = ArtTracker::default();
 
     loop {
         if let Err(error) = subscriptions.sync(&manager, &tx) {
             log::warn!("could not refresh session subscriptions: {error:#}");
         }
 
-        match read(&manager, &mut anchors) {
+        match read(&manager, &mut anchors, &mut artwork, art) {
             Ok(snapshot) => publish(app, state, snapshot),
             Err(error) => log::warn!("SMTC read failed: {error:#}"),
         }
@@ -111,6 +115,8 @@ fn publish(app: &AppHandle, state: &SharedState, snapshot: PlaybackState) {
 fn read(
     manager: &GlobalSystemMediaTransportControlsSessionManager,
     anchors: &mut HashMap<String, Anchor>,
+    artwork: &mut ArtTracker,
+    art: &ArtCache,
 ) -> Result<PlaybackState> {
     let sessions = manager.GetSessions()?;
 
@@ -153,10 +159,11 @@ fn read(
 
     let Some((_, _, session)) = best else {
         anchors.clear();
+        *artwork = ArtTracker::default();
         return Ok(PlaybackState::no_session());
     };
 
-    describe(&session, anchors)
+    describe(&session, anchors, artwork, art)
 }
 
 /// Ranks a session for selection. Higher wins; zero is never selected.
@@ -173,6 +180,8 @@ fn rank_of(status: SmtcStatus) -> u8 {
 fn describe(
     session: &GlobalSystemMediaTransportControlsSession,
     anchors: &mut HashMap<String, Anchor>,
+    artwork: &mut ArtTracker,
+    art: &ArtCache,
 ) -> Result<PlaybackState> {
     let source_app = session.SourceAppUserModelId()?.to_string();
     let media = block_on(session.TryGetMediaPropertiesAsync()?)?;
@@ -206,11 +215,21 @@ fn describe(
 
     anchor.observe(&identity, position_ms, anchor_ticks);
 
+    // Reading the thumbnail is the expensive part of this whole module, so it
+    // is gated on the track identity changing rather than run on every wake.
+    // Phase 0 measured one at 1,022,489 bytes; doing this per tick would not
+    // fit the idle CPU budget in CLAUDE.md constraint 4.
+    let art_key = format!("{source_app}|{identity}");
+    if artwork.identity != art_key {
+        artwork.identity = art_key;
+        artwork.art_id = read_thumbnail(&media).map(|bytes| art.insert(bytes));
+    }
+
     Ok(PlaybackState {
         title,
         artist,
         album,
-        art_id: None,
+        art_id: artwork.art_id.clone(),
         status,
         position_ms: Some(anchor.published_position_ms),
         duration_ms: (duration_ms > 0).then_some(duration_ms),
@@ -218,6 +237,46 @@ fn describe(
         source_app,
         peak: 0.0,
     })
+}
+
+// ---------------------------------------------------------------------------
+// Artwork
+// ---------------------------------------------------------------------------
+
+/// Remembers which track's art we already hold, so the thumbnail is read once
+/// per track rather than once per event.
+#[derive(Default)]
+struct ArtTracker {
+    identity: String,
+    art_id: Option<String>,
+}
+
+/// Pulls the thumbnail bytes out of a session.
+///
+/// Every step is fallible and every failure is simply "no art", which is the
+/// common case: Phase 0 found browsers, local files and livestreams routinely
+/// have no thumbnail at all. That is what the procedural label is for.
+fn read_thumbnail(media: &MediaProperties) -> Option<Vec<u8>> {
+    let reference = media.Thumbnail().ok()?;
+    let stream = block_on(reference.OpenReadAsync().ok()?).ok()?;
+
+    let size = stream.Size().ok()?;
+    if size == 0 {
+        return None;
+    }
+
+    let readable = u32::try_from(size).ok()?;
+    let reader = DataReader::CreateDataReader(&stream).ok()?;
+    let loaded = block_on(reader.LoadAsync(readable).ok()?).ok()?;
+
+    let mut bytes = vec![0_u8; loaded as usize];
+    reader.ReadBytes(&mut bytes).ok()?;
+
+    if bytes.is_empty() {
+        None
+    } else {
+        Some(bytes)
+    }
 }
 
 // ---------------------------------------------------------------------------

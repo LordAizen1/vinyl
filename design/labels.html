@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>vinyl — procedural labels</title>
+    <!--
+      Preview sheet for the procedural label generator in src/label.js.
+
+      Needs a local server rather than file://, because it imports the real
+      module instead of duplicating it:  python -m http.server 8731
+      then open http://127.0.0.1:8731/design/labels.html
+
+      Its job is to check two things at a glance: that all five archetypes
+      look deliberate rather than degraded, and that the same track always
+      presses the same label.
+    -->
+    <style>
+      @font-face {
+        font-family: "Archivo Narrow";
+        font-weight: 400 700;
+        font-display: block;
+        src: url("../src/assets/fonts/ArchivoNarrow-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        font-weight: 400;
+        font-display: block;
+        src: url("../src/assets/fonts/JetBrainsMono-latin.woff2") format("woff2");
+      }
+
+      :root {
+        --font-label: "Archivo Narrow", "Arial Narrow", sans-serif;
+        --font-mono: "JetBrains Mono", Consolas, monospace;
+      }
+
+      body {
+        margin: 0;
+        padding: 28px;
+        background: #0a0b0d;
+        color: #e8e9eb;
+        font-family: var(--font-label);
+      }
+
+      h1 {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #8a8f98;
+        margin: 0 0 22px;
+      }
+
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+      }
+
+      figure {
+        margin: 0;
+        width: 150px;
+        text-align: center;
+      }
+
+      figure svg {
+        display: block;
+        width: 150px;
+        height: 150px;
+        background: #0b0b0d;
+        border-radius: 50%;
+      }
+
+      figcaption {
+        margin-top: 8px;
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        line-height: 1.5;
+        color: #5f646c;
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Procedural labels · same input, same label</h1>
+    <div class="grid" id="grid"></div>
+
+    <script type="module">
+      import { proceduralLabel, fitLabelText, hashOf } from "../src/label.js";
+
+      // Deliberately includes the blank-metadata cases Phase 0 found: Photos,
+      // Netflix and WhatsApp all report almost nothing, and must still produce
+      // distinct, recognisable labels.
+      const TRACKS = [
+        { title: "Alone Again", artist: "The Weeknd", sourceApp: "AppleMusic.exe" },
+        { title: "Abyss (from Kaiju No. 8)", artist: "YUNGBLUD", sourceApp: "AppleMusic.exe" },
+        { title: "Yi Jian Mei", artist: "Fei Yu-ching", sourceApp: "msedge.exe" },
+        { title: "Timeless", artist: "The Weeknd & Playboi Carti", sourceApp: "AppleMusic.exe" },
+        { title: "Better off Alone x Clarity x Unlock it", artist: "Sharingan", sourceApp: "msedge.exe" },
+        { title: "Netflix", artist: "", sourceApp: "msedge.exe" },
+        { title: "", artist: "", sourceApp: "Microsoft.Windows.Photos" },
+        { title: "WhatsApp", artist: "", sourceApp: "msedgewebview2.exe" },
+        { title: "Family Guy - My hiccups are gone", artist: "Mr. Rupert", sourceApp: "msedge.exe" },
+        { title: "겨울사랑 (A winter story)", artist: "The One", sourceApp: "msedge.exe" },
+      ];
+
+      const DEFS = `
+        <defs>
+          <radialGradient id="gLabShade" cx="42%" cy="34%" r="72%">
+            <stop offset="0" stop-color="rgba(255,255,255,.10)"/>
+            <stop offset=".45" stop-color="rgba(255,255,255,0)"/>
+            <stop offset="1" stop-color="rgba(0,0,0,.34)"/>
+          </radialGradient>
+          <clipPath id="cLab"><circle cx="96" cy="112" r="26"/></clipPath>
+        </defs>`;
+
+      const grid = document.getElementById("grid");
+      await document.fonts.ready;
+
+      for (const track of TRACKS) {
+        const figure = document.createElement("figure");
+        // viewBox centred on the label, which lives at (96,112) r=26.
+        figure.innerHTML = `
+          <svg viewBox="68 84 56 56" xmlns="http://www.w3.org/2000/svg">
+            ${DEFS}${proceduralLabel(track)}
+          </svg>
+          <figcaption>${track.title || "(blank)"}<br/>${track.sourceApp}</figcaption>`;
+        grid.appendChild(figure);
+        fitLabelText(figure.querySelector("svg"));
+      }
+
+      // Determinism check: rebuild everything and compare.
+      const once = TRACKS.map((t) => proceduralLabel(t));
+      const twice = TRACKS.map((t) => proceduralLabel(t));
+      const stable = once.every((markup, i) => markup === twice[i]);
+      const archetypes = new Set(
+        TRACKS.map((t) => (hashOf(`${t.artist || ""}|${t.title || ""}|${t.sourceApp || ""}`) >>> 11) % 5),
+      );
+
+      const note = document.createElement("h1");
+      note.style.marginTop = "26px";
+      note.textContent = `deterministic: ${stable} · distinct archetypes seen: ${archetypes.size} of 5`;
+      document.body.appendChild(note);
+    </script>
+  </body>
+</html>

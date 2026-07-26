@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>vinyl — app preview</title>
+    <!--
+      Runs the REAL frontend (src/index.html + main.js + label.js) against a
+      stubbed Tauri bridge, so the widget can be iterated without a Rust
+      rebuild. Not shipped; a development harness only.
+
+      Needs a local server, because it fetches and imports:
+        python -m http.server 8731
+        http://127.0.0.1:8731/design/app-preview.html
+
+      Query flags:
+        ?state=playing | paused | none | live | art
+    -->
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(1100px 640px at 40% 24%, #1d2026 0%, #0a0b0d 70%);
+      }
+      #shell {
+        width: 420px;
+        height: 220px;
+        resize: both;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="shell"></div>
+
+    <script>
+      /* A stand-in for the real album art, drawn here rather than sourced. */
+      const FAKE_ART =
+        "data:image/svg+xml;utf8," +
+        encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+             <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+               <stop offset="0%" stop-color="#26323f"/><stop offset="100%" stop-color="#5e2b34"/>
+             </linearGradient></defs>
+             <rect width="200" height="200" fill="url(#g)"/>
+             <circle cx="70" cy="68" r="38" fill="#e8e9eb" opacity="0.85"/>
+             <rect x="38" y="130" width="122" height="9" fill="#ffb454" opacity="0.9"/>
+             <rect x="38" y="150" width="72" height="9" fill="#e8e9eb" opacity="0.5"/>
+           </svg>`,
+        );
+
+      const flavour = new URLSearchParams(location.search).get("state") || "playing";
+
+      const BASE = {
+        title: "Alone Again",
+        artist: "The Weeknd",
+        album: "After Hours (Deluxe)",
+        artId: null,
+        status: "playing",
+        positionMs: 96_000,
+        durationMs: 250_000,
+        updatedAt: Date.now(),
+        sourceApp: "AppleMusic.exe",
+        peak: 0.0,
+      };
+
+      const FLAVOURS = {
+        playing: BASE,
+        paused: { ...BASE, status: "paused" },
+        art: { ...BASE, artId: "fake" },
+        live: { ...BASE, durationMs: null, positionMs: 0, title: "Lofi radio" },
+        none: {
+          title: null,
+          artist: null,
+          album: null,
+          artId: null,
+          status: "noSession",
+          positionMs: null,
+          durationMs: null,
+          updatedAt: 0,
+          sourceApp: "",
+          peak: 0,
+        },
+      };
+
+      window.__TAURI__ = {
+        core: {
+          invoke: async (cmd) => {
+            if (cmd === "get_state") return FLAVOURS[flavour] ?? BASE;
+            throw new Error(`unstubbed command: ${cmd}`);
+          },
+          // The real one returns http://art.localhost/{id}; any URL will do here.
+          convertFileSrc: () => FAKE_ART,
+        },
+        event: {
+          listen: async () => () => {},
+        },
+      };
+    </script>
+
+    <script type="module">
+      const markup = await (await fetch("../src/index.html")).text();
+      const parsed = new DOMParser().parseFromString(markup, "text/html");
+
+      const styles = document.createElement("link");
+      styles.rel = "stylesheet";
+      styles.href = "../src/styles.css";
+      document.head.appendChild(styles);
+
+      document.getElementById("shell").innerHTML = parsed.body.innerHTML;
+
+      await import("../src/main.js");
+    </script>
+  </body>
+</html>
