@@ -147,25 +147,31 @@
           <!-- The reference fills this with lyrics; PLAN.md defers lyrics and
                we have no source for them, so it carries what we do have. -->
           <div class="screen">
-            <div class="screen-body">
+            <!-- Rides to the top when there are lyrics to make room for, and
+                 settles back into the middle of the screen when there are not.
+                 The album travels with it, which is why it lives in here. -->
+            <div class="screen-head">
               <div class="title" id="uiTitle">No session</div>
               <div class="artist" id="uiArtist">Nothing is playing</div>
-              <div class="album" id="uiAlbum"></div>
-              <div class="source" id="uiSource"></div>
+              <!-- The source app is still read, since label.js seeds the
+                   procedural label from it, but "msedge.exe" is plumbing and
+                   not worth screen space. -->
+              <div class="meta" id="uiMeta">
+                <div class="album" id="uiAlbum"></div>
+              </div>
+
+              <div class="note-ic" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13.2 3.6 20 2v3.3l-5.2 1.3v9.1a3.2 3.2 0 1 1-1.6-2.77Z" />
+                </svg>
+              </div>
             </div>
 
-            <div class="note-ic" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13.2 3.6 20 2v3.3l-5.2 1.3v9.1a3.2 3.2 0 1 1-1.6-2.77Z" />
-              </svg>
-            </div>
-
-            <!-- Deterministic per track, lit to the real playback position, so
-                 it is a readout rather than decoration. Audio-reactive bars
-                 need the peak metering in Phase 6. -->
-            <div class="wave" aria-hidden="true">
-              <div class="wave-row" id="uiWaveDim"></div>
-              <div class="wave-row wave-lit" id="uiWaveLit"></div>
+            <!-- Timed lyrics, scrolling against the real playback position.
+                 The inner track is what moves: one transform per line, on the
+                 compositor, rather than a scroll written every frame. -->
+            <div class="lyrics" id="uiLyrics" aria-hidden="true">
+              <div class="lyric-track" id="uiLyricTrack"></div>
             </div>
           </div>
 

@@ -185,39 +185,109 @@ function buildGrooves() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * Waveform
+ * Lyrics
  *
- * Deterministic per track and lit to the real playback position, so it is a
- * readout rather than decoration. Genuinely audio-reactive bars need the peak
- * metering in Phase 6; drawing animated ones now would be pretending to show
- * data we do not have.
+ * Rust fetches and parses; this scrolls. Lines arrive as {atMs, text} and are
+ * laid out once per track, after which the only work per line is one transform
+ * on the track element and one class swap.
+ *
+ * That matters: a lyric lands every few seconds, so this writes far less often
+ * than the 4 Hz timecode beside it. CLAUDE.md constraint 4 rules out per-frame
+ * DOM work, and an auto-scrolling lyric is exactly the feature that invites it.
  * ══════════════════════════════════════════════════════════════════════ */
-const WAVE_BARS = 46;
-let waveKey = null;
 
-function buildWave() {
-  const key = snapshot ? `${snapshot.title ?? ""}|${snapshot.artist ?? ""}` : "none";
-  if (key === waveKey) return;
-  waveKey = key;
+/** Where in the viewport the sung line sits, as a fraction of its height.
+ *  A third down rather than centred, so more of what is coming is visible. */
+const LYRIC_ANCHOR = 0.34;
 
-  let seed = 2166136261;
-  for (let i = 0; i < key.length; i += 1) {
-    seed ^= key.charCodeAt(i);
-    seed = Math.imul(seed, 16777619);
+let lyrics = null;
+/** Offset of each line within the track, measured once after layout. */
+let lyricOffsets = [];
+let lyricIndex = -1;
+
+function hasLyrics() {
+  return Boolean(lyrics && lyrics.lines && lyrics.lines.length);
+}
+
+/**
+ * Lays the lines out for a new track.
+ *
+ * The one expensive step, and it runs on a track change rather than on a tick.
+ * Offsets are read back immediately afterwards so the scroll never has to
+ * measure again: reading offsetTop per line during playback would force a
+ * layout four times a second.
+ */
+function buildLyrics(next) {
+  lyrics = next;
+  lyricIndex = -1;
+  lyricOffsets = [];
+
+  const track = $("uiLyricTrack");
+
+  if (!hasLyrics()) {
+    track.textContent = "";
+    track.style.transform = "translateY(0)";
+    widget.classList.remove("has-lyrics");
+    return;
   }
-  const rand = seededRandom(seed >>> 0);
 
-  let bars = "";
-  for (let i = 0; i < WAVE_BARS; i += 1) {
-    // Two overlaid sine terms keep it from looking like pure noise, and the
-    // envelope keeps the ends shorter, the way a real waveform tends to sit.
-    const envelope = Math.sin((i / (WAVE_BARS - 1)) * Math.PI) * 0.55 + 0.45;
-    const height = (0.18 + rand() * 0.82) * envelope;
-    bars += `<i style="height:${(height * 100).toFixed(1)}%"></i>`;
+  track.innerHTML = lyrics.lines
+    .map((line) => `<p>${escapeHtml(line.text)}</p>`)
+    .join("");
+  widget.classList.add("has-lyrics");
+
+  const rows = track.children;
+  for (let i = 0; i < rows.length; i += 1) {
+    lyricOffsets.push(rows[i].offsetTop + rows[i].offsetHeight / 2);
   }
 
-  $("uiWaveDim").innerHTML = bars;
-  $("uiWaveLit").innerHTML = bars;
+  syncLyric(currentPositionMs() ?? 0);
+}
+
+function escapeHtml(value) {
+  return String(value).replace(
+    /[<>&]/g,
+    (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c],
+  );
+}
+
+/** The last line whose stamp has passed, or -1 before the first one. */
+function lyricAt(positionMs) {
+  const lines = lyrics.lines;
+  let low = 0;
+  let high = lines.length - 1;
+  let found = -1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (lines[mid].atMs <= positionMs) {
+      found = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return found;
+}
+
+/** Moves the scroll if, and only if, the sung line has changed. */
+function syncLyric(positionMs) {
+  if (!hasLyrics()) return;
+
+  const next = lyricAt(positionMs);
+  if (next === lyricIndex) return;
+
+  const track = $("uiLyricTrack");
+  const rows = track.children;
+  if (lyricIndex >= 0 && rows[lyricIndex]) rows[lyricIndex].classList.remove("on");
+  lyricIndex = next;
+  if (next >= 0 && rows[next]) rows[next].classList.add("on");
+
+  // Before the first stamp, sit at the top rather than scrolling the intro
+  // off-screen.
+  const centre = next >= 0 ? lyricOffsets[next] : 0;
+  const anchor = $("uiLyrics").clientHeight * LYRIC_ANCHOR;
+  const shift = Math.max(0, centre - anchor);
+  track.style.transform = `translateY(${-shift.toFixed(1)}px)`;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -549,7 +619,6 @@ function render() {
     $("uiTitle").textContent = "No session";
     $("uiArtist").textContent = "Nothing is playing";
     $("uiAlbum").textContent = "";
-    $("uiSource").textContent = "";
     $("uiElapsed").textContent = "0:00";
     $("uiTotal").textContent = "–:––";
     setProgress(0);
@@ -561,7 +630,6 @@ function render() {
   // Only worth showing when it adds something the artist line does not.
   $("uiAlbum").textContent =
     snapshot.album && snapshot.album !== snapshot.title ? snapshot.album : "";
-  $("uiSource").textContent = snapshot.sourceApp || "";
 
   if (isLive) {
     // Showing "0:00 / 0:00" would be a lie.
@@ -573,13 +641,14 @@ function render() {
     $("uiTotal").textContent = formatTime(snapshot.durationMs ?? 0);
     setProgress(fraction);
   }
+
+  // Cheap: a binary search over the stamps, and it writes only when the sung
+  // line actually changes, which is every few seconds rather than every tick.
+  syncLyric(position ?? 0);
 }
 
-/** Bar fill and the lit portion of the waveform, in one go. */
 function setProgress(fraction) {
-  const percent = `${(fraction * 100).toFixed(2)}%`;
-  $("uiBar").style.width = percent;
-  $("uiWaveLit").style.setProperty("--played", percent);
+  $("uiBar").style.width = `${(fraction * 100).toFixed(2)}%`;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -640,9 +709,14 @@ function adopt(next) {
     next.status === "noSession";
 
   snapshot = next;
-  if (changedTrack) shownMs = null;
+  if (changedTrack) {
+    shownMs = null;
+    // Rust sends the new track's lyrics a moment later. Clearing here rather
+    // than waiting stops the old song's words sitting under the new title for
+    // however long the lookup takes.
+    buildLyrics(null);
+  }
 
-  buildWave();
   syncLabel();
   syncTint();
   render();
@@ -657,6 +731,16 @@ bindTransport();
 await listen("playback-changed", (event) => adopt(event.payload));
 await listen("prefs-changed", (event) => applyPrefs(event.payload));
 
+// Applied as sent. The worker is a single thread that emits a clear before each
+// lookup and the result after it, so the order is always clear(A), result(A),
+// clear(B), result(B) and a reply can never overtake the track it belongs to.
+//
+// An earlier version re-derived Rust's track key here and dropped anything that
+// did not match. That duplicated a format defined in `lyrics.rs`, which is
+// exactly the kind of agreement that silently rots: the two only had to differ
+// by a space for every lookup to be discarded and no lyric to ever appear.
+await listen("lyrics-changed", (event) => buildLyrics(event.payload));
+
 // Before the first render: the saved size decides the layout, and restyling
 // after paint would show the wrong one for a frame.
 try {
@@ -669,6 +753,15 @@ try {
   adopt(await invoke("get_state"));
 } catch (error) {
   console.error("initial get_state failed", error);
+}
+
+// After adopt, which clears them: Rust reaches a track long before the webview
+// is ready, so the first lyrics-changed usually fires with nobody listening.
+// Without this read the song playing at launch never gets its words.
+try {
+  buildLyrics(await invoke("get_lyrics"));
+} catch (error) {
+  console.error("initial get_lyrics failed", error);
 }
 
 // 4 Hz. The tonearm updates at most twice a second per CLAUDE.md constraint 4;

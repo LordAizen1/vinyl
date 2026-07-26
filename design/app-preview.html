@@ -13,10 +13,12 @@
         http://127.0.0.1:8731/design/app-preview.html
 
       Query flags:
-        ?state=playing | paused | none | live | art
+        ?state=playing | paused | none | live | art | video
         ?art=red | teal | indigo | amber
         ?size=full | compact
         ?theme=auto | light | dark
+        ?pos=<seconds>   start position, for checking the lyric scroll
+        ?lyrics=off      stands in for the menu's Show lyrics being unticked
     -->
     <style>
       body {
@@ -63,16 +65,50 @@
 
       const flavour = new URLSearchParams(location.search).get("state") || "playing";
 
+      /* Real stamps, taken from what LRCLIB returns for this track, so the
+         scroll is exercised against the spacing it will actually meet. */
+      const ALONE_AGAIN = {
+        trackKey: "The Weeknd|Alone Again",
+        instrumental: false,
+        lines: [
+          { atMs: 0, text: "" },
+          { atMs: 11550, text: "Take off my disguise" },
+          { atMs: 17460, text: "I'm living someone else's life" },
+          { atMs: 23290, text: "Suppressing who I was inside" },
+          { atMs: 28540, text: "So I throw two-thousand ones in the sky" },
+          { atMs: 35160, text: "Together we're alone (together we're alone)" },
+          { atMs: 41590, text: "In Vegas I feel so at home" },
+          { atMs: 48120, text: "Falling only for the night" },
+          { atMs: 54300, text: "So I throw two-thousand ones in the sky" },
+          { atMs: 61000, text: "How much to light up my star again" },
+          { atMs: 67400, text: "And rewire all my thoughts?" },
+          { atMs: 73800, text: "Oh baby, won't you remind me what I am?" },
+          { atMs: 80200, text: "And break my little cold heart" },
+        ],
+      };
+
+      /* Per state: a track with words, a track without, and none at all. */
+      const LYRICS = {
+        playing: ALONE_AGAIN,
+        art: ALONE_AGAIN,
+        paused: ALONE_AGAIN,
+        // A film, a podcast or simply a track nobody has transcribed.
+        video: { trackKey: "", lines: [], instrumental: false },
+        live: { trackKey: "", lines: [], instrumental: false },
+        none: { trackKey: "", lines: [], instrumental: false },
+      };
+
       const BASE = {
         title: "Alone Again",
         artist: "The Weeknd",
         album: "After Hours (Deluxe)",
         artId: null,
         status: "playing",
-        positionMs: 96_000,
+        positionMs: Number(new URLSearchParams(location.search).get("pos") ?? 96) * 1000,
         durationMs: 250_000,
         updatedAt: Date.now(),
         sourceApp: "AppleMusic.exe",
+        mediaKind: "music",
         peak: 0.0,
         canPlayPause: true,
         canNext: true,
@@ -97,6 +133,15 @@
           canNext: false,
           canPrevious: false,
         },
+        // Not music: the screen must fall back to title and artist alone.
+        video: {
+          ...BASE,
+          title: "Some Documentary",
+          artist: "YouTube",
+          album: null,
+          mediaKind: "video",
+          sourceApp: "msedge.exe",
+        },
         none: {
           title: null,
           artist: null,
@@ -107,6 +152,7 @@
           durationMs: null,
           updatedAt: 0,
           sourceApp: "",
+          mediaKind: "unknown",
           peak: 0,
           canPlayPause: false,
           canNext: false,
@@ -126,12 +172,19 @@
       // ?theme= stands in for the context-menu choice. Default auto, which
       // resolves against whatever colour scheme the browser reports.
       const themeFlag = new URLSearchParams(location.search).get("theme") || "auto";
+      const lyricsOff = new URLSearchParams(location.search).get("lyrics") === "off";
 
       window.__TAURI__ = {
         core: {
           invoke: async (cmd, args) => {
             if (cmd === "get_state") return FLAVOURS[flavour] ?? BASE;
-            if (cmd === "get_prefs") return { size: sizeFlag, theme: themeFlag };
+            if (cmd === "get_prefs") return { size: sizeFlag, theme: themeFlag, lyrics: !lyricsOff };
+            // Mirrors the real initial read. The event still fires afterwards,
+            // which is also what the real build does on a track change.
+            if (cmd === "get_lyrics")
+              return lyricsOff
+                ? { trackKey: "", lines: [], instrumental: false }
+                : (LYRICS[flavour] ?? { trackKey: "", lines: [], instrumental: false });
             if (cmd === "show_menu") {
               console.log("show_menu");
               return null;
@@ -146,7 +199,16 @@
           convertFileSrc: () => FAKE_ART,
         },
         event: {
-          listen: async () => () => {},
+          // Only lyrics-changed carries anything here; the rest are one-shot in
+          // the harness because get_state and get_prefs already returned.
+          listen: async (name, handler) => {
+            if (!lyricsOff && name === "lyrics-changed" && LYRICS[flavour] !== undefined) {
+              // Deferred so main.js has finished booting, which is also the
+              // order the real build sees: state first, words a moment later.
+              setTimeout(() => handler({ payload: LYRICS[flavour] }), 300);
+            }
+            return () => {};
+          },
         },
       };
     </script>

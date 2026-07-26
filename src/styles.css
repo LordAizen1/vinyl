@@ -82,8 +82,6 @@
   --screen-ink: rgba(255, 248, 247, 0.97);
   --screen-sub: rgba(255, 248, 247, 0.78);
   --screen-faint: rgba(255, 248, 247, 0.52);
-  --wave-dim: rgba(255, 247, 246, 0.3);
-  --wave-lit: rgba(255, 247, 246, 0.88);
 
   --ink: #26282b;
   --ink-soft: #3d3f43;
@@ -154,8 +152,6 @@
   --screen-ink: rgba(250, 240, 240, 0.95);
   --screen-sub: rgba(250, 240, 240, 0.72);
   --screen-faint: rgba(250, 240, 240, 0.45);
-  --wave-dim: rgba(250, 240, 240, 0.22);
-  --wave-lit: rgba(250, 240, 240, 0.8);
 
   --ink: #e6e8ea;
   --ink-soft: #b3b7bc;
@@ -408,13 +404,32 @@ body {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 22%);
 }
 
-.screen-body {
+/* Centred is the resting state: with no lyrics the screen holds only the title
+   block, and it belongs in the middle. Lyrics push it to the top, and the move
+   is animated because it happens live when Show lyrics is toggled. */
+.screen-head {
   position: absolute;
   left: 3.4cqw;
-  right: 8cqw;
+  right: 2.5cqw;
   top: 50%;
-  transform: translateY(-58%);
+  transform: translateY(-50%);
   min-width: 0;
+  transition:
+    top 420ms cubic-bezier(0.33, 1, 0.68, 1),
+    transform 420ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.widget.has-lyrics .screen-head {
+  top: 2.6cqw;
+  transform: translateY(0);
+}
+
+/* The gutter the note icon sits in. On the text rather than the block, so the
+   icon can be positioned against the head's real right edge. */
+.title,
+.artist,
+.meta {
+  padding-right: 5.5cqw;
 }
 
 .title {
@@ -440,8 +455,17 @@ body {
   white-space: nowrap;
 }
 
-.album,
-.source {
+/* The album, shown only when there are no lyrics to show instead. In the flow
+   of .screen-head rather than positioned, so it rides up and down with it. */
+.meta {
+  margin-top: 0.7cqw;
+}
+
+.widget.has-lyrics .meta {
+  display: none;
+}
+
+.album {
   font-size: 1.75cqw;
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -452,27 +476,17 @@ body {
   white-space: nowrap;
 }
 
-.album {
-  margin-top: 0.7cqw;
-}
-
-.source {
-  margin-top: 0.25cqw;
-  font-family: var(--font-mono);
-  font-size: 1.5cqw;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.album:empty,
-.source:empty {
+.album:empty {
   display: none;
 }
 
+/* Inside the head, so it travels with the title rather than being stranded at
+   the top when the block drops to the middle. Sits in the gutter the text
+   reserves with its padding-right. */
 .note-ic {
   position: absolute;
-  right: 2.5cqw;
-  top: 41%;
+  right: 0;
+  top: 0.9cqw;
   width: 3.6cqw;
   height: 3.6cqw;
   color: var(--screen-faint);
@@ -485,40 +499,69 @@ body {
   display: block;
 }
 
-/* ── waveform ── */
-.wave {
+/* ── lyrics ──
+ *
+ * The waveform used to sit here. It was decoration duplicating the progress bar
+ * directly below the screen, so the words get the room instead.
+ *
+ * The viewport clips; the inner track slides. Moving one transform per line
+ * keeps this on the compositor, which matters because CLAUDE.md constraint 4
+ * rules out per-frame DOM writes and a scrolling lyric is exactly the kind of
+ * thing that invites them. A line lands every few seconds, so this writes far
+ * less often than the 4 Hz timecode does. */
+.lyrics {
   position: absolute;
   left: 3.4cqw;
-  right: 5.8cqw;
-  bottom: 1.85cqw;
-  height: 3.3cqw;
+  right: 3.4cqw;
+  top: 10.2cqw;
+  bottom: 1.2cqw;
+  overflow: hidden;
   pointer-events: none;
+  /* Faded at both ends, so lines enter and leave rather than being chopped.
+     The tail is held longer than the lead: the sung line sits a third down, so
+     most of what is visible is what is coming, and fading that as hard as the
+     line already past would waste the room. */
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 88%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 14%, #000 88%, transparent);
 }
 
-.wave-row {
+.widget:not(.has-lyrics) .lyrics {
+  display: none;
+}
+
+.lyric-track {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  gap: 0.32cqw;
+  left: 0;
+  right: 0;
+  top: 0;
+  will-change: transform;
+  transition: transform 420ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-.wave-row i {
-  flex: 1;
-  min-width: 0.22cqw;
-  border-radius: 0.2cqw;
-  background: var(--wave-dim);
+.lyric-track p {
+  font-size: 2.35cqw;
+  line-height: 1.42;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--screen-faint);
+  padding: 0.3cqw 0;
+  /* Wrapped, not clipped: a long line is worth two rows, and an ellipsis in
+     the middle of a lyric reads as a bug. */
+  overflow-wrap: break-word;
+  transition:
+    color 260ms ease,
+    opacity 260ms ease;
 }
 
-/* One masked copy over the dim one, so progress costs a single style write
-   rather than restyling every bar four times a second. */
-.wave-lit i {
-  background: var(--wave-lit);
+/* The line being sung. Everything else recedes. */
+.lyric-track p.on {
+  color: var(--screen-ink);
 }
 
-.wave-lit {
-  -webkit-mask-image: linear-gradient(90deg, #000 0 var(--played, 0%), transparent var(--played, 0%));
-  mask-image: linear-gradient(90deg, #000 0 var(--played, 0%), transparent var(--played, 0%));
+/* An instrumental gap: a stamp with no words. Collapsed rather than left as a
+   blank row, so the scroll does not stall on nothing. */
+.lyric-track p:empty {
+  padding: 0;
 }
 
 /* ── progress ── */

@@ -60,6 +60,9 @@ pub enum Theme {
 pub struct Prefs {
     pub size: Size,
     pub theme: Theme,
+    /// Whether to look lyrics up. This is the only setting that governs network
+    /// access: with it off, the app makes no outbound requests at all.
+    pub lyrics: bool,
 }
 
 impl Default for Prefs {
@@ -67,6 +70,7 @@ impl Default for Prefs {
         Self {
             size: Size::Full,
             theme: Theme::Auto,
+            lyrics: true,
         }
     }
 }
@@ -135,6 +139,7 @@ mod tests {
         let prefs: Prefs = serde_json::from_str(r#"{"size":"compact"}"#).unwrap();
         assert_eq!(prefs.size, Size::Compact);
         assert_eq!(prefs.theme, Theme::Auto);
+        assert!(prefs.lyrics, "an older config should keep the default");
     }
 
     #[test]
@@ -142,6 +147,7 @@ mod tests {
         let prefs = Prefs {
             size: Size::Compact,
             theme: Theme::Dark,
+            lyrics: false,
         };
         let text = serde_json::to_string(&prefs).unwrap();
         assert_eq!(serde_json::from_str::<Prefs>(&text).unwrap(), prefs);

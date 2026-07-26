@@ -4,11 +4,22 @@
 //! click would lose the tick marks. The frontend forwards its `contextmenu`
 //! event to `show_menu`; everything else happens here.
 
+use std::sync::mpsc::Sender;
+
 use parking_lot::Mutex;
 use tauri::menu::{CheckMenuItem, ContextMenu, Menu, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, Runtime, Window};
 
+use crate::lyrics::Query;
 use crate::prefs::{Prefs, Size, Theme};
+use crate::state::SharedState;
+
+/// Which settings a menu click actually moved. Both need work beyond writing
+/// the value, and neither should run when the other was clicked.
+struct Changed {
+    size: bool,
+    lyrics: bool,
+}
 
 /// Where the choice is written. Tauri resolves this to
 /// `%APPDATA%\dev.lordaizen.vinyl\config.json` on Windows.
@@ -24,6 +35,7 @@ const SIZE_COMPACT: &str = "size:compact";
 const THEME_AUTO: &str = "theme:auto";
 const THEME_LIGHT: &str = "theme:light";
 const THEME_DARK: &str = "theme:dark";
+const LYRICS: &str = "lyrics";
 const QUIT: &str = "quit";
 
 /// The menu, plus the check items that have to be re-ticked after a choice.
@@ -31,6 +43,7 @@ pub struct AppMenu<R: Runtime> {
     menu: Menu<R>,
     size_items: [(CheckMenuItem<R>, Size); 2],
     theme_items: [(CheckMenuItem<R>, Theme); 3],
+    lyrics_item: CheckMenuItem<R>,
 }
 
 /// The live preferences. A `Mutex` rather than a channel: menu clicks are rare
@@ -49,12 +62,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) -> tauri::Result<AppM
     let light = check(THEME_LIGHT, "Light", prefs.theme == Theme::Light)?;
     let dark = check(THEME_DARK, "Dark", prefs.theme == Theme::Dark)?;
 
-    let appearance = Submenu::with_items(
-        app,
-        "Appearance",
-        true,
-        &[&auto, &light, &dark],
-    )?;
+    let appearance = Submenu::with_items(app, "Appearance", true, &[&auto, &light, &dark])?;
+
+    let lyrics = check(LYRICS, "Show lyrics", prefs.lyrics)?;
 
     let menu = Menu::with_items(
         app,
@@ -63,6 +73,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) -> tauri::Result<AppM
             &compact,
             &PredefinedMenuItem::separator(app)?,
             &appearance,
+            &lyrics,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::quit(app, Some("Quit vinyl"))?,
         ],
@@ -76,6 +87,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) -> tauri::Result<AppM
             (light, Theme::Light),
             (dark, Theme::Dark),
         ],
+        lyrics_item: lyrics,
     })
 }
 
@@ -94,6 +106,8 @@ impl<R: Runtime> AppMenu<R> {
         for (item, theme) in &self.theme_items {
             let _ = item.set_checked(*theme == prefs.theme);
         }
+        // A plain on/off, so unlike the groups above it needs no exclusivity.
+        let _ = self.lyrics_item.set_checked(prefs.lyrics);
     }
 }
 
@@ -109,7 +123,7 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, id: &str) {
         return;
     };
 
-    let (prefs, size_changed) = {
+    let (prefs, changed) = {
         let mut current = state.0.lock();
         let before = *current;
 
@@ -119,17 +133,40 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, id: &str) {
             THEME_AUTO => current.theme = Theme::Auto,
             THEME_LIGHT => current.theme = Theme::Light,
             THEME_DARK => current.theme = Theme::Dark,
+            LYRICS => current.lyrics = !current.lyrics,
             other => {
                 log::warn!("menu: unknown item {other:?}");
                 return;
             }
         }
 
-        (*current, current.size != before.size)
+        (
+            *current,
+            Changed {
+                size: current.size != before.size,
+                lyrics: current.lyrics != before.lyrics,
+            },
+        )
     };
 
-    if size_changed {
+    if changed.size {
         apply_size(app, prefs.size);
+    }
+
+    // Push the lyrics setting rather than waiting for the next track change.
+    // Nothing else would: `publish` only runs when playback moves, so toggling
+    // during a paused song used to leave the old words frozen on screen.
+    if changed.lyrics {
+        if let Some(sender) = app.try_state::<Sender<Option<Query>>>() {
+            let query = prefs.lyrics.then(|| {
+                app.try_state::<SharedState>()
+                    .and_then(|state| crate::lyrics::query_for(&state.read(), true))
+            });
+            // `None` is the clear signal; turning it back on re-asks for the
+            // track that is playing now, which the worker's cache usually
+            // answers without another request.
+            let _ = sender.send(query.flatten());
+        }
     }
 
     if let Ok(dir) = app.path().app_config_dir() {

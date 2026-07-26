@@ -21,19 +21,19 @@ use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use windows::Foundation::TypedEventHandler;
 use windows::Media::Control::{
     GlobalSystemMediaTransportControlsSession, GlobalSystemMediaTransportControlsSessionManager,
     GlobalSystemMediaTransportControlsSessionMediaProperties as MediaProperties,
     GlobalSystemMediaTransportControlsSessionPlaybackStatus as SmtcStatus,
 };
-use windows::Media::MediaPlaybackAutoRepeatMode as SmtcRepeat;
+use windows::Media::{MediaPlaybackAutoRepeatMode as SmtcRepeat, MediaPlaybackType};
 use windows::Storage::Streams::DataReader;
 use windows::Win32::System::WinRT::{RoInitialize, RO_INIT_MULTITHREADED};
 
 use crate::art::ArtCache;
-use crate::state::{PlaybackState, RepeatMode, SharedState, Status};
+use crate::state::{MediaKind, PlaybackState, RepeatMode, SharedState, Status};
 
 /// Safety net only. Events drive the updates; this bounds how long a missed
 /// event can leave the UI stale. Reading metadata is cheap because Phase 1 does
@@ -189,6 +189,22 @@ fn publish(app: &AppHandle, state: &SharedState, snapshot: PlaybackState) {
 
     *state.write() = snapshot.clone();
 
+    // The lyrics worker dedupes by track, so this fires on every change and
+    // only the ones that are actually a new song cost a lookup.
+    match app.try_state::<Sender<Option<crate::lyrics::Query>>>() {
+        Some(lyrics) => {
+            let enabled = app
+                .try_state::<crate::menu::PrefsState>()
+                .is_some_and(|prefs| prefs.0.lock().lyrics);
+            if let Err(error) = lyrics.send(crate::lyrics::query_for(&snapshot, enabled)) {
+                log::warn!("lyrics: the worker is gone, cannot ask it ({error})");
+            }
+        }
+        // Would mean the worker was never registered, which is a wiring bug
+        // rather than a missing lyric.
+        None => log::warn!("lyrics: no worker registered"),
+    }
+
     if let Err(error) = app.emit("playback-changed", snapshot) {
         log::warn!("could not emit playback-changed: {error}");
     }
@@ -322,6 +338,19 @@ fn describe(
     let (artist, album_from_artist) = split_artist(&raw_artist);
     let album = non_empty(clean_album(&raw_album)).or(album_from_artist);
 
+    // Nullable on the WinRT side, and frequently null: browsers rarely set it.
+    // An absent value maps to Unknown, which still gets a lyrics lookup.
+    let media_kind = media
+        .PlaybackType()
+        .and_then(|kind| kind.Value())
+        .map(|kind| match kind {
+            MediaPlaybackType::Music => MediaKind::Music,
+            MediaPlaybackType::Video => MediaKind::Video,
+            MediaPlaybackType::Image => MediaKind::Image,
+            _ => MediaKind::Unknown,
+        })
+        .unwrap_or(MediaKind::Unknown);
+
     let status = match playback.PlaybackStatus()? {
         SmtcStatus::Playing => Status::Playing,
         SmtcStatus::Paused => Status::Paused,
@@ -406,6 +435,7 @@ fn describe(
         updated_at: anchor.published_updated_at,
         source_app,
         peak: 0.0,
+        media_kind,
         can_play_pause,
         can_next,
         can_previous,

@@ -28,6 +28,30 @@ pub enum RepeatMode {
     List,
 }
 
+/// Mirrors `MediaPlaybackType`, which decides whether a session is worth
+/// looking lyrics up for.
+///
+/// `Unknown` is the honest default and is common: browsers frequently leave it
+/// unset. It is therefore treated as "might be music" rather than "is not", so a
+/// YouTube tab still gets a lookup. A miss costs one request that returns
+/// nothing; refusing to try would cost every browser-played song.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MediaKind {
+    Music,
+    Video,
+    Image,
+    Unknown,
+}
+
+impl MediaKind {
+    /// Whether to look this up. Video and Image never are: a film's title is not
+    /// a song, and searching for one only produces a wrong match.
+    pub fn might_have_lyrics(self) -> bool {
+        matches!(self, MediaKind::Music | MediaKind::Unknown)
+    }
+}
+
 /// A snapshot of what is playing anywhere on the system.
 ///
 /// `position_ms` is deliberately **not** live. It is the position as of
@@ -51,6 +75,9 @@ pub struct PlaybackState {
     pub source_app: String,
     /// Audio peak in 0.0..=1.0. Always zero until Phase 6.
     pub peak: f32,
+    /// What the source says it is playing. Decides whether the screen shows
+    /// lyrics or just the title and artist.
+    pub media_kind: MediaKind,
 
     /// What the session actually supports, read from `PlaybackInfo.Controls`.
     /// A live skip button that cannot skip is a bug, so the frontend disables
@@ -79,6 +106,7 @@ impl PlaybackState {
             updated_at: 0,
             source_app: String::new(),
             peak: 0.0,
+            media_kind: MediaKind::Unknown,
             can_play_pause: false,
             can_next: false,
             can_previous: false,
@@ -103,6 +131,7 @@ impl PlaybackState {
             || self.duration_ms != other.duration_ms
             || self.updated_at != other.updated_at
             || self.source_app != other.source_app
+            || self.media_kind != other.media_kind
             || self.can_play_pause != other.can_play_pause
             || self.can_next != other.can_next
             || self.can_previous != other.can_previous
