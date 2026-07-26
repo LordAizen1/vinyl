@@ -34,7 +34,7 @@ Then have me run it for ten minutes across: Spotify, a YouTube tab in Chrome or 
 YouTube Music, VLC, a podcast app, a livestream, two tabs playing simultaneously, and
 a game with music.
 
-**Deliverable: a written findings table** in `spike/FINDINGS.md` recording, per app:
+**Deliverable: a written findings table**, now at `docs/FINDINGS.md`, recording per app:
 does the title parse usefully; is artist meaningful or is it the channel name; is
 `EndTime` ever zero; does a thumbnail exist; what `GetCurrentSession()` picks when two
 sources are live.
@@ -49,11 +49,10 @@ Wait for my go-ahead.
 
 ## Phase 1 — Ugly but alive
 
-Port `reconcile`, `ticks_since_1601`, and their unit tests out of `spike/src/main.rs`
-into `src/smtc.rs` **before** deleting `spike/`; that logic is the validated fix for
-`CLAUDE.md` constraint 1 and should not be rewritten from scratch. Then delete `spike/`
-and scaffold the real project: `cargo tauri init` or the Tauri v2 CLI,
-vanilla frontend, no framework.
+Done. The anchor logic was ported out of the spike into `src-tauri/src/smtc.rs` as
+`Anchor::observe`, `spike/` was deleted, and `docs/FINDINGS.md` was kept as the Phase 0
+record. The project is scaffolded with the Tauri v2 CLI on the vanilla template, which
+serves `src/` as static files with no build step at all.
 
 Build the real backend structure now, even though the UI is plain text:
 

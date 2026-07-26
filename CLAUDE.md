@@ -123,8 +123,8 @@ extrapolation from zero on every read and parks the arm permanently.
 re-anchor.** Keep the existing local clock running. Re-anchor only on a track change, a
 genuinely different position, or a seek. Without this, a source that refreshes its
 timestamp without moving its position pins the arm at `0:00` for the whole track.
-Working reference implementation with tests: `reconcile` in `spike/src/main.rs`, which
-Phase 1 should lift into `smtc.rs` rather than rewrite.
+Implemented as `Anchor::observe` in `src-tauri/src/smtc.rs`, with tests covering a
+republished position, a backward seek, and a track change at the same position.
 
 ### 2. Tauri has no per-region hit testing
 
@@ -158,6 +158,11 @@ The widget runs 24/7. Idle CPU target: **under 1%**.
 - The tonearm updates at most twice per second. That is plenty.
 - The audio meter event carries one f32. Nothing else at 30 Hz.
 - When `Status::NoSession`, stop all animation and drop the meter thread to 2 Hz.
+
+The SMTC worker is event-driven, with one deliberate exception: a 5 s watchdog re-read
+so a missed or unsubscribed event cannot strand the UI on stale state. Accepted in
+Phase 1 because it reads metadata only. **Revisit it in Phase 3**, where thumbnails
+enter the read path and a per-tick megabyte would not fit this budget.
 
 WebView2 will cost 60–120 MB RSS. That is accepted and not a bug.
 

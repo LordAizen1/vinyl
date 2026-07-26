@@ -1,7 +1,12 @@
 # Phase 0 — SMTC findings
 
-Run the spike for at least ten minutes across the sources below. Record what the
-console reports rather than what the source application's own UI displays.
+The permanent record of what SMTC actually does on real applications. Everything here
+was observed from a console spike, not inferred; where something is inferred rather than
+measured, it says so.
+
+The spike itself was deleted at the end of Phase 1, once its logic had been ported into
+`src-tauri/src/smtc.rs`. It remains in git history at commit `ffd7364` if it is ever
+needed to answer the open questions listed at the bottom.
 
 ## Environment
 
@@ -150,7 +155,7 @@ not re-anchor.** Keep counting locally. Re-anchor only on a track change, a genu
 different position, or a seek, and when re-anchoring, credit the anchor's staleness so
 the value stays accurate for case 1 sources.
 
-Covered by unit tests in `spike/src/main.rs`, all passing:
+Covered by unit tests, now living in `src-tauri/src/smtc.rs`:
 
 - a source pinned at `0:00` forever still produces advancing progress
 - a seek re-anchors to the new position instead of being smoothed away

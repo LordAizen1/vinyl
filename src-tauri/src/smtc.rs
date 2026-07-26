@@ -2,7 +2,7 @@
 //! events, and keeps `PlaybackState` current.
 //!
 //! Three pieces of hard-won behaviour live here, all measured in Phase 0 and
-//! documented in `spike/FINDINGS.md`:
+//! documented in `docs/FINDINGS.md`:
 //!
 //! 1. `Position` does not tick. It is a snapshot as of `LastUpdatedTime`, and
 //!    Edge routinely leaves one untouched for minutes. We publish the anchor and
