@@ -1,4 +1,6 @@
 mod art;
+mod menu;
+mod prefs;
 mod smtc;
 mod state;
 
@@ -7,9 +9,12 @@ use std::sync::Arc;
 use std::sync::mpsc::Sender;
 
 use art::ArtCache;
+use menu::{AppMenu, PrefsState};
+use parking_lot::Mutex;
+use prefs::Prefs;
 use smtc::{Command, Signal};
 use state::{PlaybackState, SharedState};
-use tauri::{http, Manager};
+use tauri::{http, Manager, Wry};
 
 /// The frontend's initial read. Every update after this arrives as a
 /// `playback-changed` event.
@@ -37,6 +42,20 @@ fn transport(action: &str, sender: tauri::State<'_, Sender<Signal>>) -> Result<(
     sender
         .send(Signal::Run(command))
         .map_err(|_| "the SMTC worker is not running".to_owned())
+}
+
+/// The frontend's initial read of the menu choices, so it can style itself on
+/// load without waiting for a `prefs-changed` it may never get.
+#[tauri::command]
+fn get_prefs(state: tauri::State<'_, PrefsState>) -> Prefs {
+    *state.0.lock()
+}
+
+/// Pops the context menu at the cursor. The webview owns the `contextmenu`
+/// event, so the frontend has to ask for this rather than Tauri intercepting it.
+#[tauri::command]
+fn show_menu(window: tauri::Window, menu: tauri::State<'_, AppMenu<Wry>>) -> Result<(), String> {
+    menu.popup(window).map_err(|error| error.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -100,11 +119,29 @@ pub fn run() {
             }
         })
         .setup(move |app| {
-            let sender = smtc::spawn(app.handle().clone(), worker_state, worker_cache);
+            let handle = app.handle().clone();
+
+            // Before the window is shown, so a compact config does not flash at
+            // the full size first.
+            let prefs = menu::load(&handle);
+            if prefs.size != prefs::Size::Full {
+                menu::apply_size(&handle, prefs.size);
+            }
+
+            app.manage(PrefsState(Mutex::new(prefs)));
+            app.manage(menu::build(&handle, prefs)?);
+
+            let sender = smtc::spawn(handle, worker_state, worker_cache);
             app.manage(sender);
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_state, transport])
+        .on_menu_event(|app, event| menu::handle(app, event.id().as_ref()))
+        .invoke_handler(tauri::generate_handler![
+            get_state,
+            transport,
+            get_prefs,
+            show_menu
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

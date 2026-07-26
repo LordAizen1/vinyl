@@ -14,7 +14,6 @@ const RM = matchMedia("(prefers-reduced-motion: reduce)");
 const widget = $("widget");
 const spinG = $("spinG");
 const armG = $("armG");
-const armSh = $("armSh");
 const labelG = $("labelG");
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -32,15 +31,18 @@ const PIVOT_DIST = Math.hypot(PIVOT.x - CENTER.x, PIVOT.y - CENTER.y);
  * Pivot to contact, and the bearing of the contact in the arm's drawn pose.
  *
  * The tube runs straight to (860,105), bends to (990,128), and the headshell
- * is set there at a 30 degree offset. The contact point is the underside of
- * the cartridge, local (26.5, 19) inside that rotated group.
+ * is set there at a 30 degree offset. The contact point is under the front of
+ * the head, mid-width: local (36, 24) inside that rotated group, which lands
+ * at (1009.18, 166.79). Nothing is drawn there — the stylus points down, so
+ * from above it is hidden by the head — but the arm still tracks to it.
  *
- * So the arm is not "pointing along +x": pivot to contact measures 368.6 at
- * 8.5 degrees. Both are derived from the drawn geometry, because assuming zero
+ * So the arm is not "pointing along +x": pivot to contact measures 374.31 at
+ * 9.5 degrees. Both are derived from the drawn geometry, because assuming zero
  * would leave the cartridge several degrees off the groove it is tracking.
+ * Re-measure these whenever the headshell or cartridge is resized.
  */
-const ARM_LEN = 368.6;
-const DRAWN_ANGLE = 8.5;
+const ARM_LEN = 374.31;
+const DRAWN_ANGLE = 9.5;
 
 /**
  * Where the stylus sits at the start and end of a track.
@@ -51,8 +53,12 @@ const DRAWN_ANGLE = 8.5;
  * and the head reads as sitting outside the vinyl. Measured: at a lead-in of
  * 294 the headshell's rear corner landed at 324.7, some 22 units beyond the
  * rim.
+ *
+ * The value tracks the headshell's size, so it is measured, not chosen: at 260
+ * the rear corner sits at 299.7, just inside the rim. Enlarging the head means
+ * re-measuring this alongside ARM_LEN.
  */
-const R_LEAD_IN = 267;
+const R_LEAD_IN = 260;
 const R_RUN_OUT = 128;
 
 const BASE_ANGLE =
@@ -275,11 +281,11 @@ function syncLabel() {
  * cover would eventually produce pale yellow and make it unreadable. The
  * result stays "dusty" like the reference and only ever shifts in hue.
  * ══════════════════════════════════════════════════════════════════════ */
-const DARK = matchMedia("(prefers-color-scheme: dark)");
-
 /** Lightness and saturation bands that keep white type legible. */
 function screenBand() {
-  return DARK.matches
+  // The resolved palette, not the system one: with the theme forced to Light on
+  // a dark desktop, a dark band would put dim type on a bright screen.
+  return isDark()
     ? { light: 0.22, sat: [0.14, 0.32] }
     : { light: 0.6, sat: [0.16, 0.36] };
 }
@@ -448,6 +454,8 @@ function bindTransport() {
   $("btnPlay").addEventListener("click", toggle);
   $("btnNext").addEventListener("click", () => skip("next"));
   $("btnPrev").addEventListener("click", () => skip("previous"));
+  // Inert unless the widget is compact; CSS keeps it out of the way otherwise.
+  $("deckHit").addEventListener("click", toggle);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -522,23 +530,20 @@ function render() {
   const rotation = hasSession ? armRotationFor(radius) : REST_ROTATION;
   if (rotation !== lastRotation) {
     lastRotation = rotation;
-    const spin = `rotate(${rotation.toFixed(3)} ${PIVOT.x} ${PIVOT.y})`;
-    armG.setAttribute("transform", spin);
-    // The shadow sits further out and softer when the arm is lifted, which is
-    // how a top-down view expresses height at all.
-    const lift = playing ? 0 : 1;
-    armSh.setAttribute(
+    armG.setAttribute(
       "transform",
-      `translate(${(7 + 5 * lift).toFixed(1)} ${(12 + 7 * lift).toFixed(1)}) ${spin}`,
+      `rotate(${rotation.toFixed(3)} ${PIVOT.x} ${PIVOT.y})`,
     );
   }
-  armSh.setAttribute("opacity", playing ? "0.3" : "0.16");
 
   // Only offer what the source says it supports.
-  $("btnPlay").disabled = !hasSession || !snapshot.canPlayPause;
+  const canToggle = hasSession && snapshot.canPlayPause;
+  $("btnPlay").disabled = !canToggle;
   $("btnNext").disabled = !hasSession || !snapshot.canNext;
   $("btnPrev").disabled = !hasSession || !snapshot.canPrevious;
   $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
+  $("deckHit").disabled = !canToggle;
+  $("deckHit").setAttribute("aria-label", playing ? "Pause" : "Play");
 
   if (!hasSession) {
     $("uiTitle").textContent = "No session";
@@ -570,13 +575,62 @@ function render() {
   }
 }
 
-/** Bar fill, marker position and the lit portion of the waveform, in one go. */
+/** Bar fill and the lit portion of the waveform, in one go. */
 function setProgress(fraction) {
   const percent = `${(fraction * 100).toFixed(2)}%`;
   $("uiBar").style.width = percent;
-  $("uiKnob").style.left = percent;
   $("uiWaveLit").style.setProperty("--played", percent);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Preferences
+ *
+ * Size and palette both come from the right-click menu, which Rust owns: it
+ * resizes the window, writes config.json and emits `prefs-changed`. All this
+ * side does is restyle.
+ * ══════════════════════════════════════════════════════════════════════ */
+const SYSTEM_DARK = matchMedia("(prefers-color-scheme: dark)");
+const root = document.documentElement;
+
+/** The palette actually in force, which is what every caller wants. */
+function isDark() {
+  return root.dataset.theme === "dark";
+}
+
+/**
+ * Writes the resolved palette to the root.
+ *
+ * "auto" is never written: styles.css declares its dark tokens once, under
+ * `[data-theme="dark"]`, so the choice has to be resolved to a concrete palette
+ * here rather than left for a media query to settle.
+ */
+function applyTheme(theme) {
+  const dark = theme === "dark" || (theme === "auto" && SYSTEM_DARK.matches);
+  root.dataset.theme = dark ? "dark" : "light";
+  // The tint's lightness band is keyed off the palette, so a theme change has
+  // to recompute it or the screen keeps the other palette's band.
+  syncTint();
+}
+
+function applyPrefs(prefs) {
+  theme = prefs.theme;
+  applyTheme(theme);
+  widget.classList.toggle("compact", prefs.size === "compact");
+}
+
+let theme = "auto";
+
+// Only meaningful while the choice is Match Windows; harmless otherwise, since
+// applyTheme re-resolves from the current choice either way.
+SYSTEM_DARK.addEventListener("change", () => {
+  if (theme === "auto") applyTheme(theme);
+});
+
+// The webview swallows right-click by default, so the menu has to be asked for.
+addEventListener("contextmenu", (event) => {
+  event.preventDefault();
+  invoke("show_menu").catch((error) => console.error("show_menu failed", error));
+});
 
 function adopt(next) {
   const changedTrack =
@@ -601,6 +655,15 @@ buildGrooves();
 bindTransport();
 
 await listen("playback-changed", (event) => adopt(event.payload));
+await listen("prefs-changed", (event) => applyPrefs(event.payload));
+
+// Before the first render: the saved size decides the layout, and restyling
+// after paint would show the wrong one for a frame.
+try {
+  applyPrefs(await invoke("get_prefs"));
+} catch (error) {
+  console.error("get_prefs failed; keeping the defaults", error);
+}
 
 try {
   adopt(await invoke("get_state"));

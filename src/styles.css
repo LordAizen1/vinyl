@@ -45,11 +45,15 @@
   --steel-lo: #c3c5c8;
   --plate-hi: #eceef0;
   --plate-lo: #d5d7da;
+  --plate-edge: rgba(15, 17, 20, 0.17);
+  --plate-cast: rgba(15, 17, 20, 0.2);
+  --plate-cast-tight: rgba(15, 17, 20, 0.14);
+  --plate-rim: rgba(255, 255, 255, 0.85);
+  --plate-floor: rgba(0, 0, 0, 0.1);
 
   --metal-hi: #ffffff;
   --metal-mid: #c9ccd0;
   --metal-lo: #96999c;
-  --metal-deep: #6b6e72;
 
   --vinyl-hi: #212226;
   --vinyl-mid: #121317;
@@ -58,15 +62,19 @@
   --groove: #000000;
   --groove-sep: rgba(255, 255, 255, 0.05);
 
-  --head-hi: #5a5d61;
-  --head-mid: #33363a;
-  --head-lo: #1b1d20;
-  --cart-c: #17181b;
+  --arm-c: #b9bcc0;
+  --arm-base-c: #cbced2;
+  --arm-cap-c: #a4a7ab;
+  --arm-edge-c: rgba(0, 0, 0, 0.32);
+  /* The head spends its life over the black record, so it is silver rather
+     than the near-black of the earlier build, which vanished against it. */
+  --head-c: #71767d;
+  --head-edge-c: #2e3237;
   --collar-c: #494c50;
   --spindle-pin-c: #75787c;
   --bearing-pin-c: #9a9da1;
+  --screw-c: #bcbfc3;
   --screw-edge-c: rgba(0, 0, 0, 0.25);
-  --screw-inner-c: rgba(0, 0, 0, 0.18);
 
   --screen-hi: #b98e92;
   --screen: #b08386;
@@ -85,9 +93,6 @@
 
   --track-c: rgba(30, 31, 33, 0.32);
   --fill-c: #232426;
-  --knob-hi: #ffffff;
-  --knob-mid: #e7e9eb;
-  --knob-lo: #c9cbce;
   --big-ring: #2b2c2e;
   --big-hi: #f7f8f9;
   --big-lo: #dfe1e3;
@@ -97,59 +102,70 @@
   --font-display: "Pirata One", "UnifrakturMaguntia", Georgia, serif;
 }
 
-/* ═══════════════ dark, on a dark desktop ═══════════════ */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --steel-hi: #26292e;
-    --steel: #1a1c20;
-    --steel-lo: #101215;
-    --plate-hi: #1c1f23;
-    --plate-lo: #121417;
+/* ═══════════════ dark ═══════════════
+ *
+ * Selected by attribute rather than by `prefers-color-scheme`, because the
+ * context menu offers Match Windows / Light / Dark and a media query cannot
+ * express a user override. `data-theme` is always one of "light" or "dark",
+ * never "auto": the resolving happens in JS, so these tokens are declared once.
+ *
+ * Two places write it. An inline script in index.html sets it from matchMedia
+ * before first paint, so a dark desktop never flashes silver; main.js then
+ * overrides once the saved choice arrives from Rust, and keeps watching the
+ * media query while the choice is Match Windows. */
+:root[data-theme="dark"] {
+  --steel-hi: #26292e;
+  --steel: #1a1c20;
+  --steel-lo: #101215;
+  --plate-hi: #1c1f23;
+  --plate-lo: #121417;
+  --plate-edge: rgba(255, 255, 255, 0.11);
+  --plate-cast: rgba(0, 0, 0, 0.62);
+  --plate-cast-tight: rgba(0, 0, 0, 0.5);
+  --plate-rim: rgba(255, 255, 255, 0.16);
+  --plate-floor: rgba(0, 0, 0, 0.4);
 
-    --metal-hi: #c3c8ce;
-    --metal-mid: #8f959c;
-    --metal-lo: #5c6167;
-    --metal-deep: #383c41;
+  --metal-hi: #c3c8ce;
+  --metal-mid: #8f959c;
+  --metal-lo: #5c6167;
 
-    --vinyl-hi: #1a1b1e;
-    --vinyl-mid: #0e0f12;
-    --vinyl-lo: #08090b;
-    --vinyl-edge: #040405;
-    --groove: #000000;
-    --groove-sep: rgba(255, 255, 255, 0.045);
+  --vinyl-hi: #1a1b1e;
+  --vinyl-mid: #0e0f12;
+  --vinyl-lo: #08090b;
+  --vinyl-edge: #040405;
+  --groove: #000000;
+  --groove-sep: rgba(255, 255, 255, 0.045);
 
-    --head-hi: #5a5d61;
-    --head-mid: #33363a;
-    --head-lo: #1b1d20;
-    --cart-c: #131417;
-    --collar-c: #494c50;
-    --spindle-pin-c: #6a6d71;
-    --bearing-pin-c: #8a8d91;
-    --screw-edge-c: rgba(0, 0, 0, 0.5);
-    --screw-inner-c: rgba(0, 0, 0, 0.4);
+  --arm-c: #8f959c;
+  --arm-base-c: #6f747a;
+  --arm-cap-c: #878d94;
+  --arm-edge-c: rgba(0, 0, 0, 0.55);
+  --head-c: #7d838a;
+  --head-edge-c: #202429;
+  --collar-c: #494c50;
+  --spindle-pin-c: #6a6d71;
+  --bearing-pin-c: #8a8d91;
+  --screw-c: #71767c;
+  --screw-edge-c: rgba(0, 0, 0, 0.5);
 
-    --screen-hi: #4d3539;
-    --screen: #422e32;
-    --screen-lo: #37262a;
-    --screen-ink: rgba(250, 240, 240, 0.95);
-    --screen-sub: rgba(250, 240, 240, 0.72);
-    --screen-faint: rgba(250, 240, 240, 0.45);
-    --wave-dim: rgba(250, 240, 240, 0.22);
-    --wave-lit: rgba(250, 240, 240, 0.8);
+  --screen-hi: #4d3539;
+  --screen: #422e32;
+  --screen-lo: #37262a;
+  --screen-ink: rgba(250, 240, 240, 0.95);
+  --screen-sub: rgba(250, 240, 240, 0.72);
+  --screen-faint: rgba(250, 240, 240, 0.45);
+  --wave-dim: rgba(250, 240, 240, 0.22);
+  --wave-lit: rgba(250, 240, 240, 0.8);
 
-    --ink: #e6e8ea;
-    --ink-soft: #b3b7bc;
-    --lamp: #ffb454;
+  --ink: #e6e8ea;
+  --ink-soft: #b3b7bc;
+  --lamp: #ffb454;
 
-    --track-c: rgba(255, 255, 255, 0.18);
-    --fill-c: #d8dbde;
-    --knob-hi: #ffffff;
-    --knob-mid: #d3d6d9;
-    --knob-lo: #9ea2a6;
-    --big-ring: #4d5157;
-    --big-hi: #2e3238;
-    --big-lo: #1c1f23;
-  }
+  --track-c: rgba(255, 255, 255, 0.18);
+  --fill-c: #d8dbde;
+  --big-ring: #4d5157;
+  --big-hi: #2e3238;
+  --big-lo: #1c1f23;
 }
 
 * {
@@ -234,19 +250,30 @@ body {
 }
 
 /* ─────────────────────────── the plate ─────────────────────────── */
+/* Centred rather than pinned to a fixed top: the plate's height is in cqw and
+   so does not track the chassis's height, which left the bottom margin wider
+   than the top at every aspect but one. */
 .plate {
   position: absolute;
   left: 6.2cqw;
-  top: 7.8cqw;
+  top: 50%;
+  transform: translateY(-50%);
   width: 46.5cqw;
   height: 45.6cqw;
   border-radius: 2.6cqw;
   background: linear-gradient(180deg, var(--plate-hi) 0%, var(--plate-lo) 100%);
+  /* Themed, not fixed. A dark cast shadow reads on the silver chassis but
+     vanishes on the dark one, where the panel and its surround are within a few
+     percent of each other; the dark palette leans on the rim light and the
+     spread ring instead, so the deck still reads as a separate object sitting
+     on the chassis. Most visible when compact, where the deck nearly fills the
+     widget and that thin bezel is the only thing separating them. */
   box-shadow:
-    0 1.1cqw 2.3cqw rgba(15, 17, 20, 0.2),
-    0 0.25cqw 0.6cqw rgba(15, 17, 20, 0.14),
-    inset 0 0.14cqw 0.25cqw rgba(255, 255, 255, 0.85),
-    inset 0 -0.3cqw 0.7cqw rgba(0, 0, 0, 0.1);
+    0 0 0 0.085cqw var(--plate-edge),
+    0 1.1cqw 2.3cqw var(--plate-cast),
+    0 0.25cqw 0.6cqw var(--plate-cast-tight),
+    inset 0 0.14cqw 0.25cqw var(--plate-rim),
+    inset 0 -0.3cqw 0.7cqw var(--plate-floor);
 }
 
 .plate::before {
@@ -276,20 +303,30 @@ body {
 .s-metal-hi { stop-color: var(--metal-hi); }
 .s-metal-mid { stop-color: var(--metal-mid); }
 .s-metal-lo { stop-color: var(--metal-lo); }
-.s-metal-deep { stop-color: var(--metal-deep); }
 .s-vinyl-hi { stop-color: var(--vinyl-hi); }
 .s-vinyl-mid { stop-color: var(--vinyl-mid); }
 .s-vinyl-lo { stop-color: var(--vinyl-lo); }
 .s-vinyl-edge { stop-color: var(--vinyl-edge); }
-.s-head-hi { stop-color: var(--head-hi); }
-.s-head-mid { stop-color: var(--head-mid); }
-.s-head-lo { stop-color: var(--head-lo); }
 
-.screw-edge { stroke: var(--screw-edge-c); }
-.screw-inner { stroke: var(--screw-inner-c); }
+/* ── Flat parts: a fill and an edge, no highlight ramp, no cast shadow. ── */
+.screw {
+  fill: var(--screw-c);
+  stroke: var(--screw-edge-c);
+}
+.arm-base,
+.arm-cap {
+  stroke: var(--arm-edge-c);
+}
+.arm-base { fill: var(--arm-base-c); }
+.arm-cap { fill: var(--arm-cap-c); }
+.arm-tube { stroke: var(--arm-c); }
+.arm-tube-edge { stroke: var(--arm-edge-c); }
+.head-body {
+  fill: var(--head-c);
+  stroke: var(--head-edge-c);
+}
 .spindle-pin { fill: var(--spindle-pin-c); }
 .bearing-pin { fill: var(--bearing-pin-c); }
-.cart { fill: var(--cart-c); }
 .head-collar { fill: var(--collar-c); }
 #grooves circle { stroke: var(--groove); }
 #grooves circle.sep { stroke: var(--groove-sep); }
@@ -324,24 +361,21 @@ body {
 }
 
 /* The arm sweeps on a transition. Real state moves it about twice a second. */
-#armG,
-#armSh {
+#armG {
   transition: transform 520ms cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-#armSh {
-  transition:
-    transform 520ms cubic-bezier(0.34, 1.2, 0.64, 1),
-    opacity 260ms ease-out;
-}
-
 /* ─────────────────────────── right column ─────────────────────────── */
+/* Bounded to the deck panel's exact vertical extent, so the two halves of the
+   face read as one row rather than two stacks of different heights. Centred the
+   same way .plate is, and must keep the same height as it. */
 .side {
   position: absolute;
   left: 56.3cqw;
   right: 7.2cqw;
-  top: 0;
-  bottom: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 45.6cqw;
   display: flex;
   flex-direction: column;
 }
@@ -349,9 +383,10 @@ body {
 /* ── the screen ── */
 .screen {
   position: relative;
-  margin-top: 6cqw;
-  height: 36cqw;
-  flex: none;
+  /* Absorbs whatever the fixed rows below leave, so the column fills its bounds
+     exactly without the heights having to be totted up by hand. */
+  flex: 1;
+  min-height: 0;
   border-radius: 1.9cqw;
   background: linear-gradient(180deg, var(--screen-hi) 0%, var(--screen) 55%, var(--screen-lo) 100%);
   box-shadow:
@@ -510,24 +545,6 @@ body {
   background: var(--fill-c);
 }
 
-/* A position marker, not a drag handle: PLAN.md excludes seek, so it must not
-   look grabbable. */
-.knob {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 2.15cqw;
-  height: 2.15cqw;
-  margin: -1.07cqw 0 0 -1.07cqw;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, var(--knob-hi) 0%, var(--knob-mid) 45%, var(--knob-lo) 100%);
-  border: 0.07cqw solid rgba(0, 0, 0, 0.18);
-  box-shadow:
-    0 0.3cqw 0.65cqw rgba(0, 0, 0, 0.35),
-    inset 0 0.12cqw 0.18cqw rgba(255, 255, 255, 0.9);
-  pointer-events: none;
-}
-
 .times {
   margin-top: 0.55cqw;
   display: flex;
@@ -539,8 +556,8 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.widget.live .bar,
-.widget.live .knob {
+/* A livestream has no duration, so there is no progress to show. */
+.widget.live .bar {
   opacity: 0.25;
 }
 
@@ -639,8 +656,64 @@ button {
   display: none;
 }
 
-:is(.tbtn, .big):focus-visible,
-#deckHit:focus-visible {
+:is(.tbtn, .big):focus-visible {
+  outline: 0.26cqw solid var(--ink);
+  outline-offset: 0.3cqw;
+}
+
+/* ─────────────────────────── compact ───────────────────────────
+ *
+ * The deck on its own: no screen, no readout, no transport. A display, not a
+ * controller, which is the whole point of the smaller size.
+ *
+ * Everything inside the deck is drawn in the SVG's own viewBox, so it all
+ * rescales from the plate alone and none of it needs a compact variant.
+ *
+ * The window wants height = 0.982 x width. That is not arbitrary: the plate
+ * sits inside a 0.62cqw chassis padding plus this 6.2cqw inset on every side,
+ * so at that ratio the 715x700 viewBox fills the plate exactly and the deck
+ * neither letterboxes nor crops. 360x354 is the intended default.
+ *
+ * PLAN.md Phase 4 owns the switch itself: the context menu entry, the window
+ * resize and persisting the choice. Only the layout lives here.
+ */
+.widget.compact .side {
+  display: none;
+}
+
+.widget.compact .plate {
+  inset: 6.2cqw;
+  width: auto;
+  height: auto;
+  /* The inset already centres it; leaving the full size's translate on would
+     drag it half its own height off the top. */
+  transform: none;
+  /* The plate now nearly fills the face, so it wants a corner closer to the
+     chassis's own rather than the small one it has when it is a panel. */
+  border-radius: 3.2cqw;
+}
+
+/* The deck as a play/pause target. Only at the compact size: at the full one
+   the transport row is right there, and CLAUDE.md's one-obvious-control rule
+   was the reason the earlier deck-click and corner toggle both came out. */
+#deckHit {
+  display: none;
+}
+
+.widget.compact #deckHit {
+  display: block;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.widget.compact #deckHit:disabled {
+  cursor: default;
+}
+
+.widget.compact #deckHit:focus-visible {
   outline: 0.26cqw solid var(--ink);
   outline-offset: 0.3cqw;
 }
@@ -649,7 +722,6 @@ button {
    because the rotation is the product. */
 @media (prefers-reduced-motion: reduce) {
   #armG,
-  #armSh,
   #vinylG,
   #labelG {
     transition: none;

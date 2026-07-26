@@ -13,9 +13,9 @@
         "label": "main",
         "title": "vinyl",
         "width": 470,
-        "height": 300,
-        "minWidth": 380,
-        "minHeight": 250
+        "height": 275,
+        "minWidth": 260,
+        "minHeight": 240
       }
     ],
     "security": {

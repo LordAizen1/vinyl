@@ -171,9 +171,20 @@ Tauri window config: `transparent: true`, `decorations: false`, `alwaysOnTop: tr
 capabilities in the Tauri v2 capabilities file.
 
 - Drag to move via a designated drag region on the plinth.
-- Persist window position to `%APPDATA%\vinyl\config.json`, debounced. Restore on
-  launch, clamped to a currently-connected monitor so it can't restore off-screen.
+- Persist window position to the `config.json` the menu already writes, debounced.
+  Restore on launch, clamped to a currently-connected monitor so it can't restore
+  off-screen. Tauri resolves the file to
+  `%APPDATA%\dev.lordaizen.vinyl\config.json`, not the `%APPDATA%\vinyl` guessed
+  here originally.
 - System tray icon: show/hide, always-on-top toggle, launch at login, quit.
+- ~~**Two sizes, chosen from a right-click menu on the widget.**~~ **Built early**,
+  and the same menu carries a Light / Dark / Match Windows choice. Full is
+  470x275 (deck, screen, progress readout, transport), compact is 280x275 (the
+  deck alone, no controls but the deck itself). Menu in `src-tauri/src/menu.rs`,
+  store in `prefs.rs`, layout as `.widget.compact` in `styles.css`. Neither
+  preset's height is free — see the notes on `Size::dimensions`. **This phase now
+  only has to add window position to the existing `config.json`, not build the
+  store.**
 - **Hide when a fullscreen app is foreground.** Compare the `GetForegroundWindow()`
   rect against its monitor rect from `MonitorFromWindow` + `GetMonitorInfoW`. Poll at
   1 Hz — cheap and adequate. Without this, the widget draws over games.
@@ -184,6 +195,8 @@ capabilities in the Tauri v2 capabilities file.
 - Survives a restart in the same position. Survives unplugging a second monitor.
 - Disappears in a fullscreen game and returns on alt-tab.
 - Multi-monitor and 150% display scaling both behave.
+- Switching to compact and back leaves the window where it was, and the choice
+  survives a restart.
 
 ### Gate 4
 

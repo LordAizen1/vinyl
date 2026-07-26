@@ -14,6 +14,9 @@
 
       Query flags:
         ?state=playing | paused | none | live | art
+        ?art=red | teal | indigo | amber
+        ?size=full | compact
+        ?theme=auto | light | dark
     -->
     <style>
       body {
@@ -23,11 +26,16 @@
         place-items: center;
         background: radial-gradient(1100px 640px at 40% 24%, #1d2026 0%, #0a0b0d 70%);
       }
+      /* Both mirror prefs.rs Size::dimensions(). */
       #shell {
         width: 470px;
-        height: 300px;
+        height: 275px;
         resize: both;
         overflow: hidden;
+      }
+      #shell.compact {
+        width: 280px;
+        height: 275px;
       }
     </style>
   </head>
@@ -110,10 +118,24 @@
         },
       };
 
+      // ?size= stands in for the saved config the real build reads from Rust.
+      const sizeFlag =
+        new URLSearchParams(location.search).get("size") === "compact"
+          ? "compact"
+          : "full";
+      // ?theme= stands in for the context-menu choice. Default auto, which
+      // resolves against whatever colour scheme the browser reports.
+      const themeFlag = new URLSearchParams(location.search).get("theme") || "auto";
+
       window.__TAURI__ = {
         core: {
           invoke: async (cmd, args) => {
             if (cmd === "get_state") return FLAVOURS[flavour] ?? BASE;
+            if (cmd === "get_prefs") return { size: sizeFlag, theme: themeFlag };
+            if (cmd === "show_menu") {
+              console.log("show_menu");
+              return null;
+            }
             if (cmd === "transport") {
               console.log("transport:", args.action);
               return null;
@@ -138,7 +160,19 @@
       styles.href = "../src/styles.css";
       document.head.appendChild(styles);
 
-      document.getElementById("shell").innerHTML = parsed.body.innerHTML;
+      const shell = document.getElementById("shell");
+      shell.innerHTML = parsed.body.innerHTML;
+
+      // index.html does this in a <head> script, which injecting body.innerHTML
+      // skips. main.js overwrites it a moment later from the stubbed get_prefs.
+      document.documentElement.dataset.theme = matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches
+        ? "dark"
+        : "light";
+
+      // Rust resizes the real window; here the harness resizes its own shell.
+      if (sizeFlag === "compact") shell.classList.add("compact");
 
       await import("../src/main.js");
     </script>

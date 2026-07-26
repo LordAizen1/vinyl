@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>vinyl</title>
     <link rel="stylesheet" href="styles.css" />
+    <!--
+      Runs before first paint. styles.css keys its dark palette off
+      [data-theme="dark"] rather than a media query, so that the context menu can
+      override it; without this line a dark desktop would paint the silver
+      widget for a frame before main.js loads. main.js takes over from here,
+      applying the saved choice and watching the system setting.
+    -->
+    <script>
+      document.documentElement.dataset.theme = matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches
+        ? "dark"
+        : "light";
+    </script>
     <script type="module" src="main.js" defer></script>
   </head>
 
@@ -31,38 +45,6 @@
                 <stop offset=".78" class="s-vinyl-lo" />
                 <stop offset="1" class="s-vinyl-edge" />
               </radialGradient>
-              <radialGradient id="gScrew" cx="35%" cy="30%" r="75%">
-                <stop offset="0" class="s-metal-hi" />
-                <stop offset=".45" class="s-metal-mid" />
-                <stop offset=".8" class="s-metal-lo" />
-                <stop offset="1" class="s-metal-deep" />
-              </radialGradient>
-              <radialGradient id="gBase" cx="36%" cy="30%" r="80%">
-                <stop offset="0" class="s-metal-hi" />
-                <stop offset=".5" class="s-metal-mid" />
-                <stop offset=".85" class="s-metal-lo" />
-                <stop offset="1" class="s-metal-deep" />
-              </radialGradient>
-              <radialGradient id="gCapIn" cx="40%" cy="32%" r="80%">
-                <stop offset="0" class="s-metal-hi" />
-                <stop offset=".6" class="s-metal-lo" />
-                <stop offset="1" class="s-metal-deep" />
-              </radialGradient>
-              <linearGradient id="gTube" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="s-metal-hi" />
-                <stop offset=".45" class="s-metal-mid" />
-                <stop offset="1" class="s-metal-deep" />
-              </linearGradient>
-              <linearGradient id="gHead" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="s-head-hi" />
-                <stop offset=".5" class="s-head-mid" />
-                <stop offset="1" class="s-head-lo" />
-              </linearGradient>
-              <radialGradient id="gCw" cx="35%" cy="30%" r="80%">
-                <stop offset="0" class="s-metal-mid" />
-                <stop offset=".6" class="s-metal-lo" />
-                <stop offset="1" class="s-metal-deep" />
-              </radialGradient>
               <radialGradient id="gSpin" cx="35%" cy="30%" r="80%">
                 <stop offset="0" class="s-metal-hi" />
                 <stop offset=".55" class="s-metal-mid" />
@@ -83,22 +65,14 @@
               <filter id="fB8" x="-40%" y="-40%" width="180%" height="180%">
                 <feGaussianBlur stdDeviation="8" />
               </filter>
-              <filter id="fB4" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="4" />
-              </filter>
               <clipPath id="cLab"><circle cx="335" cy="345" r="92" /></clipPath>
               <clipPath id="cRec"><circle cx="335" cy="345" r="303" /></clipPath>
             </defs>
 
-            <!-- corner screws -->
-            <ellipse cx="63" cy="70" rx="23" ry="21" fill="#000" opacity=".18" filter="url(#fB4)" />
-            <circle cx="60" cy="65" r="22" fill="url(#gScrew)" />
-            <circle class="screw-edge" cx="60" cy="65" r="22" fill="none" stroke-width="1" />
-            <circle class="screw-inner" cx="60" cy="65" r="12.5" fill="none" stroke-width="1.6" />
-            <ellipse cx="43" cy="630" rx="23" ry="21" fill="#000" opacity=".18" filter="url(#fB4)" />
-            <circle cx="40" cy="625" r="22" fill="url(#gScrew)" />
-            <circle class="screw-edge" cx="40" cy="625" r="22" fill="none" stroke-width="1" />
-            <circle class="screw-inner" cx="40" cy="625" r="12.5" fill="none" stroke-width="1.6" />
+            <!-- Corner pins: flat metal discs. Both share cx, so they read as
+                 one vertical line down the left edge. -->
+            <circle class="screw" cx="60" cy="65" r="22" stroke-width="1" />
+            <circle class="screw" cx="60" cy="635" r="22" stroke-width="1" />
 
             <circle cx="345" cy="361" r="303" fill="#000" opacity=".32" filter="url(#fB16)" />
 
@@ -124,64 +98,48 @@
               <circle cx="331.6" cy="341.4" r="1.8" fill="#fff" opacity=".85" />
             </g>
 
-            <!-- ─── tonearm ─── -->
-            <g clip-path="url(#cRec)">
-              <path
-                id="armSh"
-                d="M672 105 H860 C925 105, 960 112, 990 128"
-                transform="translate(7 12) rotate(80.2 640 105)"
-                fill="none"
-                stroke="#000"
-                stroke-width="14"
-                stroke-linecap="round"
-                opacity=".3"
-                filter="url(#fB8)"
-              />
-            </g>
-
+            <!-- ─── tonearm ───
+                 Drawn flat: solid fills with a hairline edge, no highlight
+                 ramps and no cast shadow. Matches the corner pins. -->
             <g id="armG" transform="rotate(80.2 640 105)">
-              <circle cx="582" cy="105" r="13.5" fill="url(#gCw)" />
-              <circle cx="582" cy="105" r="13.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1" />
-              <rect x="588" y="97.5" width="28" height="15" rx="7.5" fill="url(#gTube)" />
+              <!-- No counterweight behind the bearing: the arm reads as one
+                   clean line out of the pivot disc. -->
 
               <!-- Straight tube, then the bend. A J-arm: the tube runs true out
-                   of the bearing and only turns near the headshell. -->
-              <path d="M672 105 H860 C925 105, 960 112, 990 128" fill="none"
-                    stroke="url(#gTube)" stroke-width="12" stroke-linecap="round" />
-              <path d="M674 101.4 H858 C922 101.4, 956 108.6, 985 124.4" fill="none"
-                    stroke="rgba(255,255,255,.6)" stroke-width="2.6" stroke-linecap="round" opacity=".8" />
+                   of the bearing and only turns near the headshell. Stroked
+                   twice, wider and darker underneath, so the flat bar keeps an
+                   outline over both the light plate and the black record. -->
+              <path class="arm-tube-edge" d="M672 105 H860 C925 105, 960 112, 990 128"
+                    fill="none" stroke-width="13.6" stroke-linecap="round" />
+              <path class="arm-tube" d="M672 105 H860 C925 105, 960 112, 990 128"
+                    fill="none" stroke-width="12" stroke-linecap="round" />
 
-              <!-- Headshell, set at the offset angle where the bend ends. The
-                   stylus itself is not drawn: it points down into the record,
-                   so from directly above it sits beneath the cartridge. The
-                   contact point it implies is what main.js measures ARM_LEN
-                   and DRAWN_ANGLE from. -->
+              <!-- Headshell, set at the offset angle where the bend ends.
+                   Nothing marks the stylus: it points straight down into the
+                   record, so from directly above it is hidden under the front
+                   of the head. That point, local (36, 24), is still what
+                   main.js measures ARM_LEN and DRAWN_ANGLE from even though no
+                   element sits on it. -->
               <g transform="translate(990 128) rotate(30)">
                 <!-- collar over the tube joint -->
-                <rect class="head-collar" x="-9" y="-6.5" width="18" height="13" rx="6.5" />
-                <!-- Body. Kept short deliberately: a longer headshell overhangs
-                     the record rim at the lead-in, so the head reads as sitting
-                     outside the vinyl at the moment a track starts. -->
-                <rect x="2" y="-9" width="34" height="18" rx="5" fill="url(#gHead)"
-                      stroke="#0c0d0f" stroke-width=".9" />
-                <rect x="5.5" y="-7" width="27" height="3" rx="1.5" fill="rgba(255,255,255,.38)" />
-                <!-- finger lift on the nose -->
-                <path d="M36 -9 l9 4.5 -9 4.5 z" fill="url(#gHead)" stroke="#0c0d0f" stroke-width=".8" />
-                <!-- cartridge, slung under the front of the headshell -->
-                <rect class="cart" x="17" y="8.5" width="19" height="10.5" rx="2.5" />
-                <rect x="20" y="10.5" width="13" height="2.2" rx="1.1" fill="rgba(255,255,255,.22)" />
+                <rect class="head-collar" x="-10" y="-8" width="20" height="16" rx="8" />
+                <!-- Body. It grows forward and across, never backward: the rear
+                     corner is what overhangs the record rim at the lead-in, so
+                     x=2 is fixed and only the nose and the width move. -->
+                <rect class="head-body" x="2" y="-12" width="46" height="24" rx="6" stroke-width="1.1" />
               </g>
             </g>
 
             <!-- fixed pivot base -->
-            <ellipse cx="646" cy="115" rx="37" ry="34" fill="#000" opacity=".22" filter="url(#fB8)" />
-            <circle cx="640" cy="105" r="34" fill="url(#gBase)" />
-            <path d="M609 96 A 34 34 0 0 1 671 96" fill="none" stroke="rgba(255,255,255,.75)"
-                  stroke-width="2.4" stroke-linecap="round" />
-            <circle cx="640" cy="105" r="21" fill="url(#gCapIn)" />
-            <circle cx="640" cy="105" r="21" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.1" />
+            <circle class="arm-base" cx="640" cy="105" r="34" stroke-width="1" />
+            <circle class="arm-cap" cx="640" cy="105" r="21" stroke-width="1.1" />
             <circle class="bearing-pin" cx="640" cy="105" r="4.2" />
           </svg>
+
+          <!-- Compact hides the transport, so the deck itself becomes the one
+               control. Inert at the full size, where the real buttons exist and
+               a second way to play would be a third route to the same thing. -->
+          <button id="deckHit" type="button" aria-label="Play"></button>
         </div>
 
         <!-- ─── right column ─── -->
@@ -214,7 +172,7 @@
           <!-- A readout, not a control: PLAN.md excludes seek, so it must not
                look grabbable. -->
           <div class="seekrow">
-            <div class="bar"><i id="uiBar"></i><span class="knob" id="uiKnob"></span></div>
+            <div class="bar"><i id="uiBar"></i></div>
           </div>
           <div class="times">
             <span id="uiElapsed">0:00</span><span id="uiTotal">–:––</span>
