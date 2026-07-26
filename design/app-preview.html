@@ -64,13 +64,25 @@
         updatedAt: Date.now(),
         sourceApp: "AppleMusic.exe",
         peak: 0.0,
+        canPlayPause: true,
+        canNext: true,
+        canPrevious: true,
       };
 
       const FLAVOURS = {
         playing: BASE,
         paused: { ...BASE, status: "paused" },
         art: { ...BASE, artId: "fake" },
-        live: { ...BASE, durationMs: null, positionMs: 0, title: "Lofi radio" },
+        // A livestream typically offers no skip, which must dim the buttons
+        // rather than leave dead ones enabled.
+        live: {
+          ...BASE,
+          durationMs: null,
+          positionMs: 0,
+          title: "Lofi radio",
+          canNext: false,
+          canPrevious: false,
+        },
         none: {
           title: null,
           artist: null,
@@ -82,13 +94,20 @@
           updatedAt: 0,
           sourceApp: "",
           peak: 0,
+          canPlayPause: false,
+          canNext: false,
+          canPrevious: false,
         },
       };
 
       window.__TAURI__ = {
         core: {
-          invoke: async (cmd) => {
+          invoke: async (cmd, args) => {
             if (cmd === "get_state") return FLAVOURS[flavour] ?? BASE;
+            if (cmd === "transport") {
+              console.log("transport:", args.action);
+              return null;
+            }
             throw new Error(`unstubbed command: ${cmd}`);
           },
           // The real one returns http://art.localhost/{id}; any URL will do here.

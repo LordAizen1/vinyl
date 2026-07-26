@@ -14,7 +14,7 @@
 
 use std::collections::HashMap;
 use std::future::{Future, IntoFuture};
-use std::sync::mpsc::{self, Sender};
+use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::Arc;
 use std::task::{Context, Poll, Wake, Waker};
 use std::thread;
@@ -46,46 +46,75 @@ const SETTLE_POLL: Duration = Duration::from_millis(280);
 /// Unix epoch expressed in the 100 ns ticks since 1601 that WinRT `DateTime` uses.
 const UNIX_EPOCH_IN_1601_TICKS: i64 = 116_444_736_000_000_000;
 
-/// Starts the worker. Never blocks the caller.
-pub fn spawn(app: AppHandle, state: SharedState, art: Arc<ArtCache>) {
+/// A transport action, sent from the Tauri command layer.
+#[derive(Debug, Clone, Copy)]
+pub enum Command {
+    Toggle,
+    Next,
+    Previous,
+}
+
+/// Why the worker woke up.
+///
+/// Transport commands travel on the same channel as change notifications so
+/// they run on the worker's own MTA thread. Calling into a session from the UI
+/// thread would mean initialising COM there too, for no benefit.
+pub enum Signal {
+    Poll,
+    Run(Command),
+}
+
+/// Starts the worker and returns the handle used to send it transport commands.
+pub fn spawn(app: AppHandle, state: SharedState, art: Arc<ArtCache>) -> Sender<Signal> {
+    let (tx, rx) = mpsc::channel::<Signal>();
+    let worker_tx = tx.clone();
+
     thread::spawn(move || {
-        if let Err(error) = run(&app, &state, &art) {
+        if let Err(error) = run(&app, &state, &art, &worker_tx, &rx) {
             log::error!("SMTC worker stopped: {error:#}");
         }
     });
+
+    tx
 }
 
-fn run(app: &AppHandle, state: &SharedState, art: &ArtCache) -> Result<()> {
+fn run(
+    app: &AppHandle,
+    state: &SharedState,
+    art: &ArtCache,
+    tx: &Sender<Signal>,
+    rx: &Receiver<Signal>,
+) -> Result<()> {
     // SAFETY: first WinRT call on this thread, and every WinRT call made by this
     // worker stays on it. MTA means event callbacks arrive on pool threads
     // without needing a message pump.
     unsafe { RoInitialize(RO_INIT_MULTITHREADED)? };
 
     let manager = block_on(GlobalSystemMediaTransportControlsSessionManager::RequestAsync()?)?;
-    let (tx, rx) = mpsc::channel::<()>();
 
     let sessions_tx = tx.clone();
     manager.SessionsChanged(&TypedEventHandler::new(move |_, _| {
-        let _ = sessions_tx.send(());
+        let _ = sessions_tx.send(Signal::Poll);
         Ok(())
     }))?;
 
     let current_tx = tx.clone();
     manager.CurrentSessionChanged(&TypedEventHandler::new(move |_, _| {
-        let _ = current_tx.send(());
+        let _ = current_tx.send(Signal::Poll);
         Ok(())
     }))?;
 
     let mut subscriptions = Subscriptions::default();
     let mut anchors: HashMap<String, Anchor> = HashMap::new();
     let mut artwork = ArtTracker::default();
+    let mut selected: Option<GlobalSystemMediaTransportControlsSession> = None;
 
     loop {
-        if let Err(error) = subscriptions.sync(&manager, &tx) {
+        if let Err(error) = subscriptions.sync(&manager, tx) {
             log::warn!("could not refresh session subscriptions: {error:#}");
         }
 
-        match read(&manager, &mut anchors, &mut artwork, art) {
+        match read(&manager, &mut anchors, &mut artwork, art, &mut selected) {
             Ok(snapshot) => publish(app, state, snapshot),
             Err(error) => log::warn!("SMTC read failed: {error:#}"),
         }
@@ -98,9 +127,43 @@ fn run(app: &AppHandle, state: &SharedState, art: &ArtCache) -> Result<()> {
         } else {
             WATCHDOG
         };
-        let _ = rx.recv_timeout(wait);
-        // Coalesce a burst: sources fire several change events per track change.
-        while rx.try_recv().is_ok() {}
+
+        // Coalesce a burst; sources fire several change events per track
+        // change. Commands are never coalesced away.
+        let mut wakes = Vec::new();
+        if let Ok(wake) = rx.recv_timeout(wait) {
+            wakes.push(wake);
+        }
+        while let Ok(wake) = rx.try_recv() {
+            wakes.push(wake);
+        }
+
+        for wake in wakes {
+            if let Signal::Run(command) = wake {
+                match &selected {
+                    Some(session) => execute(session, command),
+                    None => log::warn!("transport: {command:?} with no session selected"),
+                }
+            }
+        }
+    }
+}
+
+/// Sends a transport command to the selected session.
+///
+/// A `false` return means the source accepted the call and declined to act,
+/// which is different from an error and worth seeing separately in the log.
+fn execute(session: &GlobalSystemMediaTransportControlsSession, command: Command) {
+    let outcome = match command {
+        Command::Toggle => session.TryTogglePlayPauseAsync().and_then(block_on),
+        Command::Next => session.TrySkipNextAsync().and_then(block_on),
+        Command::Previous => session.TrySkipPreviousAsync().and_then(block_on),
+    };
+
+    match outcome {
+        Ok(true) => log::info!("transport: {command:?} accepted"),
+        Ok(false) => log::warn!("transport: {command:?} refused by the source"),
+        Err(error) => log::warn!("transport: {command:?} failed ({error})"),
     }
 }
 
@@ -128,6 +191,7 @@ fn read(
     anchors: &mut HashMap<String, Anchor>,
     artwork: &mut ArtTracker,
     art: &ArtCache,
+    selected: &mut Option<GlobalSystemMediaTransportControlsSession>,
 ) -> Result<PlaybackState> {
     let sessions = manager.GetSessions()?;
 
@@ -170,11 +234,16 @@ fn read(
 
     let Some((_, _, session)) = best else {
         anchors.clear();
+        *selected = None;
         // Settled, not pending: with no session there is nothing to look for,
         // and leaving it unsettled would spin the worker at SETTLE_POLL.
         *artwork = ArtTracker::idle();
         return Ok(PlaybackState::no_session());
     };
+
+    // Held so transport commands act on whatever the widget is showing, which
+    // is not necessarily what GetCurrentSession would have picked.
+    *selected = Some(session.clone());
 
     describe(&session, anchors, artwork, art)
 }
@@ -228,13 +297,11 @@ fn describe(
 
     anchor.observe(&identity, position_ms, anchor_ticks);
 
-    // Reading the thumbnail is the expensive part of this whole module, so it
-    // is gated on the track identity changing rather than run on every wake.
-    // Phase 0 measured one at 1,022,489 bytes; doing this per tick would not
-    // fit the idle CPU budget in CLAUDE.md constraint 4.
-    // Reading the thumbnail is the expensive part of this module, so it never
-    // runs on a plain tick. It runs on a track change, and then again only
-    // while the result still looks like the previous track's art.
+    // Reading the thumbnail is the expensive part of this module: Phase 0
+    // measured one at 1,022,489 bytes, and doing that per tick would not fit
+    // the idle CPU budget in CLAUDE.md constraint 4. So it runs on a track
+    // change, and then again only while the result still looks like the
+    // previous track's art.
     let art_key = format!("{source_app}|{identity}");
     if artwork.identity != art_key {
         log::info!("art: track changed to {art_key:?}");
@@ -252,6 +319,26 @@ fn describe(
         }
     }
 
+    // Only offer a control the source actually supports. A dead skip button on
+    // a livestream is a bug, not a cosmetic detail.
+    let controls = playback.Controls().ok();
+    let can_play_pause = controls
+        .as_ref()
+        .map(|c| {
+            c.IsPlayEnabled().unwrap_or(false)
+                || c.IsPauseEnabled().unwrap_or(false)
+                || c.IsPlayPauseToggleEnabled().unwrap_or(false)
+        })
+        .unwrap_or(false);
+    let can_next = controls
+        .as_ref()
+        .and_then(|c| c.IsNextEnabled().ok())
+        .unwrap_or(false);
+    let can_previous = controls
+        .as_ref()
+        .and_then(|c| c.IsPreviousEnabled().ok())
+        .unwrap_or(false);
+
     Ok(PlaybackState {
         title,
         artist,
@@ -263,6 +350,9 @@ fn describe(
         updated_at: anchor.published_updated_at,
         source_app,
         peak: 0.0,
+        can_play_pause,
+        can_next,
+        can_previous,
     })
 }
 
@@ -575,7 +665,7 @@ impl Subscriptions {
     fn sync(
         &mut self,
         manager: &GlobalSystemMediaTransportControlsSessionManager,
-        tx: &Sender<()>,
+        tx: &Sender<Signal>,
     ) -> Result<()> {
         let sessions = manager.GetSessions()?;
 
@@ -604,20 +694,20 @@ impl Subscriptions {
         for (source_app, session) in current {
             let media_tx = tx.clone();
             let media = session.MediaPropertiesChanged(&TypedEventHandler::new(move |_, _| {
-                let _ = media_tx.send(());
+                let _ = media_tx.send(Signal::Poll);
                 Ok(())
             }))?;
 
             let playback_tx = tx.clone();
             let playback = session.PlaybackInfoChanged(&TypedEventHandler::new(move |_, _| {
-                let _ = playback_tx.send(());
+                let _ = playback_tx.send(Signal::Poll);
                 Ok(())
             }))?;
 
             let timeline_tx = tx.clone();
             let timeline =
                 session.TimelinePropertiesChanged(&TypedEventHandler::new(move |_, _| {
-                    let _ = timeline_tx.send(());
+                    let _ = timeline_tx.send(Signal::Poll);
                     Ok(())
                 }))?;
 

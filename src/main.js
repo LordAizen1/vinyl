@@ -269,6 +269,14 @@ function render() {
   }
   needleSh.setAttribute("opacity", playing ? "0.5" : "0");
 
+  // Only offer what the source says it supports.
+  $("btnPlay").disabled = !hasSession || !snapshot.canPlayPause;
+  $("btnNext").disabled = !hasSession || !snapshot.canNext;
+  $("btnPrev").disabled = !hasSession || !snapshot.canPrevious;
+  $("btnPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
+  $("deckHit").style.cursor =
+    hasSession && snapshot.canPlayPause ? "pointer" : "default";
+
   if (!hasSession) {
     $("uiTitle").textContent = "No session";
     $("uiArtist").textContent = "Nothing is playing";
@@ -296,6 +304,53 @@ function render() {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * Transport
+ *
+ * The click updates the UI immediately and the real SMTC event reconciles it
+ * a moment later. Phase 0 measured Edge taking minutes to volunteer a timeline
+ * update, so waiting for confirmation would make the button feel broken.
+ * ══════════════════════════════════════════════════════════════════════ */
+async function send(action) {
+  try {
+    await invoke("transport", { action });
+  } catch (error) {
+    console.error(`transport ${action} failed`, error);
+    // The optimistic guess was wrong; fall back to whatever Rust last told us.
+    render();
+  }
+}
+
+function toggle() {
+  if (!snapshot || !snapshot.canPlayPause) return;
+
+  // Optimistic flip. Re-anchor to now so the extrapolation does not jump when
+  // the real update arrives.
+  const position = currentPositionMs();
+  snapshot = {
+    ...snapshot,
+    status: snapshot.status === "playing" ? "paused" : "playing",
+    positionMs: position ?? snapshot.positionMs,
+    updatedAt: Date.now(),
+  };
+  render();
+  send("toggle");
+}
+
+function skip(action) {
+  const allowed = action === "next" ? snapshot?.canNext : snapshot?.canPrevious;
+  if (!allowed) return;
+  send(action);
+}
+
+function bindTransport() {
+  $("btnPlay").addEventListener("click", toggle);
+  $("btnNext").addEventListener("click", () => skip("next"));
+  $("btnPrev").addEventListener("click", () => skip("previous"));
+  // The record itself is the pause control; the needle lifts with it.
+  $("deckHit").addEventListener("click", toggle);
+}
+
 function adopt(next) {
   const changedTrack =
     !snapshot ||
@@ -314,6 +369,7 @@ function adopt(next) {
  * Boot
  * ══════════════════════════════════════════════════════════════════════ */
 buildGrooves();
+bindTransport();
 
 await listen("playback-changed", (event) => adopt(event.payload));
 

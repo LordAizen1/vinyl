@@ -98,6 +98,11 @@
             <circle cx="96" cy="112" r="2.2" fill="url(#gCap)" stroke="rgba(0,0,0,.6)" stroke-width=".4" />
           </g>
 
+          <!-- PLAN.md Phase 5: clicking the record pauses, and the needle
+               lifts. The physical ritual and the command are one action.
+               Sits above the record so it actually receives the click. -->
+          <circle id="deckHit" cx="96" cy="112" r="86" fill="transparent" cursor="pointer" />
+
           <!-- ─── tonearm ─── -->
           <g id="armRest">
             <ellipse cx="198" cy="122.5" rx="6.5" ry="2" fill="#000" opacity=".4" filter="url(#fB2)" />
@@ -149,6 +154,29 @@
           <div class="times">
             <span id="uiElapsed">0:00</span><span id="uiTotal">–:––</span>
           </div>
+        </div>
+
+        <!-- Only ever shows what PlaybackInfo.Controls says the source
+             supports. A dead skip button on a livestream is a bug. -->
+        <div class="controls">
+          <button id="btnPrev" class="tbtn" type="button" aria-label="Previous track">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+              <path d="M6.2 5.2h2.3v13.6H6.2zM18.9 6.1v11.8c0 .95-1.05 1.52-1.85.98l-8.6-5.9a1.18 1.18 0 0 1 0-1.96l8.6-5.9c.8-.54 1.85.03 1.85.98z" />
+            </svg>
+          </button>
+          <button id="btnPlay" class="tbtn play" type="button" aria-label="Play">
+            <svg id="icPlay" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+              <path d="M8.6 5.5v13c0 .96 1.06 1.54 1.86 1.02l10-6.5c.74-.48.74-1.56 0-2.04l-10-6.5C9.66 3.96 8.6 4.54 8.6 5.5z" />
+            </svg>
+            <svg id="icPause" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+              <path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z" />
+            </svg>
+          </button>
+          <button id="btnNext" class="tbtn" type="button" aria-label="Next track">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+              <path d="M15.5 5.2h2.3v13.6h-2.3zM5.1 6.1v11.8c0 .95 1.05 1.52 1.85.98l8.6-5.9c.78-.53.78-1.43 0-1.96l-8.6-5.9C6.15 4.58 5.1 5.15 5.1 6.1z" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

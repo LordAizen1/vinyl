@@ -4,7 +4,10 @@ mod state;
 
 use std::sync::Arc;
 
+use std::sync::mpsc::Sender;
+
 use art::ArtCache;
+use smtc::{Command, Signal};
 use state::{PlaybackState, SharedState};
 use tauri::{http, Manager};
 
@@ -13,6 +16,25 @@ use tauri::{http, Manager};
 #[tauri::command]
 fn get_state(state: tauri::State<'_, SharedState>) -> PlaybackState {
     state.read().clone()
+}
+
+/// Sends a transport action to the session the widget is showing.
+///
+/// Returns as soon as the command is queued. The frontend updates optimistically
+/// and the real SMTC event reconciles it a moment later, so a slow source never
+/// makes the button feel unresponsive.
+#[tauri::command]
+fn transport(action: &str, sender: tauri::State<'_, Sender<Signal>>) -> Result<(), String> {
+    let command = match action {
+        "toggle" => Command::Toggle,
+        "next" => Command::Next,
+        "previous" => Command::Previous,
+        other => return Err(format!("unknown transport action: {other}")),
+    };
+
+    sender
+        .send(Signal::Run(command))
+        .map_err(|_| "the SMTC worker is not running".to_owned())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -71,10 +93,11 @@ pub fn run() {
             }
         })
         .setup(move |app| {
-            smtc::spawn(app.handle().clone(), worker_state, worker_cache);
+            let sender = smtc::spawn(app.handle().clone(), worker_state, worker_cache);
+            app.manage(sender);
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_state])
+        .invoke_handler(tauri::generate_handler![get_state, transport])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

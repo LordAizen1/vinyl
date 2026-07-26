@@ -199,7 +199,11 @@ Send transport commands back through SMTC: `TryTogglePlayPauseAsync()`,
 - Clicking the record or a discreet button pauses. **The needle lifts.** The physical
   ritual is the whole point — the visual and the command must feel like one action.
 - Optimistically update the UI on click, then reconcile with the real SMTC event.
-- Hover reveals controls; they stay hidden otherwise so the idle widget is just an object.
+- ~~Hover reveals controls; they stay hidden otherwise.~~ **Reversed during Phase 5.**
+  The transport row is permanently visible. Hiding it left a conspicuous empty band in
+  the panel, and the widget read as unfinished rather than as a quiet object. Unsupported
+  controls are dimmed and inert rather than removed, so the layout does not jump between
+  a track and a livestream.
 
 ### Acceptance criteria
 - Clicking pause actually pauses YouTube in a browser tab, with the arm lifting.

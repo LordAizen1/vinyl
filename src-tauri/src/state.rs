@@ -40,6 +40,13 @@ pub struct PlaybackState {
     pub source_app: String,
     /// Audio peak in 0.0..=1.0. Always zero until Phase 6.
     pub peak: f32,
+
+    /// What the session actually supports, read from `PlaybackInfo.Controls`.
+    /// A live skip button that cannot skip is a bug, so the frontend disables
+    /// anything the source has not offered.
+    pub can_play_pause: bool,
+    pub can_next: bool,
+    pub can_previous: bool,
 }
 
 impl PlaybackState {
@@ -56,6 +63,9 @@ impl PlaybackState {
             updated_at: 0,
             source_app: String::new(),
             peak: 0.0,
+            can_play_pause: false,
+            can_next: false,
+            can_previous: false,
         }
     }
 
@@ -73,6 +83,9 @@ impl PlaybackState {
             || self.duration_ms != other.duration_ms
             || self.updated_at != other.updated_at
             || self.source_app != other.source_app
+            || self.can_play_pause != other.can_play_pause
+            || self.can_next != other.can_next
+            || self.can_previous != other.can_previous
     }
 }
 
