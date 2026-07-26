@@ -213,6 +213,9 @@ pub fn run() {
 
             // Before anything is shown, so it does not appear centred and then
             // jump to where it was left.
+            // Before anything is shown, so it never briefly accepts a click it
+            // is not meant to.
+            menu::apply_lock(&handle, prefs.locked);
             window::restore(&handle, prefs.placement, prefs.size.dimensions());
             window::keep_on_desktop(handle.clone());
             app.manage(window::spawn_saver(handle.clone()));

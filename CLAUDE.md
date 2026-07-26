@@ -131,10 +131,21 @@ republished position, a backward seek, and a track change at the same position.
 `setIgnoreCursorEvents` is all-or-nothing for the whole window. There is no way to be
 click-through on the transparent corners and clickable on the record.
 
-**Phase 4 decision: ship with click-through OFF.** The window is a small, nearly
-square, mostly opaque box; the dead corners are a few pixels around a circle and
-nobody will notice. Do not build the 60 Hz cursor-polling workaround unless explicitly
-asked in a later phase.
+~~**Phase 4 decision: ship with click-through OFF.**~~ **Reversed.** The widget now
+ships **locked**: click-through ON for the whole window, with a "Lock in place" tick in
+the tray menu to turn it off. A desktop widget that swallows clicks in the middle of
+your wallpaper is a nuisance, and being inert is most of what makes it feel like part
+of the desktop rather than an app parked on it.
+
+All-or-nothing is exactly right for this, which is why the limitation above stopped
+mattering: locked means every part of it is inert, so there is no region to
+distinguish. The 60 Hz cursor-polling workaround is still not built and still should
+not be.
+
+Two consequences, both intended. While locked the transport buttons do not work, so
+the widget is something you look at and the tray keeps the controls. And a locked
+widget cannot be right-clicked, so the tray is the *only* way back in: it is not an
+optional convenience.
 
 ### 3. Album art is often missing
 

@@ -20,6 +20,7 @@ use crate::state::SharedState;
 struct Changed {
     size: bool,
     lyrics: bool,
+    locked: bool,
 }
 
 /// Where the choice is written. Tauri resolves this to
@@ -38,6 +39,7 @@ const THEME_LIGHT: &str = "theme:light";
 const THEME_DARK: &str = "theme:dark";
 const LYRICS: &str = "lyrics";
 const VISIBLE: &str = "visible";
+const LOCKED: &str = "locked";
 const QUIT: &str = "quit";
 
 /// The menu, plus the check items that have to be re-ticked after a choice.
@@ -47,6 +49,7 @@ pub struct AppMenu<R: Runtime> {
     theme_items: [(CheckMenuItem<R>, Theme); 3],
     lyrics_item: CheckMenuItem<R>,
     visible_item: CheckMenuItem<R>,
+    locked_item: CheckMenuItem<R>,
 }
 
 /// The live preferences. A `Mutex` rather than a channel: menu clicks are rare
@@ -71,11 +74,15 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) -> tauri::Result<AppM
     // Ticked because the widget starts visible. The tray is the only way back
     // once it is not: there is no taskbar entry to click.
     let visible = check(VISIBLE, "Show vinyl", true)?;
+    // Unticking this is the only way to make the widget touchable, so it sits
+    // with the other window-level entries rather than under Appearance.
+    let locked = check(LOCKED, "Lock in place", prefs.locked)?;
 
     let menu = Menu::with_items(
         app,
         &[
             &visible,
+            &locked,
             &PredefinedMenuItem::separator(app)?,
             &full,
             &compact,
@@ -97,6 +104,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) -> tauri::Result<AppM
         ],
         lyrics_item: lyrics,
         visible_item: visible,
+        locked_item: locked,
     })
 }
 
@@ -120,8 +128,9 @@ impl<R: Runtime> AppMenu<R> {
         for (item, theme) in &self.theme_items {
             let _ = item.set_checked(*theme == prefs.theme);
         }
-        // A plain on/off, so unlike the groups above it needs no exclusivity.
+        // Plain on/off, so unlike the groups above these need no exclusivity.
         let _ = self.lyrics_item.set_checked(prefs.lyrics);
+        let _ = self.locked_item.set_checked(prefs.locked);
     }
 
     /// Visibility is not a preference, so it is ticked from the window itself
@@ -217,6 +226,7 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, id: &str) {
             THEME_LIGHT => current.theme = Theme::Light,
             THEME_DARK => current.theme = Theme::Dark,
             LYRICS => current.lyrics = !current.lyrics,
+            LOCKED => current.locked = !current.locked,
             other => {
                 log::warn!("menu: unknown item {other:?}");
                 return;
@@ -228,12 +238,17 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, id: &str) {
             Changed {
                 size: current.size != before.size,
                 lyrics: current.lyrics != before.lyrics,
+                locked: current.locked != before.locked,
             },
         )
     };
 
     if changed.size {
         apply_size(app, prefs.size);
+    }
+
+    if changed.locked {
+        apply_lock(app, prefs.locked);
     }
 
     // Push the lyrics setting rather than waiting for the next track change.
@@ -270,6 +285,34 @@ pub fn persist<R: Runtime>(app: &AppHandle<R>, prefs: Prefs) {
         Ok(dir) => prefs.save(&dir.join(CONFIG_FILE)),
         Err(error) => log::warn!("prefs: no config directory ({error}), not saving"),
     }
+}
+
+/// Makes the widget ignore the mouse, or take it again.
+///
+/// All or nothing for the whole window, which is the one case where that
+/// limitation does not matter: locked means every part of it is inert.
+///
+/// While locked the transport buttons do not work either. That is the point
+/// rather than a side effect: the widget becomes something you look at, and the
+/// tray keeps the controls.
+pub fn apply_lock<R: Runtime>(app: &AppHandle<R>, locked: bool) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+
+    if let Err(error) = window.set_ignore_cursor_events(locked) {
+        log::warn!("menu: could not set the lock ({error})");
+        return;
+    }
+
+    log::info!(
+        "window: {}",
+        if locked {
+            "locked, the mouse passes through"
+        } else {
+            "unlocked, drag and right-click work"
+        }
+    );
 }
 
 /// Resizes the main window to a preset.

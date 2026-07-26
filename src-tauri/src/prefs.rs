@@ -70,6 +70,15 @@ pub struct Prefs {
     /// Where the window was left. `None` on a first run, which means "let the
     /// window manager decide" rather than any particular corner.
     pub placement: Option<Placement>,
+    /// Locked means the widget ignores the mouse entirely: clicks, drags and
+    /// right-clicks all pass through to whatever is beneath it, which on the
+    /// desktop is the desktop. It just sits there.
+    ///
+    /// On by default. A widget is something you glance at, and one that
+    /// swallows clicks in the middle of your wallpaper is a nuisance. The tray
+    /// is how you unlock it, and is the only way in: a locked widget cannot be
+    /// right-clicked, by definition.
+    pub locked: bool,
 }
 
 impl Default for Prefs {
@@ -79,6 +88,7 @@ impl Default for Prefs {
             theme: Theme::Auto,
             lyrics: true,
             placement: None,
+            locked: true,
         }
     }
 }
@@ -149,6 +159,7 @@ mod tests {
         assert_eq!(prefs.theme, Theme::Auto);
         assert!(prefs.lyrics, "an older config should keep the default");
         assert!(prefs.placement.is_none());
+        assert!(prefs.locked, "an older config should keep the default");
     }
 
     #[test]
@@ -158,6 +169,7 @@ mod tests {
             theme: Theme::Dark,
             lyrics: false,
             placement: Some(Placement { x: 12.0, y: 34.0 }),
+            locked: false,
         };
         let text = serde_json::to_string(&prefs).unwrap();
         assert_eq!(serde_json::from_str::<Prefs>(&text).unwrap(), prefs);

@@ -4,14 +4,13 @@ A little turntable that sits on your desktop and plays along with whatever you'r
 
 The idea was my little sister's. I just brought it to life.
 
-Put something on (Spotify, Apple Music, a YouTube tab, honestly anything) and the record starts spinning. The tonearm drifts inwards as the song goes on, the way a real one does. The album art becomes the label in the middle. If the song has lyrics, they scroll past on the little screen.
+Put something on (Spotify, Apple Music, a YouTube tab, honestly anything) and the record starts spinning. The tonearm drifts inwards as the song goes on, the way a real one does. The album art becomes the label in the middle, and the little screen takes its colour from the cover, so a red album turns the screen red. If the song has lyrics, they scroll past in time with it.
 
 That's the whole thing, really.
 
 It's not trying to replace your music player. You can't browse anything, there's no library, no playlists. It just sits there and spins.
 
-<!-- Screenshot or gif goes here. A gif of the record spinning and the arm
-     moving across sells it far better than a still. -->
+![vinyl running on a desktop, the record spinning while the lyrics scroll](docs/demo.gif)
 
 ## Getting it
 
@@ -23,18 +22,44 @@ Heads up: it isn't code-signed, because certificates cost more per year than thi
 
 It lives on your desktop, underneath your other windows. Open something and it disappears behind it; go back to your desktop and there it is again.
 
+Out of the box it's **locked**, which means it ignores the mouse completely. Clicking straight through it hits the desktop, same as clicking the wallpaper. It just sits there and spins.
+
+To move it, untick **Lock in place** in the tray menu. Then:
+
 - **Drag it** from anywhere on its body. It won't let you shove it off the edge of the screen or under the taskbar.
-- **Right-click it** (or the tray icon) for the menu.
+- **Right-click it** for the menu.
+- The play and skip buttons work too.
+
+Lock it again when you've put it where you want it.
+
 - **Left-click the tray icon** to hide or show it.
+
+The tray icon is your way in whenever it's locked, since a locked widget can't be right-clicked.
 
 In the menu you'll find:
 
 | | |
 |---|---|
+| **Show vinyl** | Hides it without quitting. Left-clicking the tray icon does the same. |
+| **Lock in place** | On by default. Untick it to move the widget or use its buttons. |
 | **Full size / Compact** | Compact is just the deck, nothing else. Nice if you want it out of the way. |
 | **Appearance** | Light, dark, or follow whatever Windows is doing. |
 | **Show lyrics** | On by default. See the note below. |
 | **Quit vinyl** | Does what it says. |
+
+## Little things you might not spot
+
+**No album art?** It presses one instead. You get an iridescent mother-of-pearl label with the artist's initial on it and a made-up catalogue number, and the same song always gets the same label. Lots of things have no artwork, browser tabs especially, and a blank circle looked broken rather than minimal.
+
+**In compact mode, click the deck** to play or pause. There are no buttons at that size, so the record itself is the button. (You'll need to unlock it first.)
+
+**It remembers where you put it**, and comes back there next time you start it.
+
+**Livestreams** say `LIVE` instead of pretending to have a position, because they don't have one.
+
+**Watching a video rather than listening to music?** It shows the title and leaves it at that. No lyrics, since the name of a film isn't a song.
+
+**If you've turned down animations in Windows**, the tonearm stops swinging about and just moves. The record still turns, since that's rather the point.
 
 ## The lyrics thing
 

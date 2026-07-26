@@ -226,7 +226,9 @@ move, with the rejection only visible in the webview console.
   the difference between them *is* the taskbar. The 16px shadow gutter is allowed
   to overhang, since those pixels draw nothing and without that the widget could
   never sit flush in a corner.
-- Click-through stays **off** per `CLAUDE.md` constraint 2.
+- ~~Click-through stays **off** per `CLAUDE.md` constraint 2.~~ **Reversed on
+  request.** Ships locked, ie. click-through on, with a "Lock in place" tick in the
+  tray. See constraint 2 for why the all-or-nothing limitation stopped mattering.
 
 ### Acceptance criteria
 - Sits over the desktop with no chrome, no square background, no taskbar entry.

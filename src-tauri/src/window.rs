@@ -16,7 +16,8 @@ use windows::Win32::Graphics::Gdi::{
     GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    SetWindowPos, HWND_BOTTOM, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+    GetClassNameW, GetWindow, IsWindowVisible, SetWindowPos, GW_HWNDNEXT, HWND_BOTTOM,
+    SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
 };
 
 /// How often to push the widget back to the bottom of the window stack.
@@ -228,12 +229,14 @@ pub fn spawn_saver<R: Runtime>(app: AppHandle<R>) -> Saver {
 ///
 /// Re-asserted on a timer rather than set once, because Windows raises a window
 /// when it is clicked and there is no reliable event for "someone put something
-/// above me". Being pushed back down is invisible in practice: if the widget was
-/// on top of nothing when you clicked it, it looks identical at the bottom.
+/// above me". This also replaces hiding for fullscreen apps, which a
+/// bottom-most window gets for free.
 ///
-/// This also replaces hiding for fullscreen apps, which a bottom-most window
-/// gets for free. `SetWindowPos` with these flags is a few microseconds and
-/// draws nothing when the window is already in place, so 1 Hz costs nothing.
+/// The check before the call is not an optimisation. `SetWindowPos` invalidates
+/// the overlapped region and forces a repaint even when the Z-order does not
+/// actually change, so calling it unconditionally once a second made the
+/// widget flicker whenever another window sat over it. Only move it when it is
+/// genuinely not at the bottom.
 pub fn keep_on_desktop<R: Runtime>(app: AppHandle<R>) {
     thread::spawn(move || loop {
         thread::sleep(DESKTOP_POLL);
@@ -242,10 +245,15 @@ pub fn keep_on_desktop<R: Runtime>(app: AppHandle<R>) {
             return;
         };
         let Ok(handle) = window.hwnd() else { continue };
+        let ours = HWND(handle.0 as *mut _);
+
+        if !something_ordinary_is_below(ours) {
+            continue;
+        }
 
         unsafe {
             let _ = SetWindowPos(
-                HWND(handle.0 as *mut _),
+                ours,
                 Some(HWND_BOTTOM),
                 0,
                 0,
@@ -255,6 +263,52 @@ pub fn keep_on_desktop<R: Runtime>(app: AppHandle<R>) {
             );
         }
     });
+}
+
+/// Whether any ordinary window sits below ours in the Z-order.
+///
+/// "Ordinary" excludes the desktop and the shell, which are always below
+/// everything and would otherwise make this report true forever, putting the
+/// flicker straight back.
+fn something_ordinary_is_below(ours: HWND) -> bool {
+    unsafe {
+        let mut current = ours;
+        loop {
+            let Ok(next) = GetWindow(current, GW_HWNDNEXT) else {
+                return false;
+            };
+            if next.0.is_null() {
+                return false;
+            }
+            if IsWindowVisible(next).as_bool() && !is_shell(next) {
+                return true;
+            }
+            current = next;
+        }
+    }
+}
+
+/// The desktop and taskbar windows, by class name.
+///
+/// Progman and WorkerW are the desktop itself; Shell_TrayWnd and its relatives
+/// are the taskbar. All of them legitimately live at the bottom with us.
+fn is_shell(window: HWND) -> bool {
+    const SHELL: [&str; 5] = [
+        "Progman",
+        "WorkerW",
+        "Shell_TrayWnd",
+        "Shell_SecondaryTrayWnd",
+        "SysListView32",
+    ];
+
+    let mut buffer = [0u16; 64];
+    let length = unsafe { GetClassNameW(window, &mut buffer) };
+    if length <= 0 {
+        return true; // Unreadable: treat as shell rather than churn the Z-order.
+    }
+
+    let name = String::from_utf16_lossy(&buffer[..length as usize]);
+    SHELL.contains(&name.as_str())
 }
 
 #[cfg(test)]
