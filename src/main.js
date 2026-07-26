@@ -159,6 +159,42 @@ function buildGrooves() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * Waveform
+ *
+ * Deterministic per track and lit to the real playback position, so it is a
+ * readout rather than decoration. Genuinely audio-reactive bars need the peak
+ * metering in Phase 6; drawing animated ones now would be pretending to show
+ * data we do not have.
+ * ══════════════════════════════════════════════════════════════════════ */
+const WAVE_BARS = 46;
+let waveKey = null;
+
+function buildWave() {
+  const key = snapshot ? `${snapshot.title ?? ""}|${snapshot.artist ?? ""}` : "none";
+  if (key === waveKey) return;
+  waveKey = key;
+
+  let seed = 2166136261;
+  for (let i = 0; i < key.length; i += 1) {
+    seed ^= key.charCodeAt(i);
+    seed = Math.imul(seed, 16777619);
+  }
+  const rand = seededRandom(seed >>> 0);
+
+  let bars = "";
+  for (let i = 0; i < WAVE_BARS; i += 1) {
+    // Two overlaid sine terms keep it from looking like pure noise, and the
+    // envelope keeps the ends shorter, the way a real waveform tends to sit.
+    const envelope = Math.sin((i / (WAVE_BARS - 1)) * Math.PI) * 0.55 + 0.45;
+    const height = (0.18 + rand() * 0.82) * envelope;
+    bars += `<i style="height:${(height * 100).toFixed(1)}%"></i>`;
+  }
+
+  $("uiWaveDim").innerHTML = bars;
+  $("uiWaveLit").innerHTML = bars;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * The label
  * ══════════════════════════════════════════════════════════════════════ */
 function artUrlFor(artId) {
@@ -377,7 +413,7 @@ function render() {
     $("uiSource").textContent = "";
     $("uiElapsed").textContent = "0:00";
     $("uiTotal").textContent = "–:––";
-    $("uiBar").style.width = "0%";
+    setProgress(0);
     return;
   }
 
@@ -392,12 +428,20 @@ function render() {
     // Showing "0:00 / 0:00" would be a lie.
     $("uiElapsed").textContent = "LIVE";
     $("uiTotal").textContent = "";
-    $("uiBar").style.width = "0%";
+    setProgress(0);
   } else {
     $("uiElapsed").textContent = formatTime(position ?? 0);
     $("uiTotal").textContent = formatTime(snapshot.durationMs ?? 0);
-    $("uiBar").style.width = `${(fraction * 100).toFixed(2)}%`;
+    setProgress(fraction);
   }
+}
+
+/** Bar fill, marker position and the lit portion of the waveform, in one go. */
+function setProgress(fraction) {
+  const percent = `${(fraction * 100).toFixed(2)}%`;
+  $("uiBar").style.width = percent;
+  $("uiKnob").style.left = percent;
+  $("uiWaveLit").style.setProperty("--played", percent);
 }
 
 function adopt(next) {
@@ -410,6 +454,7 @@ function adopt(next) {
   snapshot = next;
   if (changedTrack) shownMs = null;
 
+  buildWave();
   syncLabel();
   render();
 }

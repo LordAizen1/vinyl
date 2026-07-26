@@ -1,10 +1,10 @@
 /*
  * The widget.
  *
- * Two palettes, dark and silver, following the Windows light/dark setting via
- * prefers-color-scheme. CLAUDE.md originally specified dark only, on the
- * reasoning that dark equipment sits better on an arbitrary wallpaper; that
- * still holds on a dark desktop, which is why dark remains the default.
+ * Silver is the default, matching the reference design: brushed aluminium
+ * chassis, mauve screen, minimal line icons. A dark scheme follows the Windows
+ * setting, because CLAUDE.md's original reasoning still holds on a dark
+ * desktop, where a bright slab reads as a hole rather than an object.
  *
  * Every SVG colour is applied by CSS class, never by a fill attribute.
  * Chromium does not resolve var() inside SVG presentation attributes, so
@@ -38,72 +38,77 @@
   src: url("assets/fonts/PirataOne-latin.woff2") format("woff2");
 }
 
-/* ═══════════════ dark, the default ═══════════════ */
+/* ═══════════════ silver, the default ═══════════════ */
 :root {
-  --chassis-hi: #24272c;
-  --chassis: #191b1f;
-  --chassis-lo: #0e1013;
-  --chassis-edge: rgba(255, 255, 255, 0.075);
+  --chassis-hi: #f4f5f6;
+  --chassis: #dcdfe2;
+  --chassis-lo: #bcc1c6;
+  --chassis-edge: rgba(0, 0, 0, 0.16);
 
-  --well-hi: #131519;
-  --well-lo: #0a0b0d;
-  --well-edge-c: #05060700;
-  --well-rim-c: rgba(255, 255, 255, 0.08);
+  --well-hi: #eaecee;
+  --well-lo: #c9cdd1;
+  --well-rim-c: rgba(255, 255, 255, 0.9);
 
-  --metal-hi: #b4bac2;
-  --metal-mid: #8b9199;
-  --metal-lo: #43474d;
-  --metal-edge-c: #1d1f23;
+  --metal-hi: #ffffff;
+  --metal-mid: #b7bcc3;
+  --metal-lo: #6f747a;
+  --metal-edge-c: #878d93;
 
-  --platter-hi: #6c727b;
-  --platter-mid: #4a4e56;
-  --platter-lo: #33363c;
-  --platter-well-c: #0c0d0f;
-  --platter-edge-c: #2b2e33;
-  --strobe-c: #0e1013;
+  --platter-hi: #a4aab1;
+  --platter-mid: #868c93;
+  --platter-lo: #676d74;
+  --platter-well-c: #b0b5ba;
+  --platter-edge-c: #8d9399;
+  --strobe-c: #3c4147;
 
-  --mat-c: #121316;
-  --mat-ring-c: rgba(255, 255, 255, 0.03);
-  --spindle-hole-c: #08090a;
+  --mat-c: #232528;
+  --mat-ring-c: rgba(255, 255, 255, 0.05);
+  --spindle-hole-c: #151719;
 
-  --vinyl-c: #0b0b0d;
-  --groove-c: #8f96a2;
-  --seam-c: #565b64;
-  --sheen-a-c: #d5dfee;
-  --sheen-b-c: #b6c3d8;
+  --vinyl-c: #141517;
+  --groove-c: #c2c9d1;
+  --seam-c: #7b818a;
+  --sheen-a-c: #ffffff;
+  --sheen-b-c: #e6ecf4;
 
-  --rest-fill: #17181b;
-  --rest-stroke: rgba(255, 255, 255, 0.1);
-  --slot-c: #0d0f12;
-  --arm-base-fill: #1f2125;
-  --arm-base-stroke: #2c2e33;
-  --bearing-pin-c: #32353a;
-  --shell-fill: #3a3e45;
-  --shell-edge-c: #141517;
-  --shell-top-c: #616770;
-  --cart-fill: #1a1c20;
-  --cart-edge-c: #0b0c0e;
-  --bolt-shadow-c: #08090b;
-  --bolt-slot-c: #24272c;
+  --rest-fill: #a9aeb4;
+  --rest-stroke: rgba(0, 0, 0, 0.24);
+  --slot-c: #9ea3a9;
+  --arm-base-fill: #d0d4d8;
+  --arm-base-stroke: #adb2b8;
+  --bearing-pin-c: #686d74;
+  --shell-fill: #8a9097;
+  --shell-edge-c: #595e64;
+  --shell-top-c: #c0c5cb;
+  --cart-fill: #474c52;
+  --cart-edge-c: #303439;
+  --bolt-shadow-c: #a6abb1;
+  --bolt-slot-c: #888e95;
 
-  --display-bg: #0f1114;
-  --display-bezel: rgba(255, 255, 255, 0.09);
-  --display-inner-shadow: rgba(0, 0, 0, 0.6);
+  /* the dusty rose screen */
+  --screen-bg: #b9959a;
+  --screen-bg-lo: #a8858a;
+  --screen-bezel: rgba(255, 255, 255, 0.85);
+  --screen-shadow: rgba(0, 0, 0, 0.3);
+  --screen-ink: #ffffff;
+  --screen-sub: rgba(255, 255, 255, 0.78);
+  --screen-faint: rgba(255, 255, 255, 0.5);
+  --wave-dim: rgba(255, 255, 255, 0.28);
+  --wave-lit: rgba(255, 255, 255, 0.82);
 
-  --text: #e8e9eb;
-  --steel: #8a8f98;
-  --faint: #5f646c;
-  --lamp: #ffb454;
-  --lamp-soft: rgba(255, 180, 84, 0.5);
-  --lamp-off: #34363a;
+  --text: #23262a;
+  --steel: #5b6067;
+  --faint: #878d94;
+  --lamp: #d4842a;
+  --lamp-soft: rgba(212, 132, 42, 0.45);
+  --lamp-off: #b2b7bc;
 
-  --btn-hi: #2d3138;
-  --btn-mid: #22252a;
-  --btn-lo: #191c20;
-  --btn-edge: #0d0f12;
-  --btn-glyph: #0c0e11;
-  --btn-emboss: rgba(255, 255, 255, 0.13);
-  --ghost-glyph: #7d838c;
+  --glyph: #2c3035;
+  --glyph-hover: #0d0f11;
+  --btn-face-hi: #fdfdfe;
+  --btn-face-lo: #dfe3e6;
+  --btn-edge: #a9aeb4;
+  --track: rgba(0, 0, 0, 0.16);
 
   --radius: 14px;
   --font-label: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
@@ -111,72 +116,77 @@
   --font-display: "Pirata One", "UnifrakturMaguntia", Georgia, serif;
 }
 
-/* ═══════════════ silver, on a light desktop ═══════════════ */
-@media (prefers-color-scheme: light) {
+/* ═══════════════ dark, on a dark desktop ═══════════════ */
+@media (prefers-color-scheme: dark) {
   :root {
-    --chassis-hi: #f2f3f4;
-    --chassis: #dfe1e3;
-    --chassis-lo: #c3c7cb;
-    --chassis-edge: rgba(0, 0, 0, 0.14);
+    --chassis-hi: #24272c;
+    --chassis: #191b1f;
+    --chassis-lo: #0e1013;
+    --chassis-edge: rgba(255, 255, 255, 0.075);
 
-    --well-hi: #e8eaec;
-    --well-lo: #cbcfd3;
-    --well-rim-c: rgba(255, 255, 255, 0.85);
+    --well-hi: #131519;
+    --well-lo: #0a0b0d;
+    --well-rim-c: rgba(255, 255, 255, 0.08);
 
-    --metal-hi: #ffffff;
-    --metal-mid: #b9bec5;
-    --metal-lo: #74797f;
-    --metal-edge-c: #8a9096;
+    --metal-hi: #b4bac2;
+    --metal-mid: #8b9199;
+    --metal-lo: #43474d;
+    --metal-edge-c: #1d1f23;
 
-    --platter-hi: #9ba1a8;
-    --platter-mid: #7d838a;
-    --platter-lo: #5f656c;
-    --platter-well-c: #b2b7bc;
-    --platter-edge-c: #8f959b;
-    --strobe-c: #3a3f45;
+    --platter-hi: #6c727b;
+    --platter-mid: #4a4e56;
+    --platter-lo: #33363c;
+    --platter-well-c: #0c0d0f;
+    --platter-edge-c: #2b2e33;
+    --strobe-c: #0e1013;
 
-    --mat-c: #26282b;
-    --mat-ring-c: rgba(255, 255, 255, 0.05);
-    --spindle-hole-c: #17191b;
+    --mat-c: #121316;
+    --mat-ring-c: rgba(255, 255, 255, 0.03);
+    --spindle-hole-c: #08090a;
 
-    --vinyl-c: #17181a;
-    --groove-c: #b9c0c9;
-    --seam-c: #767c85;
-    --sheen-a-c: #ffffff;
-    --sheen-b-c: #e3e9f2;
+    --vinyl-c: #0b0b0d;
+    --groove-c: #8f96a2;
+    --seam-c: #565b64;
+    --sheen-a-c: #d5dfee;
+    --sheen-b-c: #b6c3d8;
 
-    --rest-fill: #aeb3b9;
-    --rest-stroke: rgba(0, 0, 0, 0.22);
-    --slot-c: #a2a7ad;
-    --arm-base-fill: #d2d6da;
-    --arm-base-stroke: #b0b5bb;
-    --bearing-pin-c: #6c7178;
-    --shell-fill: #8d939a;
-    --shell-edge-c: #5c6167;
-    --shell-top-c: #c2c7cd;
-    --cart-fill: #4a4f55;
-    --cart-edge-c: #33373c;
-    --bolt-shadow-c: #a8adb3;
-    --bolt-slot-c: #8b9097;
+    --rest-fill: #17181b;
+    --rest-stroke: rgba(255, 255, 255, 0.1);
+    --slot-c: #0d0f12;
+    --arm-base-fill: #1f2125;
+    --arm-base-stroke: #2c2e33;
+    --bearing-pin-c: #32353a;
+    --shell-fill: #3a3e45;
+    --shell-edge-c: #141517;
+    --shell-top-c: #616770;
+    --cart-fill: #1a1c20;
+    --cart-edge-c: #0b0c0e;
+    --bolt-shadow-c: #08090b;
+    --bolt-slot-c: #24272c;
 
-    --display-bg: #cdd1d5;
-    --display-bezel: rgba(255, 255, 255, 0.9);
-    --display-inner-shadow: rgba(0, 0, 0, 0.28);
+    --screen-bg: #4a3438;
+    --screen-bg-lo: #3a282c;
+    --screen-bezel: rgba(255, 255, 255, 0.08);
+    --screen-shadow: rgba(0, 0, 0, 0.65);
+    --screen-ink: #f3ebec;
+    --screen-sub: rgba(243, 235, 236, 0.72);
+    --screen-faint: rgba(243, 235, 236, 0.45);
+    --wave-dim: rgba(243, 235, 236, 0.22);
+    --wave-lit: rgba(243, 235, 236, 0.78);
 
-    --text: #1c1e21;
-    --steel: #5c6167;
-    --faint: #868c93;
-    --lamp: #e08a1e;
-    --lamp-soft: rgba(224, 138, 30, 0.45);
-    --lamp-off: #b4b9be;
+    --text: #e8e9eb;
+    --steel: #8a8f98;
+    --faint: #5f646c;
+    --lamp: #ffb454;
+    --lamp-soft: rgba(255, 180, 84, 0.5);
+    --lamp-off: #34363a;
 
-    --btn-hi: #fbfcfc;
-    --btn-mid: #e6e8ea;
-    --btn-lo: #ccd0d4;
-    --btn-edge: #9ba0a6;
-    --btn-glyph: #3a3f45;
-    --btn-emboss: rgba(255, 255, 255, 0.95);
-    --ghost-glyph: #767c83;
+    --glyph: #b9bec5;
+    --glyph-hover: #f2f4f6;
+    --btn-face-hi: #33373d;
+    --btn-face-lo: #1d2024;
+    --btn-edge: #0d0f12;
+    --track: rgba(255, 255, 255, 0.16);
   }
 }
 
@@ -205,7 +215,7 @@ body {
   height: 100%;
   display: flex;
   align-items: stretch;
-  gap: 4px;
+  gap: 6px;
   padding: 10px;
   border-radius: var(--radius);
   background: linear-gradient(
@@ -216,9 +226,9 @@ body {
   );
   border: 1px solid var(--chassis-edge);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 22px 44px -20px rgba(0, 0, 0, 0.7),
-    0 5px 14px rgba(0, 0, 0, 0.38);
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 22px 44px -20px rgba(0, 0, 0, 0.45),
+    0 5px 14px rgba(0, 0, 0, 0.22);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   user-select: none;
@@ -233,7 +243,7 @@ body {
   pointer-events: none;
   border-radius: inherit;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.02 1.4' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.55'/></svg>");
-  opacity: 0.06;
+  opacity: 0.07;
   mix-blend-mode: overlay;
 }
 
@@ -261,7 +271,7 @@ body {
 .s-well-hi { stop-color: var(--well-hi); }
 .s-well-lo { stop-color: var(--well-lo); }
 
-.well-edge { fill: rgba(0, 0, 0, 0.35); }
+.well-edge { fill: rgba(0, 0, 0, 0.22); }
 .well-rim { stroke: var(--well-rim-c); }
 .bolt-shadow { fill: var(--bolt-shadow-c); }
 .bolt-face { stroke: var(--well-rim-c); }
@@ -288,8 +298,6 @@ body {
 .metal-hi-fill { fill: var(--metal-hi); }
 #grooves circle { stroke: var(--groove-c); }
 
-/* The record settles onto the platter when a session appears, and lifts off
-   when everything stops. */
 #vinylG {
   opacity: 0;
   transform: scale(0.962);
@@ -326,8 +334,6 @@ body {
   transition: opacity 240ms ease-out;
 }
 
-/* The cue lever rides up when the arm lifts, hydraulically damped on a real
-   deck and so eased here. */
 #cueKnob {
   transform: translateY(0);
   transition: transform 320ms cubic-bezier(0.32, 0.72, 0.24, 1);
@@ -338,7 +344,7 @@ body {
 }
 
 #cue:hover #cueKnob {
-  filter: brightness(1.18);
+  filter: brightness(1.12);
 }
 
 /* ─────────────────────────── panel ─────────────────────────── */
@@ -347,136 +353,195 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 4px 6px 4px 8px;
+  padding: 2px 4px 2px 6px;
 }
 
-.flex {
-  flex: 1;
-}
-
-.eyebrow {
+/* ── • NOW PLAYING • ── */
+.header {
   display: flex;
   align-items: center;
-  gap: 7px;
-  min-height: 15px;
+  justify-content: center;
+  gap: 9px;
+  min-height: 14px;
 }
 
-.lamp {
-  width: 6px;
-  height: 6px;
+.header-text {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+
+.lamp,
+.header-dot {
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--lamp-off);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.7);
+  flex: none;
   transition:
     background 0.35s,
     box-shadow 0.35s;
-  flex: none;
 }
 
-.vinyl-widget.loaded .lamp {
+.vinyl-widget.loaded .lamp,
+.vinyl-widget.loaded .header-dot {
   background: var(--lamp-soft);
 }
 
-.vinyl-widget.playing .lamp {
+.vinyl-widget.playing .lamp,
+.vinyl-widget.playing .header-dot {
   background: var(--lamp);
-  box-shadow: 0 0 7px 1.5px var(--lamp-soft);
+  box-shadow: 0 0 6px 1px var(--lamp-soft);
 }
 
-.brand {
-  font-family: var(--font-display);
-  font-size: 15px;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  color: var(--steel);
-  transform: translateY(0.5px);
-}
-
-.source {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: var(--faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 45%;
-}
-
-/* ── the display: a bezelled inset, not text on the faceplate ── */
-.display {
+/* ── the screen ── */
+.screen {
   margin-top: 7px;
   flex: 1;
   min-height: 0;
-  border-radius: 8px;
-  padding: 1px;
+  border-radius: 10px;
+  padding: 1.5px;
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.35) 0%,
-    var(--display-bezel) 100%
+    rgba(0, 0, 0, 0.28) 0%,
+    var(--screen-bezel) 100%
   );
 }
 
-.display-inner {
+.screen-inner {
+  position: relative;
   height: 100%;
-  border-radius: 7px;
-  padding: 9px 11px;
-  background: var(--display-bg);
-  box-shadow:
-    inset 0 2px 5px var(--display-inner-shadow),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: linear-gradient(165deg, var(--screen-bg) 0%, var(--screen-bg-lo) 100%);
+  box-shadow: inset 0 2px 6px var(--screen-shadow);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
   overflow: hidden;
 }
 
+.note {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  color: var(--screen-faint);
+}
+
+.now {
+  min-width: 0;
+}
+
 .title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--screen-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .artist {
-  font-size: 10.5px;
+  margin-top: 2px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--steel);
+  color: var(--screen-sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album,
+.source {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--screen-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .album {
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin-top: 3px;
 }
 
-.album:empty {
+.source {
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.album:empty,
+.source:empty {
   display: none;
 }
 
-/* A readout, not a control: PLAN.md excludes seek. */
+/* ── waveform: deterministic bars, lit to the real playback position ── */
+.wave {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 9px;
+  height: 22px;
+}
+
+.wave-row {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5px;
+}
+
+.wave-row i {
+  flex: 1;
+  border-radius: 1px;
+  background: var(--wave-dim);
+}
+
+/* One masked copy over the dim one, so progress costs a single style write
+   rather than restyling every bar four times a second. */
+.wave-lit i {
+  background: var(--wave-lit);
+}
+
+.wave-lit {
+  -webkit-mask-image: linear-gradient(90deg, #000 0 var(--played, 0%), transparent var(--played, 0%));
+  mask-image: linear-gradient(90deg, #000 0 var(--played, 0%), transparent var(--played, 0%));
+}
+
+/* ── progress: times flank the bar, as in the reference ── */
 .progress {
-  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 9px;
+}
+
+.time {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  flex: none;
 }
 
 .bar {
+  position: relative;
+  flex: 1;
   height: 3px;
   border-radius: 2px;
-  background: rgba(128, 128, 128, 0.28);
-  overflow: hidden;
+  background: var(--track);
 }
 
 .bar i {
@@ -487,30 +552,35 @@ body {
   background: var(--lamp);
 }
 
-.times {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 3px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
+/* A position marker, not a drag handle: PLAN.md excludes seek, so it must not
+   look grabbable. */
+.knob {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--btn-face-hi), var(--btn-face-lo));
+  border: 1px solid var(--btn-edge);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
 
-.vinyl-widget.live .bar {
+.vinyl-widget.live .bar,
+.vinyl-widget.live .knob {
   opacity: 0.25;
 }
 
 /* ─────────────────────────── transport ───────────────────────────
-   Each control takes the form of the real thing it corresponds to. Glyphs on
-   the pressed buttons are engraved: dark fill with a one-pixel lit lower
-   edge, which is how a legend cut into a metal faceplate catches light. */
+   Minimal line icons throughout; only play/pause is circled. */
 .controls {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  margin-top: 8px;
+  gap: 14px;
+  margin-top: 9px;
 }
 
 button {
@@ -521,18 +591,16 @@ button {
   font: inherit;
 }
 
-/* Shuffle and repeat: flush legends on the faceplate rather than raised
-   buttons, so the transport row reads as one primary and two secondaries. */
 .ghost {
   position: relative;
   width: 24px;
   height: 24px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
   background: transparent;
-  color: var(--ghost-glyph);
+  color: var(--glyph);
   transition:
     color 0.15s,
     background 0.15s,
@@ -541,7 +609,7 @@ button {
 
 .ghost:hover:not(:disabled) {
   background: rgba(128, 128, 128, 0.16);
-  color: var(--text);
+  color: var(--glyph-hover);
 }
 
 .ghost[aria-pressed="true"] {
@@ -550,8 +618,8 @@ button {
 
 .badge {
   position: absolute;
-  right: 1px;
-  bottom: 0;
+  right: 0;
+  bottom: 1px;
   font-family: var(--font-mono);
   font-size: 7px;
   line-height: 1;
@@ -563,100 +631,48 @@ button {
   display: block;
 }
 
-/* Skip: the form of the 33/45 speed selector, the small squarish button that
-   really does exist on the plinth. Turntables have no skip control at all, so
-   this borrows a real shape rather than inventing one. */
-.selector {
-  width: 28px;
-  height: 20px;
-  border-radius: 3px;
-  display: grid;
-  place-items: center;
-  color: var(--btn-glyph);
-  background: linear-gradient(180deg, var(--btn-hi) 0%, var(--btn-mid) 52%, var(--btn-lo) 100%);
-  border: 1px solid var(--btn-edge);
-  box-shadow:
-    inset 0 1px 0 var(--btn-emboss),
-    0 1px 2px rgba(0, 0, 0, 0.4);
-  transition:
-    box-shadow 0.12s,
-    transform 0.08s,
-    opacity 0.2s;
-}
-
-.selector svg {
-  /* the lit lower edge that makes a glyph read as cut in, not drawn on */
-  filter: drop-shadow(0 1px 0 var(--btn-emboss));
-}
-
-.selector:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
-}
-
-/* Play/pause: the round START/STOP button, machined, with concentric turning
-   marks and a real pressed state that sinks into the plinth. */
-.startstop {
+.playpause {
+  position: relative;
   width: 38px;
   height: 38px;
   border-radius: 50%;
   display: grid;
   place-items: center;
+  color: var(--glyph);
+  background: linear-gradient(180deg, var(--btn-face-hi), var(--btn-face-lo));
   border: 1px solid var(--btn-edge);
-  background:
-    repeating-radial-gradient(
-      circle at 50% 50%,
-      rgba(255, 255, 255, 0.03) 0 1px,
-      rgba(0, 0, 0, 0.03) 1px 2px
-    ),
-    radial-gradient(circle at 36% 28%, var(--metal-mid) 0%, var(--btn-mid) 55%, var(--btn-lo) 100%);
   box-shadow:
-    inset 0 1px 0 var(--btn-emboss),
-    inset 0 -2px 5px rgba(0, 0, 0, 0.35),
-    0 2px 5px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 3px rgba(0, 0, 0, 0.22);
   transition:
     box-shadow 0.12s,
     transform 0.08s,
+    color 0.15s,
     opacity 0.2s;
 }
 
-.startstop-face {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--btn-glyph);
-  background: linear-gradient(180deg, var(--btn-hi) 0%, var(--btn-mid) 100%);
-  box-shadow:
-    inset 0 1px 0 var(--btn-emboss),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.startstop-face svg {
+.playpause svg {
   grid-area: 1/1;
-  filter: drop-shadow(0 1px 0 var(--btn-emboss));
 }
 
-.startstop:hover:not(:disabled) {
+.playpause:hover:not(:disabled) {
+  color: var(--glyph-hover);
   box-shadow:
-    inset 0 1px 0 var(--btn-emboss),
-    inset 0 -2px 5px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
     0 0 0 1px var(--lamp-soft),
-    0 2px 5px rgba(0, 0, 0, 0.4);
+    0 1px 3px rgba(0, 0, 0, 0.22);
 }
 
-.startstop:active:not(:disabled) {
+.playpause:active:not(:disabled) {
   transform: translateY(1px);
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.28);
 }
 
 /* Unsupported by the source: dimmed and inert rather than hidden, so the
    layout does not jump between a track and a livestream. */
 .ghost:disabled,
-.selector:disabled,
-.startstop:disabled {
-  opacity: 0.25;
+.playpause:disabled {
+  opacity: 0.3;
   cursor: default;
 }
 
@@ -691,46 +707,34 @@ button {
 }
 
 /* ─────────────────────────── responsive ─────────────────────────── */
-@container vinylw (max-width: 420px) {
-  .brand {
-    display: none;
-  }
+@container vinylw (max-width: 430px) {
   .title {
-    font-size: 13.5px;
-  }
-}
-
-@container vinylw (max-width: 380px) {
-  .source {
-    display: none;
+    font-size: 14px;
   }
   .album {
     display: none;
   }
+  .controls {
+    gap: 10px;
+  }
 }
 
-@container vinylw (max-height: 270px) {
-  .display-inner {
-    padding: 7px 10px;
+@container vinylw (max-height: 275px) {
+  .wave {
+    height: 16px;
   }
   .title {
-    font-size: 13.5px;
+    font-size: 14px;
+  }
+  .source {
+    display: none;
   }
   .controls {
-    margin-top: 6px;
-    gap: 6px;
+    margin-top: 7px;
   }
-  .startstop {
+  .playpause {
     width: 34px;
     height: 34px;
-  }
-  .startstop-face {
-    width: 23px;
-    height: 23px;
-  }
-  .selector {
-    width: 25px;
-    height: 18px;
   }
 }
 
