@@ -37,11 +37,18 @@ it, then write the SVG.
 
 | Role | Family | License | Notes |
 |---|---|---|---|
-| Label lettering | **Archivo Narrow** | OFL 1.1 | Set in caps with `letter-spacing: 0.14em`. Weights 500 and 600 only. |
-| Label alternate | **Bebas Neue** | OFL 1.1 | Use only if Archivo Narrow lacks punch on the arc. Caps-only by design. |
+| UI text | **Archivo Narrow** | OFL 1.1 | Title, artist, source. Caps, `letter-spacing` around 0.1em. |
 | Timecode | **JetBrains Mono** | OFL 1.1 | Monospaced, so figures are tabular by default and digits never jitter. |
+| Display | **Playfair Display** | OFL 1.1 | Added in Phase 5, on request. Two uses only: the `VINYL` brand plate, and the procedural label. |
+| ~~Label alternate~~ | ~~Bebas Neue~~ | — | Never used. Archivo Narrow held up fine on the arc. |
 
-No third face. If you believe one is needed, stop and ask.
+**Three faces, and that is the limit.** Playfair was added deliberately rather than by
+drift: the procedural label is set the way old record labels actually were, and a
+condensed grotesque cannot carry that. Its weight axis also matters, because the brand
+plate renders at 11.5px and a single-weight display face would have had its hairlines
+disappear at that size.
+
+If you believe a fourth is needed, stop and ask.
 
 ### Bundling rules
 
@@ -61,8 +68,9 @@ fails to load offline breaks the label entirely.
 ### Fallback stacks
 
 ```css
---font-label: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
---font-mono:  "JetBrains Mono", ui-monospace, Consolas, monospace;
+--font-label:   "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
+--font-mono:    "JetBrains Mono", ui-monospace, Consolas, monospace;
+--font-display: "Playfair Display", Georgia, "Times New Roman", serif;
 ```
 
 ---

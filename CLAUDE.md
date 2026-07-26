@@ -223,8 +223,7 @@ Starting tokens (revise with justification, don't drift):
 ```
 
 Type roles:
-- **Label lettering** — a condensed grotesque set in caps, arced on an SVG text path.
-  Mid-century jazz-label register (think Blue Note, Impulse!), not calligraphic script.
+- **UI text** — a condensed grotesque set in caps: title, artist, source.
   Sanitise the artist before setting it: Apple Music reports `Artist` as
   `The Weeknd — Dawn FM`, packing the album in, and YouTube reports channel names like
   `JJ Lin - Topic`. Both need trimming or the label carries the wrong words and
@@ -232,6 +231,12 @@ Type roles:
   leaves the former empty and repeats the packed string in the latter. Split once on
   ` — ` and strip Apple's ` - Single` and ` - EP` suffixes.
 - **Timecode** — a mono face with tabular figures so digits don't jitter. Small.
+- **Display** — a classic high-contrast serif, added in Phase 5 on request. Two uses
+  only: the `VINYL` brand plate on the plinth, where a real deck carries the maker's
+  name, and the procedural label, which is set the way old record labels actually were.
+  This is the one place the "avoid a serif display face" line above is deliberately
+  overridden: that warning was about the whole cream-and-terracotta package, and a
+  single classic wordmark on a near-black plinth is not that. Do not let it spread.
 - No third face.
 
 **Signature element: the needle drop.** On play, the tonearm swings over and settles,

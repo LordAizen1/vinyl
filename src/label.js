@@ -11,6 +11,10 @@
  * the identical label. See docs/FINDINGS.md.
  *
  * Same input always yields the same label.
+ *
+ * Built around a monogram rather than a block of text. The label renders about
+ * 52px across, where set type turns to mush; a large letterform still reads as
+ * a deliberate mark at that size, which is how real labels survive being small.
  */
 
 /* Label geometry, in the deck's 232x220 viewBox. */
@@ -24,11 +28,11 @@ const R = 26;
  * rules out.
  */
 const PALETTES = [
-  { field: "#2b2f35", ink: "#e8e9eb", accent: "#6e1f26", sub: "#8a8f98" },
-  { field: "#1f2a2e", ink: "#dbe2e4", accent: "#2f6f6b", sub: "#7e8f92" },
-  { field: "#2c2a25", ink: "#e4e2de", accent: "#b8792c", sub: "#948b7a" },
-  { field: "#242835", ink: "#dde2f0", accent: "#4a5a8a", sub: "#838aa0" },
-  { field: "#2a2521", ink: "#e2ddd8", accent: "#7d4a2e", sub: "#95897c" },
+  { field: "#2b2f35", ink: "#eceef0", accent: "#8d2731", sub: "#9aa0a8" },
+  { field: "#1c282c", ink: "#e2eaec", accent: "#2f8079", sub: "#8ba0a2" },
+  { field: "#2e2b24", ink: "#efece5", accent: "#c4862f", sub: "#a89c88" },
+  { field: "#232839", ink: "#e4e9f5", accent: "#5169a6", sub: "#939bb2" },
+  { field: "#2c2621", ink: "#efe7dd", accent: "#96562f", sub: "#a5968a" },
 ];
 
 /** FNV-1a, so a given track always presses the same label. */
@@ -48,12 +52,25 @@ function escapeXml(value) {
   );
 }
 
+/**
+ * The monogram: the first letter of the artist, or of the title when there is
+ * no artist, or a record glyph when there is neither.
+ *
+ * Takes the first letter-or-digit rather than the first character, so a title
+ * opening with a bracket or a quote does not produce a punctuation monogram.
+ */
+function monogramOf(track) {
+  const source = (track.artist || track.title || "").trim();
+  for (const char of source) {
+    if (/\p{L}|\p{N}/u.test(char)) return char.toUpperCase();
+  }
+  return "♪"; // an eighth note, for a source that tells us nothing at all
+}
+
 /** A plausible catalogue number, derived from the same hash. */
 function catalogueOf(seed) {
   const prefix = ["VNL", "OXB", "HFI", "STL", "LMP"][(seed >>> 3) % 5];
-  const number = 1000 + ((seed >>> 7) % 9000);
-  const side = (seed >>> 17) % 2 === 0 ? "A" : "B";
-  return `${prefix} ${number} · ${side}`;
+  return `${prefix} ${1000 + ((seed >>> 7) % 9000)}`;
 }
 
 /* Arc paths. sweep-flag 1 in a y-down system gives the upper arc; sweep-flag 0
@@ -61,9 +78,9 @@ function catalogueOf(seed) {
 function arcs() {
   return `
     <defs>
-      <path id="lblTop" d="M ${CX - 16} ${CY} A 16 16 0 0 1 ${CX + 16} ${CY}" fill="none"/>
+      <path id="lblTop" d="M ${CX - 18.5} ${CY} A 18.5 18.5 0 0 1 ${CX + 18.5} ${CY}" fill="none"/>
+      <path id="lblTopWide" d="M ${CX - 21} ${CY} A 21 21 0 0 1 ${CX + 21} ${CY}" fill="none"/>
       <path id="lblBottom" d="M ${CX - 19.5} ${CY} A 19.5 19.5 0 0 0 ${CX + 19.5} ${CY}" fill="none"/>
-      <path id="lblTopWide" d="M ${CX - 20} ${CY} A 20 20 0 0 1 ${CX + 20} ${CY}" fill="none"/>
     </defs>`;
 }
 
@@ -79,101 +96,106 @@ function field(p) {
 
 function rim(p) {
   return `
-    <circle cx="${CX}" cy="${CY}" r="${R - 0.7}" fill="none" stroke="${p.sub}" stroke-opacity=".32" stroke-width=".5"/>
+    <circle cx="${CX}" cy="${CY}" r="${R - 0.7}" fill="none" stroke="${p.sub}" stroke-opacity=".34" stroke-width=".5"/>
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".9"/>`;
 }
 
-function arced(pathId, text, size, weight, fill, spacing) {
-  return `<text class="lbl-fit" data-arc="${pathId}" font-family="var(--font-label)" font-size="${size}"
+/**
+ * The monogram itself.
+ *
+ * Sits at CY-9 so its descender clears the spindle hole at CY. Centred on the
+ * label it looked like the hole had been punched through the letterform.
+ */
+function mark(letter, fill, size = 18) {
+  return `<text x="${CX}" y="${CY - 9}" font-family="var(--font-display)" font-size="${size}"
+      font-weight="700" fill="${fill}" text-anchor="middle" dominant-baseline="middle"
+    >${escapeXml(letter)}</text>`;
+}
+
+function arced(pathId, text, size, fill, spacing, weight = 500) {
+  return `<text class="lbl-fit" data-arc="${pathId}" font-family="var(--font-display)" font-size="${size}"
       font-weight="${weight}" letter-spacing="${spacing}" fill="${fill}" text-anchor="middle"
     ><textPath href="#${pathId}" startOffset="50%">${escapeXml(text)}</textPath></text>`;
 }
 
-function straight(x, y, text, size, weight, fill, spacing) {
-  return `<text class="lbl-fit" data-width="40" x="${x}" y="${y}" font-family="var(--font-label)" font-size="${size}"
-      font-weight="${weight}" letter-spacing="${spacing}" fill="${fill}" text-anchor="middle"
-    >${escapeXml(text)}</text>`;
-}
-
 function catalogue(y, text, fill) {
-  return `<text x="${CX}" y="${y}" font-family="var(--font-mono)" font-size="3" fill="${fill}"
-      fill-opacity=".72" text-anchor="middle">${escapeXml(text)}</text>`;
+  return `<text x="${CX}" y="${y}" font-family="var(--font-mono)" font-size="2.9" fill="${fill}"
+      fill-opacity=".7" text-anchor="middle">${escapeXml(text)}</text>`;
 }
 
-/* ─────────────────────────── archetypes ─────────────────────────── */
+/* ─────────────────────────── archetypes ───────────────────────────
+   Each is one monogram, one arced line, and at most one ring device.
 
-/** Concentric rings with a single accent band. The quiet one. */
-function rings(p, title, artist, cat) {
+   Vertical budget, so nothing collides: monogram CY-15 to CY-3, spindle hole
+   CY±2.6, top arc around CY-19, bottom arc around CY+19. An archetype using
+   the bottom arc puts its catalogue number at CY+10, between the hole and the
+   arc; one using the top arc puts it at CY+20, below everything. */
+
+/** A ruled circle around the mark. The quiet one. */
+function ringed(p, mono, title, cat) {
   return `
     ${field(p)}
-    <circle cx="${CX}" cy="${CY}" r="21" fill="none" stroke="${p.accent}" stroke-width="1.1"/>
-    <circle cx="${CX}" cy="${CY}" r="19" fill="none" stroke="#000" stroke-opacity=".22" stroke-width=".4"/>
-    ${arced("lblTop", title, 4.8, 600, p.ink, 0.55)}
-    ${artist ? straight(CX, CY + 10, artist, 4, 500, p.sub, 0.45) : ""}
-    ${catalogue(CY + 16.5, cat, p.sub)}
+    <circle cx="${CX}" cy="${CY}" r="17" fill="none" stroke="${p.accent}" stroke-width="1"/>
+    ${mark(mono, p.ink)}
+    ${arced("lblTopWide", title, 3.6, p.sub, 0.35)}
+    ${catalogue(CY + 20, cat, p.sub)}
     ${rim(p)}${spindle}`;
 }
 
-/** A band above the spindle. Blue Note, roughly.
- *
- *  The band sits in the upper half rather than across the middle: centred, the
- *  title collides with the spindle hole, which no real label does. */
-function band(p, title, artist, cat) {
+/** The mark reversed out of a solid accent disc. The loud one. */
+function disc(p, mono, title, cat) {
   return `
     ${field(p)}
-    <path d="M ${CX - 25.6} ${CY - 14.5} h 51.2 v 12.2 h -51.2 z" fill="${p.accent}" opacity=".92"
-          clip-path="url(#cLab)"/>
-    ${straight(CX, CY - 5.6, title, 4.6, 600, "#f4f5f6", 0.5)}
-    ${artist ? straight(CX, CY + 11, artist, 3.8, 500, p.sub, 0.42) : ""}
-    ${catalogue(CY + 17.5, cat, p.sub)}
+    <circle cx="${CX}" cy="${CY - 3}" r="17" fill="${p.accent}"/>
+    ${mark(mono, "#f6f4f1")}
+    ${arced("lblTopWide", title, 3.6, p.sub, 0.35)}
+    ${catalogue(CY + 20, cat, p.sub)}
     ${rim(p)}${spindle}`;
 }
 
-/** Accent field with the type reversed out. The loud one. */
-function solid(p, title, artist, cat) {
-  return `
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="${p.accent}"/>
-    <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#gLabShade)"/>
-    <circle cx="${CX}" cy="${CY}" r="22.5" fill="none" stroke="${p.field}" stroke-opacity=".55" stroke-width=".6"/>
-    ${arced("lblTopWide", title, 4.6, 600, "#f4f5f6", 0.6)}
-    ${artist ? straight(CX, CY + 11, artist, 4, 500, "rgba(255,255,255,.72)", 0.45) : ""}
-    ${catalogue(CY + 17, cat, "rgba(255,255,255,.6)")}
-    ${rim(p)}${spindle}`;
-}
-
-/** Title arced above, artist arced below. Symmetrical and formal. */
-function halo(p, title, artist, cat) {
+/** A band behind the mark, Blue Note by way of a monogram. */
+function banded(p, mono, title, cat) {
   return `
     ${field(p)}
-    <circle cx="${CX}" cy="${CY}" r="23" fill="none" stroke="${p.accent}" stroke-width=".8"/>
-    <circle cx="${CX}" cy="${CY}" r="12.5" fill="none" stroke="${p.accent}" stroke-opacity=".5" stroke-width=".6"/>
-    ${arced("lblTop", title, 4.6, 600, p.ink, 0.5)}
-    ${artist ? arced("lblBottom", artist, 3.8, 500, p.sub, 0.45) : ""}
-    ${catalogue(CY + 7.5, cat, p.sub)}
+    <path d="M ${CX - 25.8} ${CY - 17.5} h 51.6 v 16.5 h -51.6 z" fill="${p.accent}"
+          opacity=".92" clip-path="url(#cLab)"/>
+    ${mark(mono, "#f6f4f1")}
+    ${arced("lblBottom", title, 3.5, p.sub, 0.35)}
+    ${catalogue(CY + 10, cat, p.sub)}
     ${rim(p)}${spindle}`;
 }
 
 /** A quarter arc in the outer band. The asymmetric one, and the one that most
- *  obviously reads as turning.
- *
- *  Drawn as a stroked arc rather than a filled wedge so it stays out of the
- *  middle of the label, where a solid wedge fights the type for contrast. */
-function quadrant(p, title, artist, cat) {
+    obviously reads as turning. */
+function quartered(p, mono, title, cat) {
   const ringR = 22.6;
   const quarter = (2 * Math.PI * ringR) / 4;
   return `
     ${field(p)}
-    <circle cx="${CX}" cy="${CY}" r="${ringR}" fill="none" stroke="${p.accent}" stroke-width="5.4"
+    <circle cx="${CX}" cy="${CY}" r="${ringR}" fill="none" stroke="${p.accent}" stroke-width="5"
             stroke-dasharray="${quarter.toFixed(2)} ${(quarter * 3).toFixed(2)}"
             transform="rotate(-86 ${CX} ${CY})" opacity=".92"/>
-    <circle cx="${CX}" cy="${CY}" r="19.2" fill="none" stroke="#000" stroke-opacity=".28" stroke-width=".5"/>
-    ${straight(CX, CY - 7.5, title, 4.4, 600, p.ink, 0.5)}
-    ${artist ? straight(CX, CY + 10, artist, 3.8, 500, p.sub, 0.42) : ""}
-    ${catalogue(CY + 16, cat, p.sub)}
+    ${mark(mono, p.ink)}
+    ${arced("lblBottom", title, 3.5, p.sub, 0.35)}
+    ${catalogue(CY + 10, cat, p.sub)}
     ${rim(p)}${spindle}`;
 }
 
-const ARCHETYPES = [rings, band, solid, halo, quadrant];
+/** Hairline rules above and below the mark. The formal one. */
+function ruled(p, mono, title, cat) {
+  return `
+    ${field(p)}
+    <path d="M ${CX - 14} ${CY - 18} h 28 M ${CX - 14} ${CY + 5.5} h 28"
+          stroke="${p.accent}" stroke-width="1.1"/>
+    <path d="M ${CX - 14} ${CY - 16.2} h 28 M ${CX - 14} ${CY + 7.3} h 28"
+          stroke="${p.accent}" stroke-opacity=".45" stroke-width=".5"/>
+    ${mark(mono, p.ink)}
+    ${arced("lblBottom", title, 3.5, p.sub, 0.35)}
+    ${catalogue(CY + 13, cat, p.sub)}
+    ${rim(p)}${spindle}`;
+}
+
+const ARCHETYPES = [ringed, disc, banded, quartered, ruled];
 
 /**
  * Builds the label markup for a track.
@@ -182,22 +204,22 @@ const ARCHETYPES = [rings, band, solid, halo, quadrant];
  * @returns {string} SVG markup for the contents of the label group
  */
 export function proceduralLabel(track) {
-  const title = (track.title || "Untitled").toUpperCase();
+  // The arced line carries the artist when we have one, since the panel
+  // already shows the title in full a few pixels away. When there is no
+  // artist it falls back to the title rather than repeating the source app,
+  // which would put a process name on the record. See docs/FINDINGS.md.
+  const line = (track.artist || track.title || "").toUpperCase();
 
-  // Deliberately no fall back to the source app. WhatsApp desktop hosts as the
-  // shared msedgewebview2.exe, so that would print a process name on the
-  // record. When there is no artist the line is simply omitted; the panel
-  // already shows the source. See docs/FINDINGS.md.
-  const artist = (track.artist || "").toUpperCase();
-
-  // Source app in the seed: without it, every blank-metadata source collapses
-  // onto one label. See docs/FINDINGS.md.
-  const seed = hashOf(`${track.artist || ""}|${track.title || ""}|${track.sourceApp || ""}`);
+  const seed = hashOf(
+    `${track.artist || ""}|${track.title || ""}|${track.sourceApp || ""}`,
+  );
 
   const palette = PALETTES[seed % PALETTES.length];
   const archetype = ARCHETYPES[(seed >>> 11) % ARCHETYPES.length];
 
-  return arcs() + archetype(palette, title, artist, catalogueOf(seed));
+  return (
+    arcs() + archetype(palette, monogramOf(track), line, catalogueOf(seed))
+  );
 }
 
 /** The real-artwork label: the art itself, ringed like a pressed label. */
@@ -214,7 +236,7 @@ export function artLabel(url) {
 }
 
 /**
- * Truncates any label text that would overrun its arc or its width.
+ * Truncates any label text that would overrun its arc.
  *
  * Must run after the markup is in the document, because it measures rendered
  * glyphs. Phase 0 found artist strings like "The Weeknd — After Hours
@@ -224,15 +246,21 @@ export function fitLabelText(root) {
   for (const el of root.querySelectorAll(".lbl-fit")) {
     const arcId = el.dataset.arc;
     const limit = arcId
-      ? arcLengthOf(root, arcId) * 0.94
+      ? arcLengthOf(root, arcId) * 0.92
       : Number(el.dataset.width || 40);
 
-    const full = el.textContent;
-    if (el.getComputedTextLength() <= limit) continue;
+    // Write to the textPath, not to the <text>. Setting textContent on the
+    // parent replaces the textPath child with a bare text node, which silently
+    // drops the string off the arc and renders it at the origin instead.
+    // SVGTextPathElement extends SVGTextContentElement, so it measures itself.
+    const target = el.querySelector("textPath") ?? el;
+
+    const full = target.textContent;
+    if (target.getComputedTextLength() <= limit) continue;
 
     for (let cut = full.length - 1; cut > 0; cut -= 1) {
-      el.textContent = `${full.slice(0, cut).trimEnd()}…`;
-      if (el.getComputedTextLength() <= limit) break;
+      target.textContent = `${full.slice(0, cut).trimEnd()}…`;
+      if (target.getComputedTextLength() <= limit) break;
     }
   }
 }
